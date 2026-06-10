@@ -1,0 +1,21 @@
+[build]
+  command = "npm run build:netlify"
+  publish = "dist/client"
+  functions = "netlify/functions"
+
+# All routes handled by the SSR server function
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/server"
+  status = 200
+
+# Static assets served directly
+[[redirects]]
+  from = "/assets/*"
+  to = "/assets/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/favicon.svg"
+  to = "/favicon.svg"
+  status = 200

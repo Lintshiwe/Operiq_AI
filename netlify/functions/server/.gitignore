@@ -1,0 +1,3 @@
+# Build artifacts — copied from dist/server/ during build:netlify
+server.js
+assets/
