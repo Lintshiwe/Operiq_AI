@@ -410,7 +410,7 @@ const PLANS = [
   {
     id: "free",
     name: "Free",
-    price: "$0",
+    price: "R0",
     features: [
       "50 AI requests/day",
       "5 image generations/day",
@@ -421,7 +421,7 @@ const PLANS = [
   {
     id: "pro",
     name: "Pro",
-    price: "$19/month",
+    price: "R19/month",
     features: [
       "500 AI requests/day",
       "50 image generations/day",
@@ -432,7 +432,7 @@ const PLANS = [
   {
     id: "enterprise",
     name: "Enterprise",
-    price: "$99/month",
+    price: "R99/month",
     features: [
       "Unlimited AI requests",
       "Unlimited image generations",
