@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MarkdownView } from "@/components/MarkdownView";
-import { BrandMark } from "@/components/AppShell";
+import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
 import { deriveTitle, type Thread } from "@/lib/threads";
 
@@ -445,9 +445,7 @@ function ChatPane({
             </>
           )}
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted cursor-default">
-            <BrandMark className="size-5" />
-            <span className="text-sm font-semibold">Operiq</span>
-            <span className="text-sm text-muted-foreground">AI</span>
+            <Logo variant="full" className="h-5" />
           </div>
         </div>
         <button
@@ -476,7 +474,7 @@ function ChatPane({
                     </div>
                   ) : (
                     <div className="flex gap-3 w-full">
-                      <BrandMark className="mt-0.5 size-7 shrink-0" />
+                      <Logo variant="ai-avatar" className="mt-0.5 size-7 shrink-0" />
                       <div className="min-w-0 flex-1 text-[15px] leading-relaxed">
                         <MarkdownView>{text || "..."}</MarkdownView>
                       </div>
@@ -488,9 +486,9 @@ function ChatPane({
 
             {isLoading && messages[messages.length - 1]?.role === "user" && (
               <div className="flex gap-3">
-                <BrandMark className="mt-0.5 size-7 shrink-0" />
+                <Logo variant="ai-avatar" loading className="mt-0.5 size-7 shrink-0" />
                 <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
-                  <Loader2 className="size-3.5 animate-spin" />
+                  <span className="size-2 rounded-full bg-[#39FF14] animate-pulse" />
                   Thinking...
                 </div>
               </div>
@@ -556,7 +554,7 @@ function EmptyState({ onPick }: { onPick: (s: string) => void }) {
   return (
     <div className="h-full flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-2xl text-center">
-        <BrandMark className="mx-auto size-10 mb-4" />
+        <Logo variant="full" className="mx-auto h-10 mb-4" />
         <h2 className="text-2xl font-semibold text-foreground tracking-tight">
           What can I help with?
         </h2>
