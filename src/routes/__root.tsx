@@ -100,7 +100,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Premium AI workspace for professionals: email, meetings, planning, research, assistant.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "https://operiq-ai.netlify.app/logo-icon.png" },
+      { property: "og:image:width", content: "512" },
+      { property: "og:image:height", content: "512" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://operiq-ai.netlify.app/logo-icon.png" },
     ],
     links: [
       { rel: "icon", type: "image/png", href: "/logo-icon.png" },

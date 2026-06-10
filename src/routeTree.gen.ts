@@ -23,6 +23,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AssistantIndexRouteImport } from './routes/assistant.index'
 import { Route as AssistantThreadIdRouteImport } from './routes/assistant.$threadId'
 import { Route as ApiResendRouteImport } from './routes/api/resend'
+import { Route as ApiHuggingfaceRouteImport } from './routes/api/huggingface'
 import { Route as ApiCodeRouteImport } from './routes/api/code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
@@ -96,6 +97,11 @@ const ApiResendRoute = ApiResendRouteImport.update({
   path: '/api/resend',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHuggingfaceRoute = ApiHuggingfaceRouteImport.update({
+  id: '/api/huggingface',
+  path: '/api/huggingface',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCodeRoute = ApiCodeRouteImport.update({
   id: '/api/code',
   path: '/api/code',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/chat': typeof ApiChatRoute
   '/api/code': typeof ApiCodeRoute
+  '/api/huggingface': typeof ApiHuggingfaceRoute
   '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
   '/assistant/': typeof AssistantIndexRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/chat': typeof ApiChatRoute
   '/api/code': typeof ApiCodeRoute
+  '/api/huggingface': typeof ApiHuggingfaceRoute
   '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
   '/assistant': typeof AssistantIndexRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/chat': typeof ApiChatRoute
   '/api/code': typeof ApiCodeRoute
+  '/api/huggingface': typeof ApiHuggingfaceRoute
   '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
   '/assistant/': typeof AssistantIndexRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/chat'
     | '/api/code'
+    | '/api/huggingface'
     | '/api/resend'
     | '/assistant/$threadId'
     | '/assistant/'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/chat'
     | '/api/code'
+    | '/api/huggingface'
     | '/api/resend'
     | '/assistant/$threadId'
     | '/assistant'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/chat'
     | '/api/code'
+    | '/api/huggingface'
     | '/api/resend'
     | '/assistant/$threadId'
     | '/assistant/'
@@ -231,6 +243,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiCodeRoute: typeof ApiCodeRoute
+  ApiHuggingfaceRoute: typeof ApiHuggingfaceRoute
   ApiResendRoute: typeof ApiResendRoute
 }
 
@@ -334,6 +347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiResendRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/huggingface': {
+      id: '/api/huggingface'
+      path: '/api/huggingface'
+      fullPath: '/api/huggingface'
+      preLoaderRoute: typeof ApiHuggingfaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/code': {
       id: '/api/code'
       path: '/api/code'
@@ -379,8 +399,19 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiChatRoute: ApiChatRoute,
   ApiCodeRoute: ApiCodeRoute,
+  ApiHuggingfaceRoute: ApiHuggingfaceRoute,
   ApiResendRoute: ApiResendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

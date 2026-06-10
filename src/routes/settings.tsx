@@ -6,6 +6,8 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import {
   ArrowLeft,
   Check,
@@ -13,6 +15,7 @@ import {
   ExternalLink,
   Globe,
   HardDrive,
+  Loader2,
   Mail,
   Moon,
   Palette,
@@ -26,6 +29,9 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/settings")({
@@ -43,13 +49,13 @@ type Section = "general" | "personalization" | "billing" | "storage" | "contact"
 const SECTIONS: {
   id: Section;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   badge?: string;
 }[] = [
   { id: "general", label: "General", icon: Settings },
   { id: "personalization", label: "Personalization", icon: Palette },
-  { id: "billing", label: "Billing", icon: CreditCard, badge: "Under maintenance" },
-  { id: "storage", label: "Storage", icon: HardDrive, badge: "Under maintenance" },
+  { id: "billing", label: "Billing", icon: CreditCard },
+  { id: "storage", label: "Storage", icon: HardDrive },
   { id: "contact", label: "Contact", icon: User },
 ];
 
@@ -400,7 +406,97 @@ function PersonalizationSection() {
 /*  Billing section                                                   */
 /* ------------------------------------------------------------------ */
 
+const PLANS = [
+  {
+    id: "free",
+    name: "Free",
+    price: "$0",
+    features: [
+      "50 AI requests/day",
+      "5 image generations/day",
+      "50MB storage",
+      "Basic support",
+    ],
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    price: "$19/month",
+    features: [
+      "500 AI requests/day",
+      "50 image generations/day",
+      "500MB storage",
+      "Priority support",
+    ],
+  },
+  {
+    id: "enterprise",
+    name: "Enterprise",
+    price: "$99/month",
+    features: [
+      "Unlimited AI requests",
+      "Unlimited image generations",
+      "5GB storage",
+      "Dedicated support",
+    ],
+  },
+];
+
 function BillingSection() {
+  const billing = useQuery(api.billing.getBilling);
+  const upgrade = useMutation(api.billing.upgradePlan);
+  const cancel = useMutation(api.billing.cancelSubscription);
+  const [upgradingId, setUpgradingId] = useState<string | null>(null);
+  const [billingError, setBillingError] = useState<string | null>(null);
+
+  const currentPlan = ((billing as any)?.plan as string) || "free";
+
+  async function handleUpgrade(planId: string) {
+    setUpgradingId(planId);
+    setBillingError(null);
+    try {
+      await upgrade({ plan: planId } as any);
+    } catch (e) {
+      setBillingError(e instanceof Error ? e.message : "Failed to upgrade plan");
+    } finally {
+      setUpgradingId(null);
+    }
+  }
+
+  async function handleCancel() {
+    setBillingError(null);
+    try {
+      await cancel();
+    } catch (e) {
+      setBillingError(e instanceof Error ? e.message : "Failed to cancel subscription");
+    }
+  }
+
+  if (billing === undefined) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Billing</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Manage your billing and subscription settings.</p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-xl border border-border bg-card p-6 space-y-4">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-8 w-16" />
+              <div className="space-y-2">
+                {[1, 2, 3, 4].map((j) => (
+                  <Skeleton key={j} className="h-4 w-full" />
+                ))}
+              </div>
+              <Skeleton className="h-9 w-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -408,15 +504,81 @@ function BillingSection() {
         <p className="mt-1 text-sm text-muted-foreground">Manage your billing and subscription settings.</p>
       </div>
 
-      <div className="flex items-center justify-center py-12">
-        <div className="max-w-sm w-full rounded-xl border border-border bg-card p-8 text-center space-y-4">
-          <img src="/maintenance.png" alt="Under maintenance" className="mx-auto h-40 w-auto" />
-          <h2 className="text-lg font-semibold text-foreground">Under maintenance</h2>
-          <p className="text-sm text-muted-foreground">
-            Billing management is currently under development. Check back soon.
-          </p>
+      {/* Current plan badge */}
+      <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-4">
+        <div className="p-2 rounded-md bg-accent/10 text-accent">
+          <CreditCard className="size-5" />
         </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-foreground">Current plan</p>
+          <p className="text-sm text-muted-foreground capitalize">{currentPlan}</p>
+        </div>
+        <Badge variant="secondary" className="capitalize">
+          {currentPlan}
+        </Badge>
       </div>
+
+      {/* Plan cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {PLANS.map((plan) => {
+          const isCurrent = currentPlan === plan.id;
+          const isPro = plan.id === "pro";
+          return (
+            <div
+              key={plan.id}
+              className={cn(
+                "rounded-xl border bg-card p-6 space-y-4 flex flex-col",
+                isPro && "border-accent/50 ring-1 ring-accent/20",
+              )}
+            >
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
+                <p className="text-2xl font-bold text-foreground mt-1">{plan.price}</p>
+              </div>
+              <ul className="space-y-2 flex-1">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Check className="size-4 text-accent shrink-0" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Button
+                variant={isCurrent ? "secondary" : "default"}
+                disabled={isCurrent || upgradingId === plan.id}
+                onClick={() => !isCurrent && handleUpgrade(plan.id)}
+                className={cn(isCurrent && "cursor-default")}
+              >
+                {upgradingId === plan.id ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : isCurrent ? (
+                  "Current plan"
+                ) : (
+                  "Upgrade"
+                )}
+              </Button>
+            </div>
+          );
+        })}
+      </div>
+
+      {billingError && (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+          {billingError}
+        </div>
+      )}
+
+      {currentPlan !== "free" && (
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={handleCancel}>
+            Cancel subscription
+          </Button>
+        </div>
+      )}
+
+      <p className="text-xs text-muted-foreground text-center">
+        Demo billing — no real payments are processed.
+      </p>
     </div>
   );
 }
@@ -426,6 +588,27 @@ function BillingSection() {
 /* ------------------------------------------------------------------ */
 
 function StorageSection() {
+  const billing = useQuery(api.billing.getBilling);
+  const storageUsed = Number((billing as any)?.storageUsed ?? 0);
+  const storageLimit = Number((billing as any)?.storageLimit ?? 50);
+  const percentUsed = storageLimit > 0 ? Math.round((storageUsed / storageLimit) * 100) : 0;
+
+  if (billing === undefined) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Storage</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Manage your data storage and files.</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-9 w-32" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -433,15 +616,27 @@ function StorageSection() {
         <p className="mt-1 text-sm text-muted-foreground">Manage your data storage and files.</p>
       </div>
 
-      <div className="flex items-center justify-center py-12">
-        <div className="max-w-sm w-full rounded-xl border border-border bg-card p-8 text-center space-y-4">
-          <img src="/maintenance.png" alt="Under maintenance" className="mx-auto h-40 w-auto" />
-          <h2 className="text-lg font-semibold text-foreground">Under maintenance</h2>
-          <p className="text-sm text-muted-foreground">
-            Storage management is coming soon. Each user will get 50MB of storage with the ability to manage and delete
-            their data.
-          </p>
+      <div className="rounded-xl border border-border bg-card p-6 space-y-6">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-foreground">Storage used</span>
+            <span className="text-sm text-muted-foreground">
+              {storageUsed}MB / {storageLimit}MB
+            </span>
+          </div>
+          <Progress value={percentUsed} />
+          <p className="text-xs text-muted-foreground">{percentUsed}% used</p>
         </div>
+
+        <div className="space-y-2">
+          <span className="text-sm font-medium text-foreground">Files</span>
+          <p className="text-sm text-muted-foreground">No files uploaded yet</p>
+        </div>
+
+        <Button variant="outline" disabled>
+          Clear all data
+          <span className="ml-2 text-xs text-muted-foreground">(Coming soon)</span>
+        </Button>
       </div>
     </div>
   );

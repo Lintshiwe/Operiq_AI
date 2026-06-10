@@ -10,9 +10,11 @@
 
 import type * as analyses from "../analyses.js";
 import type * as auth from "../auth.js";
+import type * as billing from "../billing.js";
 import type * as emailDrafts from "../emailDrafts.js";
 import type * as http from "../http.js";
 import type * as plans from "../plans.js";
+import type * as sharedChats from "../sharedChats.js";
 import type * as summaries from "../summaries.js";
 import type * as threads from "../threads.js";
 import type * as users from "../users.js";
@@ -26,9 +28,11 @@ import type {
 declare const fullApi: ApiFromModules<{
   analyses: typeof analyses;
   auth: typeof auth;
+  billing: typeof billing;
   emailDrafts: typeof emailDrafts;
   http: typeof http;
   plans: typeof plans;
+  sharedChats: typeof sharedChats;
   summaries: typeof summaries;
   threads: typeof threads;
   users: typeof users;

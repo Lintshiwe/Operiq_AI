@@ -31,6 +31,11 @@ import {
   Paperclip,
   X,
   Cpu,
+  Bot,
+  Upload,
+  Link as LinkIcon,
+  Image,
+  Share2,
 } from "lucide-react";
 import {
   Select,
@@ -41,8 +46,16 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuShortcut,
+} from "@/components/ui/dropdown-menu";
 import { MarkdownView } from "@/components/MarkdownView";
 import { Logo } from "@/components/Logo";
+import { InviteDialog } from "@/components/InviteDialog";
 import { cn } from "@/lib/utils";
 import { deriveTitle, type Thread, loadThreads, saveThreads, createBlankThread } from "@/lib/threads";
 import { MODELS, MODEL_STORAGE_KEY, MODEL_MAP } from "@/lib/models";
@@ -79,6 +92,7 @@ function AssistantThreadPage() {
   const { threadId } = useParams({ from: "/assistant/$threadId" });
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [shareThreadId, setShareThreadId] = useState<string | null>(null);
   const { isAuthenticated, isLoading: authLoading } = useSsrConvexAuth();
   const promptLimit = usePromptLimit();
 
@@ -245,6 +259,7 @@ function AssistantThreadPage() {
           onDelete={handleDelete}
           onClose={() => setSidebarOpen(false)}
           isGuest={isGuest}
+          onShare={setShareThreadId}
         />
       )}
 
@@ -260,6 +275,7 @@ function AssistantThreadPage() {
             onDelete={handleDelete}
             onClose={() => setSidebarOpen(false)}
             isGuest={isGuest}
+            onShare={setShareThreadId}
           />
         </div>
       )}
@@ -281,6 +297,16 @@ function AssistantThreadPage() {
         promptLimit={promptLimit}
         isGuest={isGuest}
       />
+
+      {shareThreadId && (
+        <InviteDialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setShareThreadId(null);
+          }}
+          threadId={shareThreadId}
+        />
+      )}
     </div>
   );
 }
@@ -314,6 +340,7 @@ function ThreadSidebar({
   onClose,
   isGuest,
   className,
+  onShare,
 }: {
   threads: Thread[];
   activeId: string;
@@ -322,6 +349,7 @@ function ThreadSidebar({
   onClose: () => void;
   isGuest?: boolean;
   className?: string;
+  onShare?: (id: string) => void;
 }) {
   const groups = useMemo(() => groupThreads(threads), [threads]);
 
@@ -374,20 +402,31 @@ function ThreadSidebar({
                     <Link
                       to="/assistant/$threadId"
                       params={{ threadId: t.id }}
-                      className="block truncate pl-2.5 pr-9 py-2 text-sm text-sidebar-foreground"
+                      className="block truncate pl-2.5 pr-16 py-2 text-sm text-sidebar-foreground"
                     >
                       {t.title}
                     </Link>
-                    <button
-                      onClick={() => onDelete(t.id)}
-                      aria-label={`Delete ${t.title}`}
+                    <div
                       className={cn(
-                        "absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:bg-background hover:text-destructive transition-opacity",
+                        "absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 transition-opacity",
                         active ? "opacity-100" : "opacity-0 group-hover:opacity-100",
                       )}
                     >
-                      <Trash2 className="size-3.5" />
-                    </button>
+                      <button
+                        onClick={() => onShare?.(t.id)}
+                        aria-label={`Share ${t.title}`}
+                        className="p-1.5 rounded-md text-muted-foreground hover:bg-background hover:text-accent"
+                      >
+                        <Share2 className="size-3.5" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(t.id)}
+                        aria-label={`Delete ${t.title}`}
+                        className="p-1.5 rounded-md text-muted-foreground hover:bg-background hover:text-destructive"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
                   </li>
                 );
               })}
@@ -490,8 +529,8 @@ function ChatPane({
 }) {
   /* ---- Model selector state ---- */
   const [selectedModel, setSelectedModel] = useState(() => {
-    if (typeof window === "undefined") return MODELS[1].id;
-    return window.localStorage.getItem(MODEL_STORAGE_KEY) || MODELS[1].id;
+    if (typeof window === "undefined") return MODELS[4].id;
+    return window.localStorage.getItem(MODEL_STORAGE_KEY) || MODELS[4].id;
   });
   const modelRef = useRef(selectedModel);
 
@@ -502,18 +541,41 @@ function ChatPane({
     }
   }, [selectedModel]);
 
-  /* ---- Transport with model header ---- */
+  /* ---- Agent mode state ---- */
+  const [agentMode, setAgentMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("operiq-agent-mode") === "true";
+  });
+  const agentModeRef = useRef(agentMode);
+
+  useEffect(() => {
+    agentModeRef.current = agentMode;
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("operiq-agent-mode", String(agentMode));
+    }
+  }, [agentMode]);
+
+  /* ---- Transport with model + agent headers ---- */
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        headers: () => ({ "x-operiq-model": MODEL_MAP[modelRef.current] || modelRef.current }),
+        headers: () => ({
+          "x-operiq-model": MODEL_MAP[modelRef.current] || modelRef.current,
+          "x-operiq-agent-mode": agentModeRef.current ? "on" : "off",
+        }),
       }),
     []
   );
 
   const [input, setInput] = useState("");
   const [files, setFiles] = useState<{ name: string; size: number; content: string }[]>([]);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [imageGenOpen, setImageGenOpen] = useState(false);
+  const [imagePrompt, setImagePrompt] = useState("");
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -623,6 +685,35 @@ function ChatPane({
     setTimeout(() => inputRef.current?.focus(), 0);
   }
 
+  async function generateImage() {
+    const prompt = imagePrompt.trim();
+    if (!prompt || isGeneratingImage) return;
+    setIsGeneratingImage(true);
+    setImageError(null);
+    setGeneratedImage(null);
+    try {
+      const res = await fetch("/api/huggingface", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Image generation failed");
+      }
+      const data = await res.json();
+      if (data.image) {
+        setGeneratedImage(data.image);
+      } else {
+        throw new Error("No image returned");
+      }
+    } catch (e) {
+      setImageError(e instanceof Error ? e.message : "Failed to generate image");
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  }
+
   return (
     <section className="flex-1 flex flex-col h-dvh bg-background min-w-0">
       {/* Top bar */}
@@ -651,6 +742,13 @@ function ChatPane({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setInviteOpen(true)}
+            className="p-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-label="Share conversation"
+          >
+            <Share2 className="size-4" />
+          </button>
           <button
             onClick={onNewChat}
             className="md:hidden p-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -777,32 +875,77 @@ function ChatPane({
                   e.preventDefault();
                   submit(input);
                 }}
-                className="relative flex items-end rounded-xl border border-border bg-card shadow-sm focus-within:border-muted-foreground/50 transition-colors"
+                className="relative rounded-xl border border-border bg-card shadow-sm focus-within:border-muted-foreground/50 transition-colors"
               >
-                <Select value={selectedModel} onValueChange={setSelectedModel}>
-                  <SelectTrigger className="h-8 w-auto min-w-0 px-2 py-0 text-[11px] rounded-lg bg-muted border-0 text-muted-foreground hover:text-foreground hover:bg-muted-foreground/20 focus:ring-0 gap-1 shrink-0 ml-2 mb-1.5">
-                    <Cpu className="size-3.5" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border min-w-[200px]">
-                    {MODELS.map((m) => (
-                      <SelectItem key={m.id} value={m.id} className="text-sm cursor-pointer">
-                        <div className="flex flex-col">
-                          <span className="font-medium">{m.label}</span>
-                          <span className="text-[11px] text-muted-foreground">{m.description}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="shrink-0 ml-1 mb-1.5 size-8 rounded-xl bg-muted text-muted-foreground hover:bg-muted-foreground/20 flex items-center justify-center"
-                  aria-label="Attach file"
-                >
-                  <Paperclip className="size-4" />
-                </button>
+                {/* Toolbar */}
+                <div className="flex items-center gap-1 px-3 pt-2 pb-1">
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <SelectTrigger className="h-7 w-auto min-w-0 px-2 py-0 text-[11px] rounded-md bg-transparent border-0 text-muted-foreground hover:text-foreground hover:bg-muted focus:ring-0 gap-1 shrink-0">
+                      <Cpu className="size-3.5" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border min-w-[200px]">
+                      {MODELS.map((m) => (
+                        <SelectItem key={m.id} value={m.id} className="text-sm cursor-pointer">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{m.label}</span>
+                            <span className="text-[11px] text-muted-foreground">{m.description}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <button
+                    type="button"
+                    onClick={() => setAgentMode((v) => !v)}
+                    className={cn(
+                      "shrink-0 size-7 rounded-md flex items-center justify-center transition-colors",
+                      agentMode
+                        ? "bg-accent text-white hover:bg-accent/90"
+                        : "bg-transparent text-muted-foreground hover:bg-muted",
+                    )}
+                    aria-label={agentMode ? "Agent mode on" : "Agent mode off"}
+                    title={agentMode ? "Agent mode: on" : "Agent mode: off"}
+                  >
+                    <Bot className="size-4" />
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="shrink-0 size-7 rounded-md bg-transparent text-muted-foreground hover:bg-muted flex items-center justify-center"
+                        aria-label="Attach file"
+                      >
+                        <Paperclip className="size-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="bg-popover border-border">
+                      <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                        <Upload className="size-4 mr-2" />
+                        Upload file
+                      </DropdownMenuItem>
+                  <DropdownMenuItem disabled>
+                    <LinkIcon className="size-4 mr-2" />
+                    Upload from URL
+                    <DropdownMenuShortcut>Coming soon</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <button
+                type="button"
+                onClick={() => setImageGenOpen((v) => !v)}
+                className={cn(
+                  "shrink-0 size-7 rounded-md flex items-center justify-center transition-colors",
+                  imageGenOpen
+                    ? "bg-accent text-white hover:bg-accent/90"
+                    : "bg-transparent text-muted-foreground hover:bg-muted",
+                )}
+                aria-label={imageGenOpen ? "Close image generation" : "Open image generation"}
+                title="Generate image"
+              >
+                <Image className="size-4" />
+              </button>
+            </div>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -839,6 +982,72 @@ function ChatPane({
                   )}
                 </Button>
               </form>
+
+              {/* Image generation panel */}
+              {imageGenOpen && (
+                <div className="mt-2 rounded-xl border border-border bg-card p-4 space-y-3 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">Image generation</span>
+                    <button
+                      onClick={() => {
+                        setImageGenOpen(false);
+                        setImagePrompt("");
+                        setGeneratedImage(null);
+                        setImageError(null);
+                      }}
+                      className="p-1 rounded-md hover:bg-muted text-muted-foreground"
+                      aria-label="Close image generation"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      value={imagePrompt}
+                      onChange={(e) => setImagePrompt(e.target.value)}
+                      placeholder="Describe the image you want to generate..."
+                      className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          generateImage();
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={generateImage}
+                      disabled={isGeneratingImage || !imagePrompt.trim()}
+                      size="sm"
+                    >
+                      {isGeneratingImage ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        "Generate"
+                      )}
+                    </Button>
+                  </div>
+                  {isGeneratingImage && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="size-4 animate-spin" />
+                      Generating image...
+                    </div>
+                  )}
+                  {imageError && (
+                    <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                      {imageError}
+                    </div>
+                  )}
+                  {generatedImage && (
+                    <div className="rounded-lg border border-border overflow-hidden">
+                      <img
+                        src={`data:image/png;base64,${generatedImage}`}
+                        alt="Generated"
+                        className="w-full max-h-[300px] object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
 
@@ -851,6 +1060,12 @@ function ChatPane({
           )}
         </div>
       </div>
+
+      <InviteDialog
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        threadId={thread.id}
+      />
     </section>
   );
 }

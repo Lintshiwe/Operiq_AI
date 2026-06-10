@@ -37,8 +37,8 @@ export const Route = createFileRoute("/code")({
 
 function CodePage() {
   const [selectedModel, setSelectedModel] = useState(() => {
-    if (typeof window === "undefined") return CODE_MODELS[0].id;
-    return window.localStorage.getItem(CODE_MODEL_STORAGE_KEY) || CODE_MODELS[0].id;
+    if (typeof window === "undefined") return CODE_MODELS[3].id;
+    return window.localStorage.getItem(CODE_MODEL_STORAGE_KEY) || CODE_MODELS[3].id;
   });
   const modelRef = useRef(selectedModel);
 
@@ -105,24 +105,6 @@ function CodePage() {
           <div>
             <h1 className="text-sm font-semibold text-foreground">Operiq Code</h1>
             <p className="text-[11px] text-muted-foreground">AI coding assistant</p>
-          </div>
-          <div className="ml-auto">
-            <Select value={selectedModel} onValueChange={setSelectedModel}>
-              <SelectTrigger className="h-8 w-auto min-w-0 px-2 py-0 text-[11px] rounded-lg bg-muted border-0 text-muted-foreground hover:text-foreground hover:bg-muted-foreground/20 focus:ring-0 gap-1">
-                <Cpu className="size-3.5" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border min-w-[200px]">
-                {CODE_MODELS.map((m) => (
-                  <SelectItem key={m.id} value={m.id} className="text-sm cursor-pointer">
-                    <div className="flex flex-col">
-                      <span className="font-medium">{m.label}</span>
-                      <span className="text-[11px] text-muted-foreground">{m.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         </div>
 
@@ -195,7 +177,26 @@ function CodePage() {
         {/* Input area */}
         <div className="border-t border-border shrink-0 px-4 lg:px-6 py-4">
           <div className="max-w-[720px] mx-auto">
-            <div className="flex items-end gap-2 bg-card border border-border rounded-2xl px-4 py-3 focus-within:border-accent/40 transition-colors">
+            <div className="relative rounded-xl border border-border bg-card shadow-sm focus-within:border-muted-foreground/50 transition-colors">
+              {/* Toolbar */}
+              <div className="flex items-center gap-1 px-3 pt-2 pb-1">
+                <Select value={selectedModel} onValueChange={setSelectedModel}>
+                  <SelectTrigger className="h-7 w-auto min-w-0 px-2 py-0 text-[11px] rounded-md bg-transparent border-0 text-muted-foreground hover:text-foreground hover:bg-muted focus:ring-0 gap-1 shrink-0">
+                    <Cpu className="size-3.5" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border min-w-[200px]">
+                    {CODE_MODELS.map((m) => (
+                      <SelectItem key={m.id} value={m.id} className="text-sm cursor-pointer">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{m.label}</span>
+                          <span className="text-[11px] text-muted-foreground">{m.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <textarea
                 ref={inputRef}
                 value={input}
@@ -204,12 +205,12 @@ function CodePage() {
                 placeholder="Ask a coding question..."
                 rows={1}
                 disabled={isLoading}
-                className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground/40 resize-none disabled:opacity-50"
+                className="w-full min-h-[44px] max-h-[200px] bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground/40 resize-none disabled:opacity-50 px-3 py-3 pr-12"
               />
               <button
                 onClick={onSend}
                 disabled={!input.trim() || isLoading}
-                className="size-8 rounded-xl bg-accent text-accent-foreground flex items-center justify-center shrink-0 hover:opacity-90 transition-opacity disabled:opacity-30"
+                className="absolute right-1.5 bottom-1.5 size-8 rounded-lg bg-foreground text-background hover:bg-foreground/90 flex items-center justify-center shrink-0 transition-opacity disabled:opacity-30"
               >
                 {isLoading ? (
                   <Loader2 className="size-4 animate-spin" />

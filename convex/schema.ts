@@ -64,4 +64,30 @@ export default defineSchema({
     output: v.string(),
     createdAt: v.string(),
   }).index("by_userId", ["userId"]),
+
+  sharedChats: defineTable({
+    threadId: v.id("threads"),
+    ownerId: v.id("users"),
+    token: v.string(),
+    isActive: v.boolean(),
+    createdAt: v.string(),
+    invitedUserIds: v.array(v.id("users")),
+  })
+    .index("by_token", ["token"])
+    .index("by_threadId", ["threadId"]),
+
+  billing: defineTable({
+    userId: v.id("users"),
+    plan: v.string(),
+    aiRequestsUsed: v.number(),
+    aiRequestsLimit: v.number(),
+    imagesGenerated: v.number(),
+    imagesLimit: v.number(),
+    storageUsed: v.number(),
+    storageLimit: v.number(),
+    subscriptionStatus: v.string(),
+    currentPeriodStart: v.string(),
+    currentPeriodEnd: v.string(),
+    createdAt: v.string(),
+  }).index("by_userId", ["userId"]),
 });

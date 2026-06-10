@@ -13,18 +13,63 @@ export const list = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
-    return await ctx.db
+
+    const ownedThreads = await ctx.db
       .query("threads")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .order("desc")
       .collect();
+
+    const sharedChats = await ctx.db
+      .query("sharedChats")
+      .withIndex("by_threadId")
+      .filter((q) => q.eq("isActive", true))
+      .collect();
+
+    const sharedThreadIds = sharedChats
+      .filter((sc) => sc.invitedUserIds.includes(userId))
+      .map((sc) => sc.threadId);
+
+    const existingIds = new Set(ownedThreads.map((t) => t._id));
+    const newSharedThreadIds = sharedThreadIds.filter(
+      (id) => !existingIds.has(id),
+    );
+
+    const sharedThreads = (
+      await Promise.all(newSharedThreadIds.map((id) => ctx.db.get(id)))
+    ).filter((t): t is NonNullable<typeof t> => t !== null);
+
+    const allThreads = [...ownedThreads, ...sharedThreads];
+    allThreads.sort(
+      (a, b) => b.updatedAt.localeCompare(a.updatedAt),
+    );
+
+    return allThreads;
   },
 });
 
 export const get = query({
   args: { threadId: v.id("threads") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.threadId);
+    const thread = await ctx.db.get(args.threadId);
+    if (!thread) return null;
+
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    if (thread.userId === userId) return thread;
+
+    const sharedChat = await ctx.db
+      .query("sharedChats")
+      .withIndex("by_threadId", (q) => q.eq("threadId", args.threadId))
+      .filter((q) => q.eq("isActive", true))
+      .first();
+
+    if (sharedChat && sharedChat.invitedUserIds.includes(userId)) {
+      return thread;
+    }
+
+    return null;
   },
 });
 

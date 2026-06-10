@@ -5,20 +5,20 @@
  */
 
 export const MODELS = [
-  { id: "operiq-ultra",  label: "Operiq Ultra",  description: "Mistral Large — Most capable" },
-  { id: "operiq-pro",    label: "Operiq Pro",    description: "Llama 3.3 70B — Balanced & Recommended" },
-  { id: "operiq-plus",   label: "Operiq Plus",   description: "Nemotron Super 49B — Fast & capable" },
-  { id: "operiq-nano",   label: "Operiq Nano",   description: "Nemotron Nano 9B — Quick" },
-  { id: "operiq-mini",   label: "Operiq Mini",   description: "Nemotron Mini 4B — Quickest" },
+  { id: "operiq-ultra",  label: "Operiq Ultra",  description: "Most capable reasoning" },
+  { id: "operiq-pro",    label: "Operiq Pro",    description: "Balanced performance" },
+  { id: "operiq-plus",   label: "Operiq Plus",   description: "Fast & capable" },
+  { id: "operiq-nano",   label: "Operiq Nano",   description: "Quick responses" },
+  { id: "operiq-mini",   label: "Operiq Mini",   description: "Fastest response" },
 ];
 
 export const MODEL_STORAGE_KEY = "operiq-chat-model";
 
 export const CODE_MODELS = [
-  { id: "operiq-ultra",  label: "Operiq Ultra", description: "Mistral Large — Best for projects" },
-  { id: "operiq-plus",   label: "Operiq Plus",  description: "Nemotron Super 49B — Balanced" },
-  { id: "operiq-pro",    label: "Operiq Pro",   description: "Llama 3.3 70B — Fast" },
-  { id: "operiq-mini",   label: "Operiq Mini",  description: "Nemotron Mini 4B — Quick questions" },
+  { id: "operiq-ultra",  label: "Operiq Ultra", description: "Best for complex projects" },
+  { id: "operiq-plus",   label: "Operiq Plus",  description: "Balanced" },
+  { id: "operiq-pro",    label: "Operiq Pro",   description: "Fast" },
+  { id: "operiq-mini",   label: "Operiq Mini",  description: "Quick questions" },
 ];
 
 export const CODE_MODEL_STORAGE_KEY = "operiq-code-model";
