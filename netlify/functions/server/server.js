@@ -1,4 +1,4 @@
-let r;function s(t){r={error:t,at:Date.now()}}typeof globalThis.addEventListener=="function"&&(globalThis.addEventListener("error",t=>s(t.error??t)),globalThis.addEventListener("unhandledrejection",t=>s(t.reason)));function p(){if(!r)return;if(Date.now()-r.at>5e3){r=void 0;return}const{error:t}=r;return r=void 0,t}const h=`
+let r;function i(t){r={error:t,at:Date.now()},t instanceof Error?console.error("captured-error:",t.message,t.stack?.slice(0,500)):console.error("captured-error:",String(t))}typeof process<"u"&&typeof process.on=="function"?(process.on("uncaughtException",t=>i(t)),process.on("unhandledRejection",t=>i(t))):typeof globalThis.addEventListener=="function"&&(globalThis.addEventListener("error",t=>i(t.error??t)),globalThis.addEventListener("unhandledrejection",t=>i(t.reason)));function p(){if(!r)return;if(Date.now()-r.at>5e3){r=void 0;return}const{error:t}=r;return r=void 0,t}const f=`
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
@@ -108,14 +108,14 @@ h1 {
   .btn-primary { width: 100%; }
   .btn-secondary { width: 100%; }
 }
-`;function c(){return f("Something went wrong · Operiq AI","/robot-error.png","Error illustration","","Something went wrong","An unexpected error occurred. Please try refreshing the page or head back home.",`<button class="btn btn-primary" onclick="location.reload()" type="button">Refresh</button>
-     <a class="btn btn-secondary" href="/">Back Home</a>`)}function f(t,o,e,n,i,d,l){return`<!doctype html>
+`;function c(){return h("Error · Operiq AI","/robot-error.png","Error illustration","","","",`<button class="btn btn-primary" onclick="location.reload()" type="button">Refresh</button>
+     <a class="btn btn-secondary" href="/">Back Home</a>`)}function h(t,o,e,n,a,d,l){return`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <title>${t}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style>${h}</style>
+    <style>${f}</style>
   </head>
   <body>
     <div class="container">
@@ -123,11 +123,11 @@ h1 {
         <img src="${o}" alt="${e}" />
       </div>
       
-      <h1>${i}</h1>
+      <h1>${a}</h1>
       <p class="description">${d}</p>
       <div class="actions">${l}</div>
     </div>
   </body>
-</html>`}let a;async function m(){return a||(a=import("./assets/server-CRO6lpVv.js").then(t=>t.s).then(t=>t.default??t)),a}async function g(t){if(t.status<500||!(t.headers.get("content-type")??"").includes("application/json"))return t;const e=await t.clone().text();if(!e.includes('"unhandled":true')||!e.includes('"message":"HTTPError"'))return t;const n=p();return n instanceof Error?console.error("SSR Error:",n.message,n.stack?.split(`
+</html>`}let s;async function u(){return s||(s=import("./assets/server-ZTopjUq5.js").then(t=>t.s).then(t=>t.default??t)),s}async function m(t){if(t.status<500||!(t.headers.get("content-type")??"").includes("application/json"))return t;const e=await t.clone().text();if(!e.includes('"unhandled":true')||!e.includes('"message":"HTTPError"'))return t;const n=p();return n instanceof Error?console.error("SSR Error:",n.message,n.stack?.split(`
 `).slice(0,5).join(`
-`)):console.error("h3 swallowed SSR error:",e),new Response(c(),{status:500,headers:{"content-type":"text/html; charset=utf-8"}})}const x={async fetch(t,o,e){try{const i=await(await m()).fetch(t,o,e);return await g(i)}catch(n){return console.error(n),new Response(c(),{status:500,headers:{"content-type":"text/html; charset=utf-8"}})}}};export{x as default,c as r};
+`)):console.error("h3 swallowed SSR error:",e),new Response(c(),{status:500,headers:{"content-type":"text/html; charset=utf-8"}})}const x={async fetch(t,o,e){try{const a=await(await u()).fetch(t,o,e);return await m(a)}catch(n){return console.error(n),new Response(c(),{status:500,headers:{"content-type":"text/html; charset=utf-8"}})}}};export{x as default,c as r};

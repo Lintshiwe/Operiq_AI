@@ -12,9 +12,17 @@ const TTL_MS = 5_000;
 
 function record(error: unknown) {
   lastCapturedError = { error, at: Date.now() };
+  if (error instanceof Error) {
+    console.error("captured-error:", error.message, error.stack?.slice(0, 500));
+  } else {
+    console.error("captured-error:", String(error));
+  }
 }
 
-if (typeof globalThis.addEventListener === "function") {
+if (typeof process !== "undefined" && typeof process.on === "function") {
+  process.on("uncaughtException", (error) => record(error));
+  process.on("unhandledRejection", (reason) => record(reason));
+} else if (typeof globalThis.addEventListener === "function") {
   globalThis.addEventListener("error", (event) => record((event as ErrorEvent).error ?? event));
   globalThis.addEventListener("unhandledrejection", (event) =>
     record((event as PromiseRejectionEvent).reason),
