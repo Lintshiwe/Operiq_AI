@@ -32,3 +32,6 @@ dist-ssr
 *.sw?
 .superpowers/
 .env
+
+# Local Netlify folder
+.netlify
