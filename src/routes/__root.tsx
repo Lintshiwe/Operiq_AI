@@ -7,16 +7,15 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-accent">FlowDesk AI</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-accent">Operiq AI</p>
         <h1 className="mt-4 font-display text-6xl font-semibold text-foreground">404</h1>
         <h2 className="mt-3 text-xl font-medium text-foreground">Page not found</h2>
         <p className="mt-3 text-sm text-muted-foreground">
@@ -38,9 +37,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
@@ -78,14 +74,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "FlowDesk AI — Executive Productivity, Reimagined" },
+      { title: "Operiq AI — Executive Productivity, Reimagined" },
       {
         name: "description",
         content:
-          "FlowDesk AI is the AI-powered workplace productivity platform for professionals — draft emails, summarize meetings, plan work, and research smarter.",
+          "Operiq AI is the AI-powered workplace productivity platform for professionals — draft emails, summarize meetings, plan work, and research smarter.",
       },
-      { name: "author", content: "FlowDesk AI" },
-      { property: "og:title", content: "FlowDesk AI — Executive Productivity Assistant" },
+      { name: "author", content: "Operiq AI" },
+      { property: "og:title", content: "Operiq AI — Executive Productivity Assistant" },
       {
         property: "og:description",
         content: "Premium AI workspace for professionals: email, meetings, planning, research, assistant.",
@@ -99,7 +95,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
       },
     ],
   }),
@@ -111,7 +107,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <HeadContent />
       </head>

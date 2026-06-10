@@ -1,9 +1,16 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
-export function createLovableAiGatewayProvider(apiKey: string) {
+export function createAiProvider(apiKey: string, baseUrl?: string) {
   return createOpenAICompatible({
-    name: "lovable-ai-gateway",
-    baseURL: "https://ai.gateway.lovable.dev/v1",
-    headers: { "Lovable-API-Key": apiKey },
+    name: "operiq-ai",
+    baseURL: baseUrl ?? "https://api.openai.com/v1",
+    headers: { Authorization: `Bearer ${apiKey}` },
   });
+}
+
+export function getProvider() {
+  const key = process.env.AI_API_KEY;
+  if (!key) throw new Error("Missing AI_API_KEY environment variable");
+  const baseUrl = process.env.AI_BASE_URL;
+  return createAiProvider(key, baseUrl);
 }

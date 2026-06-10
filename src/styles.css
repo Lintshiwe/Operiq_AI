@@ -31,7 +31,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-ring-offset-background: var(--background);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -41,62 +40,61 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: ui-sans-serif, -apple-system, "Segoe UI", "Helvetica Neue", Helvetica, "Inter", Arial, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-display: var(--font-sans);
-
-  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.04), 0 4px 16px -6px oklch(0 0 0 / 0.06);
-  --shadow-card: 0 1px 2px oklch(0 0 0 / 0.04), 0 8px 24px -10px oklch(0 0 0 / 0.10);
 }
 
 :root {
   --radius: 0.75rem;
 
-  /* ChatGPT-inspired neutral palette */
-  --background: oklch(1 0 0);                     /* #ffffff */
-  --foreground: oklch(0.22 0 0);                  /* #0d0d0d-ish */
+  /* ChatGPT Dark Mode Palette */
+  --background: oklch(0.165 0 0);          /* #212121 */
+  --foreground: oklch(0.98 0 0);            /* #ffffff */
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0 0);
+  --card: oklch(0.195 0 0);                 /* #2a2a2a */
+  --card-foreground: oklch(0.98 0 0);
 
-  --primary: oklch(0.22 0 0);                     /* near-black buttons */
-  --primary-foreground: oklch(1 0 0);
+  --popover: oklch(0.195 0 0);
+  --popover-foreground: oklch(0.98 0 0);
 
-  --secondary: oklch(0.45 0 0);
-  --secondary-foreground: oklch(1 0 0);
+  --primary: oklch(0.98 0 0);               /* white buttons */
+  --primary-foreground: oklch(0.165 0 0);
 
-  --muted: oklch(0.962 0 0);                      /* #f4f4f4 */
-  --muted-foreground: oklch(0.45 0 0);            /* #6b6b6b */
+  --secondary: oklch(0.35 0 0);             /* secondary elements */
+  --secondary-foreground: oklch(0.98 0 0);
 
-  --accent: oklch(0.55 0.13 165);                 /* subtle green accent */
-  --accent-foreground: oklch(1 0 0);
+  --muted: oklch(0.22 0 0);                 /* #303030 */
+  --muted-foreground: oklch(0.55 0 0);      /* #8e8e8e */
+
+  --accent: oklch(0.55 0.15 165);           /* ChatGPT green #10a37f */
+  --accent-foreground: oklch(0.98 0 0);
 
   --destructive: oklch(0.55 0.20 27);
-  --destructive-foreground: oklch(1 0 0);
+  --destructive-foreground: oklch(0.98 0 0);
 
-  --border: oklch(0.92 0 0);                      /* #e5e5e5 */
-  --input: oklch(0.92 0 0);
-  --ring: oklch(0.55 0 0);
+  --border: oklch(0.25 0 0);                /* #3a3a3a */
+  --input: oklch(0.25 0 0);
+  --ring: oklch(0.45 0 0);
 
-  /* ChatGPT sidebar: very light warm gray */
-  --sidebar: oklch(0.975 0.002 80);               /* #f9f9f9 */
-  --sidebar-foreground: oklch(0.22 0 0);
-  --sidebar-primary: oklch(0.22 0 0);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.93 0.002 80);         /* hover/selected */
-  --sidebar-accent-foreground: oklch(0.22 0 0);
-  --sidebar-border: oklch(0.92 0 0);
-  --sidebar-ring: oklch(0.55 0 0);
+  /* ChatGPT sidebar: slightly darker than main bg */
+  --sidebar: oklch(0.135 0 0);              /* #171717 */
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.98 0 0);
+  --sidebar-primary-foreground: oklch(0.165 0 0);
+  --sidebar-accent: oklch(0.22 0 0);        /* hover/selected #303030 */
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.2 0 0);         /* #2a2a2a */
+  --sidebar-ring: oklch(0.45 0 0);
 }
 
 @layer base {
   * { border-color: var(--color-border); }
-  html, body { font-family: var(--font-sans); }
-  body {
+  html, body {
+    font-family: var(--font-sans);
     background-color: var(--color-background);
     color: var(--color-foreground);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   h1, h2, h3 {
     font-family: var(--font-sans);
@@ -111,15 +109,12 @@
   border-radius: var(--radius-lg);
 }
 
-@utility hairline {
-  border: 1px solid color-mix(in oklab, var(--color-foreground) 8%, transparent);
-}
-
+/* Markdown prose styles for dark theme */
 .prose-flow p { margin: 0 0 0.85rem; line-height: 1.7; }
 .prose-flow h1, .prose-flow h2, .prose-flow h3 { margin: 1.25rem 0 0.5rem; font-weight: 600; }
 .prose-flow ul, .prose-flow ol { padding-left: 1.25rem; margin: 0 0 0.85rem; }
 .prose-flow li { margin: 0.25rem 0; }
-.prose-flow strong { color: var(--color-foreground); font-weight: 600; }
+.prose-flow strong { font-weight: 600; }
 .prose-flow code { background: var(--color-muted); padding: 0.1rem 0.35rem; border-radius: 6px; font-size: 0.9em; }
-.prose-flow pre { background: oklch(0.18 0 0); color: oklch(0.95 0 0); padding: 0.85rem 1rem; border-radius: 10px; overflow-x: auto; margin: 0 0 0.85rem; }
+.prose-flow pre { background: oklch(0.12 0 0); color: oklch(0.95 0 0); padding: 0.85rem 1rem; border-radius: 10px; overflow-x: auto; margin: 0 0 0.85rem; }
 .prose-flow pre code { background: transparent; padding: 0; color: inherit; }

@@ -6,7 +6,7 @@ import { createBlankThread, loadThreads, saveThreads } from "@/lib/threads";
 export const Route = createFileRoute("/assistant/")({
   head: () => ({
     meta: [
-      { title: "AI Assistant · FlowDesk AI" },
+      { title: "AI Assistant · Operiq AI" },
       { name: "description", content: "Workplace-focused conversational AI assistant." },
     ],
   }),

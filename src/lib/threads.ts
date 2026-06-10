@@ -7,7 +7,7 @@ export type Thread = {
   messages: UIMessage[];
 };
 
-const KEY = "flowdesk.threads.v1";
+const KEY = "operiq.threads.v1";
 
 function safeRead(): Thread[] {
   if (typeof window === "undefined") return [];

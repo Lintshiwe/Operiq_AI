@@ -30,8 +30,8 @@ import {
 export const Route = createFileRoute("/assistant/$threadId")({
   head: () => ({
     meta: [
-      { title: "FlowDesk AI" },
-      { name: "description", content: "Workplace-focused conversational AI assistant." },
+      { title: "Operiq AI" },
+      { name: "description", content: "AI-powered workplace productivity assistant." },
     ],
   }),
   component: AssistantThreadPage,
@@ -114,7 +114,7 @@ function AssistantThreadPage() {
 
       <ChatPane
         key={threadId}
-        thread={current ?? { id: threadId, title: "New chat", updatedAt: Date.now(), messages: [] }}
+        thread={current ?? { id: threadId, title: "New conversation", updatedAt: Date.now(), messages: [] }}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen((v) => !v)}
         onNewChat={handleCreate}
@@ -149,44 +149,47 @@ function ThreadSidebar({
   onDelete: (id: string) => void;
   onClose: () => void;
 }) {
-  // Group threads by relative time
   const groups = useMemo(() => groupThreads(threads), [threads]);
 
   return (
     <aside className="hidden md:flex w-[260px] shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+      {/* Logo area */}
       <div className="flex items-center justify-between gap-2 px-3 h-14">
-        <Link to="/assistant/$threadId" params={{ threadId: activeId }} className="flex items-center gap-2 px-2">
+        <div className="flex items-center gap-2">
           <BrandMark />
-          <span className="font-semibold text-sm">FlowDesk</span>
-        </Link>
+          <span className="font-semibold text-sm">Operiq</span>
+          <span className="text-sm text-muted-foreground">AI</span>
+        </div>
         <button
           onClick={onClose}
           aria-label="Hide sidebar"
-          className="p-1.5 rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          className="p-1.5 rounded-md text-muted-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
         >
           <PanelLeft className="size-4" />
         </button>
       </div>
 
-      <div className="px-2">
+      {/* New chat */}
+      <div className="px-2 pb-2">
         <button
           onClick={onCreate}
-          className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:bg-sidebar-accent text-sidebar-foreground"
+          className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:bg-sidebar-accent text-sidebar-foreground border border-sidebar-border"
         >
-          <span className="flex size-6 items-center justify-center rounded-md border border-sidebar-border bg-background">
-            <Plus className="size-3.5" />
-          </span>
+          <Plus className="size-4" />
           New chat
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
+      {/* Threads */}
+      <div className="flex-1 overflow-y-auto px-2 py-1 space-y-4">
         {threads.length === 0 && (
-          <p className="px-3 py-6 text-xs text-sidebar-foreground/55">No conversations yet.</p>
+          <p className="px-3 py-6 text-xs text-muted-foreground">No conversations yet.</p>
         )}
         {groups.map((group) => (
           <div key={group.label}>
-            <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/55">{group.label}</p>
+            <p className="px-2 pb-1 text-[11px] font-medium text-muted-foreground">
+              {group.label}
+            </p>
             <ul className="space-y-0.5">
               {group.threads.map((t) => {
                 const active = t.id === activeId;
@@ -209,7 +212,7 @@ function ThreadSidebar({
                       onClick={() => onDelete(t.id)}
                       aria-label={`Delete ${t.title}`}
                       className={cn(
-                        "absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-sidebar-foreground/55 hover:bg-background hover:text-destructive transition-opacity",
+                        "absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:bg-background hover:text-destructive transition-opacity",
                         active ? "opacity-100" : "opacity-0 group-hover:opacity-100",
                       )}
                     >
@@ -223,15 +226,16 @@ function ThreadSidebar({
         ))}
       </div>
 
+      {/* Workspace links at bottom */}
       <div className="border-t border-sidebar-border p-2 space-y-0.5">
-        <p className="px-2 pt-1 pb-1.5 text-[11px] font-medium text-sidebar-foreground/55">Workspaces</p>
+        <p className="px-2 pt-1 pb-1.5 text-[11px] font-medium text-muted-foreground">Workspaces</p>
         {MODULES.map((m) => {
           const Icon = m.icon;
           return (
             <Link
               key={m.to}
               to={m.to as "/email"}
-              className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
             >
               <Icon className="size-4" strokeWidth={1.75} />
               {m.label}
@@ -357,7 +361,8 @@ function ChatPane({
             </>
           )}
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted cursor-default">
-            <span className="text-sm font-semibold">FlowDesk</span>
+            <BrandMark className="size-5" />
+            <span className="text-sm font-semibold">Operiq</span>
             <span className="text-sm text-muted-foreground">AI</span>
           </div>
         </div>
@@ -384,14 +389,14 @@ function ChatPane({
               return (
                 <div key={m.id} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
                   {isUser ? (
-                    <div className="max-w-[80%] rounded-3xl bg-muted text-foreground px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap">
+                    <div className="max-w-[80%] rounded-2xl bg-card text-foreground px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap border border-border">
                       {text}
                     </div>
                   ) : (
                     <div className="flex gap-3 w-full">
-                      <BrandMark className="mt-1 size-7 shrink-0" />
-                      <div className="min-w-0 flex-1 text-[15px]">
-                        <MarkdownView>{text || "…"}</MarkdownView>
+                      <BrandMark className="mt-0.5 size-7 shrink-0" />
+                      <div className="min-w-0 flex-1 text-[15px] leading-relaxed">
+                        <MarkdownView>{text || "..."}</MarkdownView>
                       </div>
                     </div>
                   )}
@@ -401,10 +406,10 @@ function ChatPane({
 
             {isLoading && messages[messages.length - 1]?.role === "user" && (
               <div className="flex gap-3">
-                <BrandMark className="mt-1 size-7 shrink-0" />
+                <BrandMark className="mt-0.5 size-7 shrink-0" />
                 <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
                   <Loader2 className="size-3.5 animate-spin" />
-                  Thinking…
+                  Thinking...
                 </div>
               </div>
             )}
@@ -418,7 +423,7 @@ function ChatPane({
         )}
       </div>
 
-      {/* Composer */}
+      {/* Composer (ChatGPT style) */}
       <div className="px-4 lg:px-6 pb-4 pt-2 bg-background">
         <div className="mx-auto max-w-3xl">
           <form
@@ -426,7 +431,7 @@ function ChatPane({
               e.preventDefault();
               submit(input);
             }}
-            className="relative flex items-end rounded-3xl border border-border bg-card shadow-soft focus-within:border-foreground/20 transition-colors"
+            className="relative flex items-end rounded-xl border border-border bg-card shadow-sm focus-within:border-muted-foreground/50 transition-colors"
           >
             <Textarea
               ref={inputRef}
@@ -438,22 +443,22 @@ function ChatPane({
                   submit(input);
                 }
               }}
-              placeholder="Message FlowDesk AI…"
+              placeholder="Message Operiq AI..."
               rows={1}
-              className="min-h-[52px] max-h-[200px] resize-none border-0 shadow-none focus-visible:ring-0 px-5 py-4 pr-14 text-[15px] bg-transparent leading-relaxed"
+              className="min-h-[44px] max-h-[200px] resize-none border-0 shadow-none focus-visible:ring-0 px-4 py-3 pr-12 text-sm bg-transparent leading-relaxed"
             />
             <Button
               type="submit"
               size="icon"
               disabled={isLoading || input.trim().length === 0}
               aria-label="Send message"
-              className="absolute right-2 bottom-2 size-9 rounded-full bg-foreground text-background hover:bg-foreground/90 disabled:bg-muted disabled:text-muted-foreground"
+              className="absolute right-1.5 bottom-1.5 size-8 rounded-lg bg-foreground text-background hover:bg-foreground/90 disabled:bg-muted disabled:text-muted-foreground"
             >
               {isLoading ? <Loader2 className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
             </Button>
           </form>
           <p className="mt-2 text-[11px] text-muted-foreground text-center">
-            FlowDesk AI can make mistakes. Verify important information before acting.
+            Operiq AI can make mistakes. Verify important information before acting.
           </p>
         </div>
       </div>
@@ -474,7 +479,7 @@ function EmptyState({ onPick }: { onPick: (s: string) => void }) {
             <button
               key={q}
               onClick={() => onPick(q)}
-              className="text-left rounded-2xl border border-border bg-card hover:bg-muted px-4 py-3 text-sm text-foreground transition-colors"
+              className="text-left rounded-xl border border-border bg-card hover:bg-muted px-4 py-3 text-sm text-foreground transition-colors"
             >
               {q}
             </button>

@@ -1,4 +1,4 @@
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { getProvider } from "@/lib/ai-gateway.server";
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 
@@ -11,15 +11,13 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Messages are required", { status: 400 });
         }
 
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
-
-        const provider = createLovableAiGatewayProvider(key);
+        const provider = getProvider();
+        const modelName = process.env.AI_MODEL ?? "gpt-4o-mini";
 
         try {
           const result = streamText({
-            model: provider("google/gemini-3-flash-preview"),
-            system: `You are FlowDesk AI, a calm, precise executive productivity assistant for working professionals.
+            model: provider(modelName),
+            system: `You are Operiq AI, a calm, precise executive productivity assistant for working professionals.
 Specialties: drafting communications, summarizing meetings, structuring plans, distilling research, and answering workplace questions.
 Be concise, professional, and well-structured. Prefer markdown with short headings and lists.
 When uncertain, say so. Remind users to review AI-generated output before acting on it when stakes are high.

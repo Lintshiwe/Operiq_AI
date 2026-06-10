@@ -5,9 +5,8 @@ import {
   ListChecks,
   BookOpen,
   MessageSquareText,
-  Menu,
-  X,
-  ShieldCheck,
+  PanelLeft,
+  Plus,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -20,64 +19,47 @@ type NavItem = {
 
 const NAV: NavItem[] = [
   { to: "/assistant", label: "Assistant", icon: MessageSquareText },
-  { to: "/email", label: "Email", icon: Mail },
+  { to: "/email", label: "Email Studio", icon: Mail },
   { to: "/meetings", label: "Meetings", icon: CalendarCheck2 },
   { to: "/planner", label: "Planner", icon: ListChecks },
   { to: "/research", label: "Research", icon: BookOpen },
 ];
 
 /**
- * AppShell is used by all non-assistant pages.
- * The assistant page renders its own full ChatGPT-style sidebar with thread list.
+ * AppShell — ChatGPT-style dark sidebar for tool pages.
+ * The assistant page has its own dedicated layout (AssistantThreadPage).
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");
 
   return (
-    <div className="min-h-dvh w-full bg-background text-foreground">
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/85 backdrop-blur px-4 lg:px-6 h-14">
-        <div className="flex items-center gap-6">
-          <Link to="/assistant" className="flex items-center gap-2">
-            <BrandMark />
-            <span className="font-semibold text-[15px]">FlowDesk</span>
-          </Link>
-          <nav className="hidden lg:flex items-center gap-0.5">
-            {NAV.map((item) => {
-              const active = isActive(item.to);
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to as "/assistant"}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors",
-                    active
-                      ? "bg-muted text-foreground font-medium"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                  )}
-                >
-                  <Icon className="size-3.5" strokeWidth={1.75} />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-        <button
-          onClick={() => setOpen((v) => !v)}
-          aria-label={open ? "Close navigation" : "Open navigation"}
-          className="lg:hidden inline-flex items-center justify-center rounded-md p-2 hover:bg-muted"
-        >
-          {open ? <X className="size-5" /> : <Menu className="size-5" />}
-        </button>
-      </header>
-
+    <div className="flex h-dvh w-full bg-background text-foreground">
+      {/* Sidebar */}
       {open && (
-        <div className="lg:hidden border-b border-border bg-background">
-          <nav className="px-4 py-2 flex flex-col">
+        <aside className="hidden md:flex w-[260px] shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+          {/* Logo */}
+          <div className="flex items-center gap-2 px-3 h-14">
+            <BrandMark />
+            <span className="font-semibold text-sm">Operiq</span>
+            <span className="text-sm text-muted-foreground">AI</span>
+          </div>
+
+          {/* New chat button */}
+          <div className="px-2 pb-2">
+            <Link
+              to="/assistant"
+              className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:bg-sidebar-accent text-sidebar-foreground border border-sidebar-border"
+            >
+              <Plus className="size-4" />
+              New chat
+            </Link>
+          </div>
+
+          {/* Nav items */}
+          <div className="flex-1 overflow-y-auto px-2 py-1 space-y-0.5">
             {NAV.map((item) => {
               const active = isActive(item.to);
               const Icon = item.icon;
@@ -85,10 +67,11 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Link
                   key={item.to}
                   to={item.to as "/assistant"}
-                  onClick={() => setOpen(false)}
                   className={cn(
-                    "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
-                    active ? "bg-muted font-medium" : "text-muted-foreground hover:bg-muted",
+                    "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                    active
+                      ? "bg-sidebar-accent text-sidebar-foreground font-medium"
+                      : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground",
                   )}
                 >
                   <Icon className="size-4" strokeWidth={1.75} />
@@ -96,11 +79,79 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </Link>
               );
             })}
-          </nav>
+          </div>
+        </aside>
+      )}
+
+      {/* Sidebar toggle (mobile) */}
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          className="fixed top-3 left-3 z-50 md:hidden p-2 rounded-md bg-sidebar text-sidebar-foreground border border-sidebar-border"
+          aria-label="Open sidebar"
+        >
+          <PanelLeft className="size-4" />
+        </button>
+      )}
+
+      {/* Mobile sidebar overlay */}
+      {open && (
+        <div className="md:hidden fixed inset-0 z-40">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setOpen(false)} />
+          <aside className="fixed left-0 top-0 bottom-0 w-[260px] flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border z-50">
+            <div className="flex items-center justify-between px-3 h-14">
+              <div className="flex items-center gap-2">
+                <BrandMark />
+                <span className="font-semibold text-sm">Operiq</span>
+                <span className="text-sm text-muted-foreground">AI</span>
+              </div>
+              <button
+                onClick={() => setOpen(false)}
+                className="p-1.5 rounded-md text-muted-foreground hover:bg-sidebar-accent"
+              >
+                <PanelLeft className="size-4" />
+              </button>
+            </div>
+            <div className="px-2 pb-2">
+              <Link
+                to="/assistant"
+                onClick={() => setOpen(false)}
+                className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:bg-sidebar-accent text-sidebar-foreground border border-sidebar-border"
+              >
+                <Plus className="size-4" />
+                New chat
+              </Link>
+            </div>
+            <div className="flex-1 overflow-y-auto px-2 space-y-0.5">
+              {NAV.map((item) => {
+                const active = isActive(item.to);
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to as "/assistant"}
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm",
+                      active
+                        ? "bg-sidebar-accent text-sidebar-foreground font-medium"
+                        : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                    )}
+                  >
+                    <Icon className="size-4" strokeWidth={1.75} />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </aside>
         </div>
       )}
 
-      <main className="min-h-[calc(100dvh-3.5rem)]">{children}</main>
+      {/* Main content */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background">
+        {children}
+      </main>
     </div>
   );
 }
@@ -109,62 +160,11 @@ export function BrandMark({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "relative inline-flex size-7 items-center justify-center rounded-full bg-foreground text-background",
+        "relative inline-flex size-7 items-center justify-center rounded-lg bg-[#10a37f] text-white",
         className,
       )}
     >
-      <span className="text-[12px] font-semibold leading-none">F</span>
+      <span className="text-[13px] font-bold leading-none">O</span>
     </span>
-  );
-}
-
-export function PageHeader({
-  eyebrow,
-  title,
-  description,
-  actions,
-}: {
-  eyebrow?: string;
-  title: string;
-  description?: string;
-  actions?: ReactNode;
-}) {
-  return (
-    <div className="border-b border-border">
-      <div className="mx-auto max-w-5xl px-6 lg:px-10 py-8 lg:py-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="max-w-2xl">
-          {eyebrow && (
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              {eyebrow}
-            </p>
-          )}
-          <h1 className="mt-2 text-3xl lg:text-4xl font-semibold text-foreground tracking-tight">
-            {title}
-          </h1>
-          {description && (
-            <p className="mt-3 text-[15px] text-muted-foreground leading-relaxed">
-              {description}
-            </p>
-          )}
-        </div>
-        {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
-      </div>
-    </div>
-  );
-}
-
-export function AIDisclaimer({ className }: { className?: string }) {
-  return (
-    <div
-      className={cn(
-        "flex items-start gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground",
-        className,
-      )}
-    >
-      <ShieldCheck className="size-3.5 mt-0.5 text-foreground/70 shrink-0" />
-      <p>
-        AI-generated draft. Review for accuracy, tone, and potential bias before sending or acting on it.
-      </p>
-    </div>
   );
 }
