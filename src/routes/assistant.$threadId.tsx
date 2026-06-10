@@ -28,13 +28,24 @@ import {
   LogIn,
   Sparkles,
   Settings,
+  Paperclip,
+  X,
+  Cpu,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MarkdownView } from "@/components/MarkdownView";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
 import { deriveTitle, type Thread, loadThreads, saveThreads, createBlankThread } from "@/lib/threads";
+import { MODELS, MODEL_STORAGE_KEY, MODEL_MAP } from "@/lib/models";
 
 /* ------------------------------------------------------------------ */
 /*  Route                                                             */
@@ -57,6 +68,8 @@ const MODULES = [
   { to: "/planner", label: "Task Planner", icon: ListChecks },
   { to: "/research", label: "Research Hub", icon: BookOpen },
 ];
+
+
 
 /* ------------------------------------------------------------------ */
 /*  Main page                                                         */
@@ -211,8 +224,21 @@ function AssistantThreadPage() {
 
   return (
     <div className="flex h-dvh w-full bg-background text-foreground">
+      {/* Mobile hamburger toggle when sidebar is closed */}
+      {!sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="fixed top-3 left-3 z-50 md:hidden p-2 rounded-md bg-sidebar text-sidebar-foreground border border-sidebar-border"
+          aria-label="Open sidebar"
+        >
+          <PanelLeft className="size-4" />
+        </button>
+      )}
+
+      {/* Desktop sidebar — inline */}
       {sidebarOpen && (
         <ThreadSidebar
+          className="hidden md:flex"
           threads={isGuest ? guestThreads : (threads?.map(mapConvexThread) ?? [])}
           activeId={threadId}
           onCreate={handleCreate}
@@ -220,6 +246,22 @@ function AssistantThreadPage() {
           onClose={() => setSidebarOpen(false)}
           isGuest={isGuest}
         />
+      )}
+
+      {/* Mobile sidebar — overlay */}
+      {sidebarOpen && (
+        <div className="md:hidden fixed inset-0 z-50">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+          <ThreadSidebar
+            className="absolute left-0 top-0 bottom-0 w-[260px]"
+            threads={isGuest ? guestThreads : (threads?.map(mapConvexThread) ?? [])}
+            activeId={threadId}
+            onCreate={handleCreate}
+            onDelete={handleDelete}
+            onClose={() => setSidebarOpen(false)}
+            isGuest={isGuest}
+          />
+        </div>
       )}
 
       <ChatPane
@@ -271,6 +313,7 @@ function ThreadSidebar({
   onDelete,
   onClose,
   isGuest,
+  className,
 }: {
   threads: Thread[];
   activeId: string;
@@ -278,17 +321,16 @@ function ThreadSidebar({
   onDelete: (id: string) => void;
   onClose: () => void;
   isGuest?: boolean;
+  className?: string;
 }) {
   const groups = useMemo(() => groupThreads(threads), [threads]);
 
   return (
-    <aside className="hidden md:flex w-[260px] shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+    <aside className={cn("w-[260px] shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border", className)}>
       {/* Logo area */}
       <div className="flex items-center justify-between gap-2 px-3 h-14">
         <div className="flex items-center gap-2">
-          <img src="/logo-icon.png" alt="Operiq AI" className="size-7 rounded-lg" />
-          <span className="font-semibold text-sm">Operiq</span>
-          <span className="text-sm text-muted-foreground">AI</span>
+          <img src="/logo-full.png" alt="Operiq AI" className="h-8" />
         </div>
         <button
           onClick={onClose}
@@ -446,10 +488,35 @@ function ChatPane({
   promptLimit: ReturnType<typeof usePromptLimit>;
   isGuest: boolean;
 }) {
-  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
+  /* ---- Model selector state ---- */
+  const [selectedModel, setSelectedModel] = useState(() => {
+    if (typeof window === "undefined") return MODELS[1].id;
+    return window.localStorage.getItem(MODEL_STORAGE_KEY) || MODELS[1].id;
+  });
+  const modelRef = useRef(selectedModel);
+
+  useEffect(() => {
+    modelRef.current = selectedModel;
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(MODEL_STORAGE_KEY, selectedModel);
+    }
+  }, [selectedModel]);
+
+  /* ---- Transport with model header ---- */
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        headers: () => ({ "x-operiq-model": MODEL_MAP[modelRef.current] || modelRef.current }),
+      }),
+    []
+  );
+
   const [input, setInput] = useState("");
+  const [files, setFiles] = useState<{ name: string; size: number; content: string }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { messages, sendMessage, status, error } = useChat({
     id: thread.id,
@@ -483,6 +550,60 @@ function ChatPane({
   const isLoading = status === "submitted" || status === "streaming";
   const isEmpty = messages.length === 0 && !isLoading;
 
+  /* ---- File handling ---- */
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = e.target.files;
+    if (!selected) return;
+
+    const newFiles = Array.from(selected);
+    newFiles.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        setFiles((prev) => [...prev, { name: file.name, size: file.size, content: result }]);
+      };
+      reader.readAsText(file);
+    });
+
+    // Reset input so the same file can be selected again
+    e.target.value = "";
+  }
+
+  function removeFile(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function buildMessageWithFiles(text: string): string {
+    if (files.length === 0) return text;
+
+    const parts: string[] = [];
+    for (const file of files) {
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+      const imageExts = ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico"];
+      const textExts = [
+        "txt", "md", "csv", "json", "xml", "yaml", "yml", "js", "ts", "jsx", "tsx",
+        "html", "css", "scss", "py", "java", "c", "cpp", "h", "go", "rs", "rb", "php",
+        "sh", "bash", "sql", "log", "ini", "conf", "env", "toml", "lock", "dockerfile",
+      ];
+
+      if (imageExts.includes(ext)) {
+        parts.push(`[Image attached: ${file.name} (${formatFileSize(file.size)})]`);
+      } else if (textExts.includes(ext)) {
+        parts.push(`[File: ${file.name}]\n${file.content}`);
+      } else {
+        parts.push(`[File attached: ${file.name} (${formatFileSize(file.size)})]`);
+      }
+    }
+    parts.push(text);
+    return parts.join("\n\n");
+  }
+
   async function submit(text: string) {
     const value = text.trim();
     if (!value || isLoading) return;
@@ -495,8 +616,10 @@ function ChatPane({
       promptLimit.increment();
     }
 
+    const messageWithFiles = buildMessageWithFiles(value);
     setInput("");
-    await sendMessage({ text: value });
+    setFiles([]);
+    await sendMessage({ text: messageWithFiles });
     setTimeout(() => inputRef.current?.focus(), 0);
   }
 
@@ -524,16 +647,18 @@ function ChatPane({
             </>
           )}
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted cursor-default">
-            <img src="/logo-full.png" alt="Operiq AI" className="h-5" />
+            <img src="/logo-full.png" alt="Operiq AI" className="h-7" />
           </div>
         </div>
-        <button
-          onClick={onNewChat}
-          className="md:hidden p-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-          aria-label="New chat"
-        >
-          <MessageSquareText className="size-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onNewChat}
+            className="md:hidden p-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-label="New chat"
+          >
+            <MessageSquareText className="size-4" />
+          </button>
+        </div>
       </header>
 
       {/* Messages */}
@@ -625,41 +750,96 @@ function ChatPane({
               </div>
             </div>
           ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                submit(input);
-              }}
-              className="relative flex items-end rounded-xl border border-border bg-card shadow-sm focus-within:border-muted-foreground/50 transition-colors"
-            >
-              <Textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    submit(input);
-                  }
+            <>
+              {/* File chips */}
+              {files.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {files.map((file, idx) => (
+                    <div
+                      key={`${file.name}-${idx}`}
+                      className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent/10 border border-accent/20 text-xs text-accent"
+                    >
+                      <span className="truncate max-w-[200px]">{file.name}</span>
+                      <span className="text-accent/60">{formatFileSize(file.size)}</span>
+                      <button
+                        onClick={() => removeFile(idx)}
+                        aria-label={`Remove ${file.name}`}
+                        className="p-0.5 rounded hover:bg-accent/20"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submit(input);
                 }}
-                placeholder="Message Operiq AI..."
-                rows={1}
-                className="min-h-[44px] max-h-[200px] resize-none border-0 shadow-none focus-visible:ring-0 px-4 py-3 pr-12 text-sm bg-transparent leading-relaxed"
-              />
-              <Button
-                type="submit"
-                size="icon"
-                disabled={isLoading || input.trim().length === 0 || (isGuest && promptLimit.exhausted)}
-                aria-label="Send message"
-                className="absolute right-1.5 bottom-1.5 size-8 rounded-lg bg-foreground text-background hover:bg-foreground/90 disabled:bg-muted disabled:text-muted-foreground"
+                className="relative flex items-end rounded-xl border border-border bg-card shadow-sm focus-within:border-muted-foreground/50 transition-colors"
               >
-                {isLoading ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <ArrowUp className="size-4" />
-                )}
-              </Button>
-            </form>
+                <Select value={selectedModel} onValueChange={setSelectedModel}>
+                  <SelectTrigger className="h-8 w-auto min-w-0 px-2 py-0 text-[11px] rounded-lg bg-muted border-0 text-muted-foreground hover:text-foreground hover:bg-muted-foreground/20 focus:ring-0 gap-1 shrink-0 ml-2 mb-1.5">
+                    <Cpu className="size-3.5" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border min-w-[200px]">
+                    {MODELS.map((m) => (
+                      <SelectItem key={m.id} value={m.id} className="text-sm cursor-pointer">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{m.label}</span>
+                          <span className="text-[11px] text-muted-foreground">{m.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="shrink-0 ml-1 mb-1.5 size-8 rounded-xl bg-muted text-muted-foreground hover:bg-muted-foreground/20 flex items-center justify-center"
+                  aria-label="Attach file"
+                >
+                  <Paperclip className="size-4" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="*"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+                <Textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      submit(input);
+                    }
+                  }}
+                  placeholder="Message Operiq AI..."
+                  rows={1}
+                  className="min-h-[44px] max-h-[200px] resize-none border-0 shadow-none focus-visible:ring-0 px-3 py-3 pr-12 text-sm bg-transparent leading-relaxed"
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  disabled={isLoading || (input.trim().length === 0 && files.length === 0) || (isGuest && promptLimit.exhausted)}
+                  aria-label="Send message"
+                  className="absolute right-1.5 bottom-1.5 size-8 rounded-lg bg-foreground text-background hover:bg-foreground/90 disabled:bg-muted disabled:text-muted-foreground"
+                >
+                  {isLoading ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <ArrowUp className="size-4" />
+                  )}
+                </Button>
+              </form>
+            </>
           )}
 
           {!promptLimit.exhausted && (

@@ -6,8 +6,27 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Moon, Sun, User, ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  CreditCard,
+  ExternalLink,
+  Globe,
+  HardDrive,
+  Mail,
+  Moon,
+  Palette,
+  Settings,
+  Sun,
+  Trash2,
+  User,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -19,8 +38,37 @@ export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
 
+type Section = "general" | "personalization" | "billing" | "storage" | "contact";
+
+const SECTIONS: {
+  id: Section;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+}[] = [
+  { id: "general", label: "General", icon: Settings },
+  { id: "personalization", label: "Personalization", icon: Palette },
+  { id: "billing", label: "Billing", icon: CreditCard, badge: "Under maintenance" },
+  { id: "storage", label: "Storage", icon: HardDrive, badge: "Under maintenance" },
+  { id: "contact", label: "Contact", icon: User },
+];
+
+const ACCENT_COLORS = [
+  { value: "#10a37f", label: "Green" },
+  { value: "#2563eb", label: "Blue" },
+  { value: "#8b5cf6", label: "Purple" },
+  { value: "#f59e0b", label: "Amber" },
+  { value: "#ef4444", label: "Red" },
+];
+
 function SettingsPage() {
   const [isDark, setIsDark] = useState(false);
+  const [activeSection, setActiveSection] = useState<Section>("general");
+  const [accentColor, setAccentColor] = useState("#10a37f");
+  const [contrast, setContrast] = useState<"default" | "high">("default");
+  const [enableDictation, setEnableDictation] = useState(false);
+  const [separateVoice, setSeparateVoice] = useState(false);
+  const [receiveFeedbackEmails, setReceiveFeedbackEmails] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("operiq-theme");
@@ -47,14 +95,14 @@ function SettingsPage() {
 
   return (
     <div className="flex h-dvh w-full bg-background text-foreground">
-      {/* Sidebar */}
+      {/* Settings sidebar */}
       <aside className="hidden md:flex w-[260px] shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
         <div className="flex items-center gap-2 px-3 h-14">
-          <img src="/logo-icon.png" alt="Operiq AI" className="size-7 rounded-lg" />
+          <img src="/logo-icon.png" alt="Operiq AI" className="size-9 rounded-lg" />
           <span className="font-semibold text-sm">Operiq</span>
           <span className="text-sm text-muted-foreground">AI</span>
         </div>
-        <div className="flex-1 overflow-y-auto px-2 py-1">
+        <div className="flex-1 overflow-y-auto px-2 py-1 space-y-0.5">
           <Link
             to="/assistant"
             className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
@@ -62,6 +110,32 @@ function SettingsPage() {
             <ArrowLeft className="size-4" strokeWidth={1.75} />
             Back to assistant
           </Link>
+          <div className="mt-4 space-y-0.5">
+            {SECTIONS.map((s) => {
+              const Icon = s.icon;
+              const active = activeSection === s.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setActiveSection(s.id)}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-left transition-colors",
+                    active
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-muted-foreground hover:bg-sidebar-accent/70 hover:text-sidebar-foreground",
+                  )}
+                >
+                  <Icon className="size-4" strokeWidth={1.75} />
+                  <span className="flex-1">{s.label}</span>
+                  {s.badge && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                      {s.badge}
+                    </Badge>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </aside>
 
@@ -75,75 +149,560 @@ function SettingsPage() {
           </Link>
         </header>
 
+        {/* Mobile section selector */}
+        <div className="md:hidden flex items-center gap-2 px-4 py-2 border-b border-border/60 overflow-x-auto">
+          {SECTIONS.map((s) => {
+            const Icon = s.icon;
+            const active = activeSection === s.id;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setActiveSection(s.id)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium whitespace-nowrap transition-colors",
+                  active
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-muted",
+                )}
+              >
+                <Icon className="size-3.5" strokeWidth={1.75} />
+                {s.label}
+              </button>
+            );
+          })}
+        </div>
+
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-2xl px-4 lg:px-6 py-8 space-y-8">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Manage your preferences and account settings.</p>
-            </div>
-
-            {/* Appearance section */}
-            <section className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-md bg-accent/10 text-accent">
-                  <Sun className="size-4" />
-                </div>
-                <h2 className="text-lg font-semibold text-foreground">Appearance</h2>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-medium text-foreground">Dark mode</p>
-                    <p className="text-xs text-muted-foreground">
-                      Toggle between light and dark interface themes.
-                    </p>
-                  </div>
-                  <button
-                    onClick={toggleDarkMode}
-                    role="switch"
-                    aria-checked={isDark}
-                    className={
-                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
-                      (isDark ? "bg-accent" : "bg-muted-foreground/30")
-                    }
-                  >
-                    <span
-                      className={
-                        "inline-flex size-4 items-center justify-center rounded-full bg-white transition-transform " +
-                        (isDark ? "translate-x-6" : "translate-x-1")
-                      }
-                    >
-                      {isDark ? (
-                        <Moon className="size-3 text-accent" />
-                      ) : (
-                        <Sun className="size-3 text-muted-foreground" />
-                      )}
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </section>
-
-            {/* Profile section */}
-            <section className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-md bg-accent/10 text-accent">
-                  <User className="size-4" />
-                </div>
-                <h2 className="text-lg font-semibold text-foreground">Profile</h2>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-4 space-y-4">
-                <div className="space-y-0.5">
-                  <p className="text-sm font-medium text-foreground">Account details</p>
-                  <p className="text-xs text-muted-foreground">
-                    Profile settings will be available here soon.
-                  </p>
-                </div>
-              </div>
-            </section>
+            {activeSection === "general" && (
+              <GeneralSection
+                isDark={isDark}
+                toggleDarkMode={toggleDarkMode}
+                contrast={contrast}
+                setContrast={setContrast}
+                accentColor={accentColor}
+                setAccentColor={setAccentColor}
+                enableDictation={enableDictation}
+                setEnableDictation={setEnableDictation}
+                separateVoice={separateVoice}
+                setSeparateVoice={setSeparateVoice}
+              />
+            )}
+            {activeSection === "personalization" && <PersonalizationSection />}
+            {activeSection === "billing" && <BillingSection />}
+            {activeSection === "storage" && <StorageSection />}
+            {activeSection === "contact" && (
+              <ContactSection
+                receiveFeedbackEmails={receiveFeedbackEmails}
+                setReceiveFeedbackEmails={setReceiveFeedbackEmails}
+              />
+            )}
           </div>
         </div>
       </main>
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  General section                                                   */
+/* ------------------------------------------------------------------ */
+
+function GeneralSection({
+  isDark,
+  toggleDarkMode,
+  contrast,
+  setContrast,
+  accentColor,
+  setAccentColor,
+  enableDictation,
+  setEnableDictation,
+  separateVoice,
+  setSeparateVoice,
+}: {
+  isDark: boolean;
+  toggleDarkMode: () => void;
+  contrast: "default" | "high";
+  setContrast: (v: "default" | "high") => void;
+  accentColor: string;
+  setAccentColor: (v: string) => void;
+  enableDictation: boolean;
+  setEnableDictation: (v: boolean) => void;
+  separateVoice: boolean;
+  setSeparateVoice: (v: boolean) => void;
+}) {
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Manage your preferences and account settings.</p>
+      </div>
+
+      {/* Appearance */}
+      <section className="space-y-4">
+        <SectionHeader icon={Palette} title="Appearance" />
+        <div className="rounded-xl border border-border bg-card p-4 space-y-5">
+          {/* Dark mode */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium text-foreground">Dark mode</p>
+              <p className="text-xs text-muted-foreground">Toggle between light and dark interface themes.</p>
+            </div>
+            <ToggleSwitch checked={isDark} onCheckedChange={toggleDarkMode} />
+          </div>
+
+          <Separator />
+
+          {/* Contrast */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Contrast</p>
+            <div className="flex gap-2">
+              <ContrastButton active={contrast === "default"} onClick={() => setContrast("default")}>
+                Default
+              </ContrastButton>
+              <ContrastButton active={contrast === "high"} onClick={() => setContrast("high")}>
+                High
+              </ContrastButton>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Accent color */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Accent color</p>
+            <div className="flex items-center gap-3">
+              {ACCENT_COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => setAccentColor(c.value)}
+                  aria-label={c.label}
+                  className={cn(
+                    "relative size-7 rounded-full transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background",
+                    accentColor === c.value && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
+                  )}
+                  style={{ backgroundColor: c.value }}
+                >
+                  {accentColor === c.value && (
+                    <Check className="absolute inset-0 m-auto size-4 text-white" strokeWidth={3} />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Language & Speech */}
+      <section className="space-y-4">
+        <SectionHeader icon={Globe} title="Language & Speech" />
+        <div className="rounded-xl border border-border bg-card p-4 space-y-5">
+          {/* Language */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Language</p>
+            <DisabledSelect placeholder="Coming soon" />
+          </div>
+
+          <Separator />
+
+          {/* Enable Dictation */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium text-foreground">Enable Dictation</p>
+              <p className="text-xs text-muted-foreground">Use dictation in the chat composer.</p>
+            </div>
+            <ToggleSwitch checked={enableDictation} onCheckedChange={setEnableDictation} />
+          </div>
+
+          <Separator />
+
+          {/* Spoken language */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Spoken language</p>
+            <p className="text-xs text-muted-foreground">
+              For best results, select the language you mainly speak. If it&apos;s not listed, it may still be supported
+              via auto-detection.
+            </p>
+            <DisabledSelect placeholder="Coming soon" />
+          </div>
+
+          <Separator />
+
+          {/* Voice */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Voice</p>
+            <DisabledSelect placeholder="Coming soon" />
+          </div>
+
+          <Separator />
+
+          {/* Separate Voice */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium text-foreground">Separate Voice</p>
+              <p className="text-xs text-muted-foreground">
+                Keep ChatGPT Voice in a separate full screen, without real time transcripts and visuals.
+              </p>
+            </div>
+            <ToggleSwitch checked={separateVoice} onCheckedChange={setSeparateVoice} />
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Personalization section                                           */
+/* ------------------------------------------------------------------ */
+
+function PersonalizationSection() {
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Personalization</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Set the style and tone of how ChatGPT responds to you. This doesn&apos;t impact ChatGPT&apos;s capabilities.
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-border bg-card p-4 space-y-5">
+        <DisabledField label="Custom instructions" type="textarea" />
+        <Separator />
+        <DisabledField label="Nickname" type="input" />
+        <Separator />
+        <DisabledField label="Occupation" type="input" />
+        <Separator />
+        <DisabledField label="More about you" type="textarea" />
+        <Separator />
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-foreground">Learn more</p>
+          <div className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
+            Coming soon
+          </div>
+        </div>
+        <Separator />
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium text-foreground">Reference saved memories</p>
+            <p className="text-xs text-muted-foreground">Let ChatGPT save and use memories when responding.</p>
+          </div>
+          <Switch disabled />
+        </div>
+        <Separator />
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium text-foreground">Reference chat history</p>
+            <p className="text-xs text-muted-foreground">Let ChatGPT reference recent conversations when responding.</p>
+          </div>
+          <Switch disabled />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Billing section                                                   */
+/* ------------------------------------------------------------------ */
+
+function BillingSection() {
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Billing</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Manage your billing and subscription settings.</p>
+      </div>
+
+      <div className="flex items-center justify-center py-12">
+        <div className="max-w-sm w-full rounded-xl border border-border bg-card p-8 text-center space-y-4">
+          <img src="/maintenance.png" alt="Under maintenance" className="mx-auto h-40 w-auto" />
+          <h2 className="text-lg font-semibold text-foreground">Under maintenance</h2>
+          <p className="text-sm text-muted-foreground">
+            Billing management is currently under development. Check back soon.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Storage section                                                   */
+/* ------------------------------------------------------------------ */
+
+function StorageSection() {
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Storage</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Manage your data storage and files.</p>
+      </div>
+
+      <div className="flex items-center justify-center py-12">
+        <div className="max-w-sm w-full rounded-xl border border-border bg-card p-8 text-center space-y-4">
+          <img src="/maintenance.png" alt="Under maintenance" className="mx-auto h-40 w-auto" />
+          <h2 className="text-lg font-semibold text-foreground">Under maintenance</h2>
+          <p className="text-sm text-muted-foreground">
+            Storage management is coming soon. Each user will get 50MB of storage with the ability to manage and delete
+            their data.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Contact / Profile section                                         */
+/* ------------------------------------------------------------------ */
+
+function ContactSection({
+  receiveFeedbackEmails,
+  setReceiveFeedbackEmails,
+}: {
+  receiveFeedbackEmails: boolean;
+  setReceiveFeedbackEmails: (v: boolean) => void;
+}) {
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Contact</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Your profile and public information.</p>
+      </div>
+
+      {/* Profile card */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <Avatar className="size-12">
+            <AvatarFallback className="bg-accent text-accent-foreground text-lg font-medium">L</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-base font-semibold text-foreground">Lintshiwe</p>
+            <p className="text-xs text-muted-foreground">ntoampilp@gmail.com</p>
+          </div>
+        </div>
+        <button className="text-sm font-medium text-destructive hover:text-destructive/80 transition-colors">
+          <Trash2 className="inline size-3.5 mr-1" strokeWidth={1.75} />
+          Delete account
+        </button>
+      </div>
+
+      <Separator />
+
+      {/* Builder profile */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Builder profile</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Personalize your builder profile to connect with users of your GPTs. These settings apply to publicly shared
+            GPTs.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-4 space-y-5">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-foreground">PlaceholderGPT</p>
+            <p className="text-sm text-muted-foreground">By Lintshiwe Ntoampi</p>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Preview</p>
+            <div className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
+              Coming soon
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Links</p>
+            <div className="space-y-2">
+              <a
+                href="https://linkedin.com/in/lintshiwe-ntoampi"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-foreground hover:text-accent transition-colors"
+              >
+                <LinkedinIcon className="size-4 text-muted-foreground" />
+                Lintshiwe Ntoampi
+                <ExternalLink className="size-3 text-muted-foreground" strokeWidth={1.75} />
+              </a>
+              <a
+                href="https://github.com/Lintshiwe"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-foreground hover:text-accent transition-colors"
+              >
+                <GithubIcon className="size-4 text-muted-foreground" />
+                Lintshiwe
+                <ExternalLink className="size-3 text-muted-foreground" strokeWidth={1.75} />
+              </a>
+              <a
+                href="mailto:ntoampilp@gmail.com"
+                className="flex items-center gap-2 text-sm text-foreground hover:text-accent transition-colors"
+              >
+                <Mail className="size-4 text-muted-foreground" strokeWidth={1.75} />
+                ntoampilp@gmail.com
+              </a>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium text-foreground">Receive feedback emails</p>
+              <p className="text-xs text-muted-foreground">Get notified when users leave feedback on your GPTs.</p>
+            </div>
+            <ToggleSwitch checked={receiveFeedbackEmails} onCheckedChange={setReceiveFeedbackEmails} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Reusable helpers                                                  */
+/* ------------------------------------------------------------------ */
+
+function SectionHeader({
+  icon: Icon,
+  title,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="p-1.5 rounded-md bg-accent/10 text-accent">
+        <Icon className="size-4" />
+      </div>
+      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+    </div>
+  );
+}
+
+function ToggleSwitch({
+  checked,
+  onCheckedChange,
+  disabled,
+}: {
+  checked: boolean;
+  onCheckedChange?: (v: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={() => !disabled && onCheckedChange?.(!checked)}
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      className={cn(
+        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        disabled && "opacity-50 cursor-not-allowed",
+        checked ? "bg-accent" : "bg-muted-foreground/30",
+      )}
+    >
+      <span
+        className={cn(
+          "inline-flex size-4 items-center justify-center rounded-full bg-white transition-transform",
+          checked ? "translate-x-6" : "translate-x-1",
+        )}
+      >
+        {checked ? (
+          <Moon className="size-3 text-accent" />
+        ) : (
+          <Sun className="size-3 text-muted-foreground" />
+        )}
+      </span>
+    </button>
+  );
+}
+
+function ContrastButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+        active
+          ? "bg-accent text-accent-foreground"
+          : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function DisabledSelect({ placeholder }: { placeholder: string }) {
+  return (
+    <div className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground cursor-not-allowed">
+      {placeholder}
+    </div>
+  );
+}
+
+function DisabledField({ label, type }: { label: string; type: "input" | "textarea" }) {
+  const baseClass =
+    "w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground cursor-not-allowed";
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium text-foreground">{label}</p>
+      {type === "input" ? (
+        <div className={baseClass}>Coming soon</div>
+      ) : (
+        <div className={cn(baseClass, "min-h-[80px]")}>Coming soon</div>
+      )}
+    </div>
+  );
+}
+
+/* Inline SVG for GitHub (brand icon not available in lucide-react v1.17.0) */
+function GithubIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+      <path d="M9 18c-4.51 2-5-2-7-2" />
+    </svg>
+  );
+}
+
+/* Inline SVG for LinkedIn (brand icon not available in lucide-react v1.17.0) */
+function LinkedinIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+      <rect width="4" height="12" x="2" y="9" />
+      <circle cx="4" cy="4" r="2" />
+    </svg>
+  );
+}
+
+

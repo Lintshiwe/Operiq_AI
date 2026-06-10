@@ -18,11 +18,24 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         const provider = getProvider();
-        const modelName = process.env.AI_MODEL ?? "gpt-4o-mini";
+        const modelName =
+          request.headers.get("x-operiq-model") ??
+          process.env.AI_MODEL ??
+          "gpt-4o-mini";
+
+        const OPERIQ_TO_PROVIDER: Record<string, string> = {
+          "operiq-ultra": "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+          "operiq-pro":   "nvidia/llama-3.1-nemotron-70b-instruct",
+          "operiq-plus":  "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+          "operiq-nano":  "nvidia/llama-3.1-nemotron-nano-8b-v1",
+          "operiq-mini":  "nvidia/nemotron-mini-4b-instruct",
+        };
+
+        const actualModel = OPERIQ_TO_PROVIDER[modelName] ?? modelName;
 
         try {
           const result = streamText({
-            model: provider(modelName),
+            model: provider(actualModel),
             system: `You are Operiq AI, a calm, precise executive productivity assistant for working professionals.
 Specialties: drafting communications, summarizing meetings, structuring plans, distilling research, and answering workplace questions.
 Be concise, professional, and well-structured. Prefer markdown with short headings and lists.

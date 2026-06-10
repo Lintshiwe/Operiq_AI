@@ -8,9 +8,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Loader2, Code2 } from "lucide-react";
+import { ArrowUp, Loader2, Code2, Cpu } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { MarkdownView } from "@/components/MarkdownView";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CODE_MODELS, CODE_MODEL_STORAGE_KEY, MODEL_MAP } from "@/lib/models";
 
 export const Route = createFileRoute("/code")({
   head: () => ({
@@ -25,8 +33,31 @@ export const Route = createFileRoute("/code")({
   component: CodePage,
 });
 
+
+
 function CodePage() {
-  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/code" }), []);
+  const [selectedModel, setSelectedModel] = useState(() => {
+    if (typeof window === "undefined") return CODE_MODELS[0].id;
+    return window.localStorage.getItem(CODE_MODEL_STORAGE_KEY) || CODE_MODELS[0].id;
+  });
+  const modelRef = useRef(selectedModel);
+
+  useEffect(() => {
+    modelRef.current = selectedModel;
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(CODE_MODEL_STORAGE_KEY, selectedModel);
+    }
+  }, [selectedModel]);
+
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/code",
+        headers: () => ({ "x-operiq-model": MODEL_MAP[modelRef.current] || modelRef.current }),
+      }),
+    []
+  );
+
   const { messages, sendMessage, status, error } = useChat({
     transport,
   });
@@ -75,6 +106,24 @@ function CodePage() {
             <h1 className="text-sm font-semibold text-foreground">Operiq Code</h1>
             <p className="text-[11px] text-muted-foreground">AI coding assistant</p>
           </div>
+          <div className="ml-auto">
+            <Select value={selectedModel} onValueChange={setSelectedModel}>
+              <SelectTrigger className="h-8 w-auto min-w-0 px-2 py-0 text-[11px] rounded-lg bg-muted border-0 text-muted-foreground hover:text-foreground hover:bg-muted-foreground/20 focus:ring-0 gap-1">
+                <Cpu className="size-3.5" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border min-w-[200px]">
+                {CODE_MODELS.map((m) => (
+                  <SelectItem key={m.id} value={m.id} className="text-sm cursor-pointer">
+                    <div className="flex flex-col">
+                      <span className="font-medium">{m.label}</span>
+                      <span className="text-[11px] text-muted-foreground">{m.description}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Messages */}
@@ -87,7 +136,7 @@ function CodePage() {
                 </div>
                 <h2 className="text-lg font-semibold text-foreground mb-1">What are you building?</h2>
                 <p className="text-sm text-muted-foreground max-w-sm">
-                  Ask me to write code, debug errors, review your work, or explain a concept.
+                  Ask me to create a project, write code, debug errors, or review your work.
                 </p>
               </div>
             )}
