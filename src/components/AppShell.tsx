@@ -13,14 +13,21 @@ import {
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-const NAV = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact?: boolean;
+};
+
+const NAV: NavItem[] = [
   { to: "/", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/email", label: "Email Studio", icon: Mail },
   { to: "/meetings", label: "Meeting Intelligence", icon: CalendarCheck2 },
   { to: "/planner", label: "Task Planner", icon: ListChecks },
   { to: "/research", label: "Research Hub", icon: BookOpen },
   { to: "/assistant", label: "AI Assistant", icon: MessageSquareText },
-] as const;
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
