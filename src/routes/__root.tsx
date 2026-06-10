@@ -9,10 +9,12 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { type ReactNode } from "react";
-import { ConvexProvider } from "convex/react";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { AuthGate } from "@/components/AuthGate";
 
 import appCss from "../styles.css?url";
+
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL);
 
 function NotFoundComponent() {
   return (
@@ -87,7 +89,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Operiq AI — Executive Productivity Assistant" },
       {
         property: "og:description",
-        content: "Premium AI workspace for professionals: email, meetings, planning, research, assistant.",
+        content:
+          "Premium AI workspace for professionals: email, meetings, planning, research, assistant.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -128,9 +131,15 @@ function RootComponent() {
   const isAuthPage = pathname === "/login" || pathname === "/signup";
 
   return (
-    <ConvexProvider url={import.meta.env.VITE_CONVEX_URL}>
+    <ConvexProvider client={convex}>
       <QueryClientProvider client={queryClient}>
-        {isAuthPage ? <Outlet /> : <AuthGate><Outlet /></AuthGate>}
+        {isAuthPage ? (
+          <Outlet />
+        ) : (
+          <AuthGate>
+            <Outlet />
+          </AuthGate>
+        )}
       </QueryClientProvider>
     </ConvexProvider>
   );

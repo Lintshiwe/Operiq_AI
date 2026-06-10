@@ -2,6 +2,10 @@ import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-r
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { useConvexAuth } from "@convex-dev/auth/react";
+import { GenericId as Id } from "convex/values";
 import {
   Plus,
   ArrowUp,
@@ -20,13 +24,59 @@ import { Textarea } from "@/components/ui/textarea";
 import { MarkdownView } from "@/components/MarkdownView";
 import { BrandMark } from "@/components/AppShell";
 import { cn } from "@/lib/utils";
-import {
-  createBlankThread,
-  deriveTitle,
-  loadThreads,
-  saveThreads,
-  type Thread,
-} from "@/lib/threads";
+import { deriveTitle, type Thread } from "@/lib/threads";
+
+/* ------------------------------------------------------------------ */
+/*  Message helpers: Convex <-> UIMessage                             */
+/* ------------------------------------------------------------------ */
+
+function toConvexMessages(messages: UIMessage[]): Array<{
+  id: string;
+  role: string;
+  content: string;
+  createdAt?: string;
+}> {
+  return messages.map((m) => ({
+    id: m.id,
+    role: m.role,
+    content: m.parts.map((p) => (p.type === "text" ? p.text : "")).join(""),
+  }));
+}
+
+function toUIMessages(
+  messages: Array<{ id: string; role: string; content: string; createdAt?: string }>,
+): UIMessage[] {
+  return messages.map(
+    (m) =>
+      ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        parts: [{ type: "text" as const, text: m.content }],
+      }) as UIMessage,
+  );
+}
+
+function toFrontendThread(convexThread: {
+  _id: string;
+  _creationTime: number;
+  userId: string;
+  title: string;
+  messages: Array<{ id: string; role: string; content: string; createdAt?: string }>;
+  createdAt: string;
+  updatedAt: string;
+}): Thread {
+  return {
+    id: convexThread._id,
+    title: convexThread.title,
+    updatedAt: new Date(convexThread.updatedAt).getTime(),
+    messages: toUIMessages(convexThread.messages),
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Route                                                             */
+/* ------------------------------------------------------------------ */
 
 export const Route = createFileRoute("/assistant/$threadId")({
   head: () => ({
@@ -46,59 +96,87 @@ const MODULES = [
   { to: "/research", label: "Research Hub", icon: BookOpen },
 ];
 
+/* ------------------------------------------------------------------ */
+/*  Main page                                                         */
+/* ------------------------------------------------------------------ */
+
 function AssistantThreadPage() {
   const { threadId } = useParams({ from: "/assistant/$threadId" });
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
 
-  const [threads, setThreads] = useState<Thread[]>(() => {
-    if (typeof window === "undefined") return [];
-    const existing = loadThreads();
-    if (existing.length === 0) {
-      const t = createBlankThread();
-      saveThreads([t]);
-      return [t];
-    }
-    return existing;
-  });
+  const threads = useQuery(api.threads.list);
+  const create = useMutation(api.threads.create);
+  const update = useMutation(api.threads.update);
+  const remove = useMutation(api.threads.remove);
 
-  const current = useMemo(
-    () => threads.find((t) => t.id === threadId),
-    [threads, threadId],
-  );
+  const hasCreatedRef = useRef(false);
 
+  /* ---- auth guard ---- */
   useEffect(() => {
-    if (current || typeof window === "undefined") return;
-    const t: Thread = { ...createBlankThread(), id: threadId };
-    setThreads((prev) => {
-      const next = [t, ...prev];
-      saveThreads(next);
-      return next;
-    });
-  }, [current, threadId]);
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      navigate({ to: "/login", replace: true });
+    }
+  }, [authLoading, isAuthenticated, navigate]);
 
-  const handleCreate = () => {
-    const t = createBlankThread();
-    const next = [t, ...threads];
-    setThreads(next);
-    saveThreads(next);
-    navigate({ to: "/assistant/$threadId", params: { threadId: t.id } });
+  /* ---- auto-create / redirect if thread missing ---- */
+  useEffect(() => {
+    if (threads === undefined || authLoading || !isAuthenticated || hasCreatedRef.current) return;
+
+    const current = threads.find((t) => t._id === threadId);
+    if (current) {
+      hasCreatedRef.current = false;
+      return;
+    }
+
+    if (threads.length === 0) {
+      hasCreatedRef.current = true;
+      create({ title: "New conversation", messages: [] })
+        .then((id) => {
+          navigate({ to: "/assistant/$threadId", params: { threadId: id as string } });
+        })
+        .catch((e) => {
+          hasCreatedRef.current = false;
+          console.error(e);
+        });
+    } else {
+      navigate({ to: "/assistant/$threadId", params: { threadId: threads[0]._id } });
+    }
+  }, [threads, threadId, authLoading, isAuthenticated, create, navigate]);
+
+  /* ---- loading ---- */
+  if (authLoading || threads === undefined) {
+    return (
+      <div className="flex h-dvh items-center justify-center bg-background">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  if (!isAuthenticated) return null;
+
+  const current = threads.find((t) => t._id === threadId);
+  const currentThread = current ? toFrontendThread(current) : null;
+
+  const handleCreate = async () => {
+    try {
+      const id = await create({ title: "New conversation", messages: [] });
+      hasCreatedRef.current = true;
+      navigate({ to: "/assistant/$threadId", params: { threadId: id } });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    const next = threads.filter((t) => t.id !== id);
-    setThreads(next);
-    saveThreads(next);
-    if (id === threadId) {
-      const target = next[0]?.id;
-      if (target) {
-        navigate({ to: "/assistant/$threadId", params: { threadId: target } });
-      } else {
-        const t = createBlankThread();
-        saveThreads([t]);
-        setThreads([t]);
-        navigate({ to: "/assistant/$threadId", params: { threadId: t.id } });
+  const handleDelete = async (id: string) => {
+    try {
+      await remove({ threadId: id as Id<"threads"> });
+      if (id === threadId) {
+        navigate({ to: "/assistant" });
       }
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -106,7 +184,7 @@ function AssistantThreadPage() {
     <div className="flex h-dvh w-full bg-background text-foreground">
       {sidebarOpen && (
         <ThreadSidebar
-          threads={threads}
+          threads={threads.map(toFrontendThread)}
           activeId={threadId}
           onCreate={handleCreate}
           onDelete={handleDelete}
@@ -116,20 +194,24 @@ function AssistantThreadPage() {
 
       <ChatPane
         key={threadId}
-        thread={current ?? { id: threadId, title: "New conversation", updatedAt: Date.now(), messages: [] }}
+        thread={
+          currentThread ?? {
+            id: threadId,
+            title: "New conversation",
+            updatedAt: Date.now(),
+            messages: [],
+          }
+        }
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen((v) => !v)}
         onNewChat={handleCreate}
         onMessagesUpdate={(messages) => {
-          setThreads((prev) => {
-            const next = prev.map((t) =>
-              t.id === threadId
-                ? { ...t, messages, updatedAt: Date.now(), title: deriveTitle(messages) }
-                : t,
-            );
-            saveThreads(next);
-            return next;
-          });
+          const title = deriveTitle(messages);
+          update({
+            threadId: threadId as Id<"threads">,
+            messages: toConvexMessages(messages),
+            title,
+          }).catch((e) => console.error(e));
         }}
       />
     </div>
@@ -189,9 +271,7 @@ function ThreadSidebar({
         )}
         {groups.map((group) => (
           <div key={group.label}>
-            <p className="px-2 pb-1 text-[11px] font-medium text-muted-foreground">
-              {group.label}
-            </p>
+            <p className="px-2 pb-1 text-[11px] font-medium text-muted-foreground">{group.label}</p>
             <ul className="space-y-0.5">
               {group.threads.map((t) => {
                 const active = t.id === activeId;
@@ -260,7 +340,9 @@ function groupThreads(threads: Thread[]) {
     Older: [],
   };
   for (const t of threads) {
-    const age = now - t.updatedAt;
+    const updatedAt =
+      typeof t.updatedAt === "string" ? new Date(t.updatedAt).getTime() : t.updatedAt;
+    const age = now - updatedAt;
     if (age < day) buckets.Today.push(t);
     else if (age < 2 * day) buckets.Yesterday.push(t);
     else if (age < 7 * day) buckets["Previous 7 days"].push(t);
@@ -384,9 +466,7 @@ function ChatPane({
         ) : (
           <div className="mx-auto max-w-3xl px-4 lg:px-6 py-6 space-y-6">
             {messages.map((m) => {
-              const text = m.parts
-                .map((p) => (p.type === "text" ? p.text : ""))
-                .join("");
+              const text = m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
               const isUser = m.role === "user";
               return (
                 <div key={m.id} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
@@ -456,7 +536,11 @@ function ChatPane({
               aria-label="Send message"
               className="absolute right-1.5 bottom-1.5 size-8 rounded-lg bg-foreground text-background hover:bg-foreground/90 disabled:bg-muted disabled:text-muted-foreground"
             >
-              {isLoading ? <Loader2 className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
+              {isLoading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <ArrowUp className="size-4" />
+              )}
             </Button>
           </form>
           <p className="mt-2 text-[11px] text-muted-foreground text-center">

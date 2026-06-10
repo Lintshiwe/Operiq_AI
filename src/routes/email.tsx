@@ -1,9 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "convex/react";
+import { useConvexAuth } from "@convex-dev/auth/react";
+import { api } from "../../convex/_generated/api";
 import {
   Mail, Loader2, Copy, Check, ShieldCheck,
-  Sparkles, X, SendHorizontal,
+  Sparkles, X, SendHorizontal, Send,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { MarkdownView } from "@/components/MarkdownView";
@@ -36,8 +39,11 @@ function EmailPage() {
   const [copied, setCopied] = useState(false);
   const [refineText, setRefineText] = useState("");
   const [refining, setRefining] = useState(false);
+  const [sending, setSending] = useState(false);
   const refineInputRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  const { isAuthenticated } = useConvexAuth();
+  const user = useQuery(api.users.me);
   const [modKey, setModKey] = useState("\u2318");
 
   useEffect(() => {
@@ -81,6 +87,33 @@ function EmailPage() {
       console.error(e);
     } finally {
       setRefining(false);
+    }
+  }
+
+  async function onSend() {
+    if (!draft || !recipient || !user?.email) {
+      if (!recipient) toast.error("Please enter a recipient email address.");
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await fetch("/api/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: recipient,
+          subject: subject || "Email draft",
+          text: draft.replace(/^Subject: .+\n/i, "").trim(),
+          from: user.email,
+        }),
+      });
+      if (!res.ok) throw new Error("Send failed");
+      toast.success("Email sent successfully");
+      setDraft(null);
+    } catch (e) {
+      toast.error("Failed to send email. Check your Resend setup.");
+    } finally {
+      setSending(false);
     }
   }
 
@@ -297,6 +330,21 @@ function EmailPage() {
                             <><Copy className="size-3.5" /> Copy</>
                           )}
                         </Button>
+                        {recipient && isAuthenticated && user?.email && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onSend}
+                            disabled={sending}
+                            className="h-7 px-2 text-xs gap-1"
+                          >
+                            {sending ? (
+                              <><Loader2 className="size-3.5 animate-spin" /> Sending...</>
+                            ) : (
+                              <><Send className="size-3.5" /> Send</>
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </div>
 

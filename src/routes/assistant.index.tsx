@@ -1,7 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { useConvexAuth } from "@convex-dev/auth/react";
+import { Loader2 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { createBlankThread, loadThreads, saveThreads } from "@/lib/threads";
 
 export const Route = createFileRoute("/assistant/")({
   head: () => ({
@@ -15,22 +18,35 @@ export const Route = createFileRoute("/assistant/")({
 
 function AssistantIndex() {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const threads = useQuery(api.threads.list);
+  const create = useMutation(api.threads.create);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const threads = loadThreads();
-    let target = threads[0]?.id;
-    if (!target) {
-      const t = createBlankThread();
-      saveThreads([t]);
-      target = t.id;
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      navigate({ to: "/login", replace: true });
+      return;
     }
-    navigate({ to: "/assistant/$threadId", params: { threadId: target }, replace: true });
-  }, [navigate]);
+    if (threads === undefined) return;
+
+    if (threads.length === 0) {
+      create({ title: "New conversation", messages: [] }).then((id) => {
+        navigate({ to: "/assistant/$threadId", params: { threadId: id }, replace: true });
+      });
+    } else {
+      navigate({
+        to: "/assistant/$threadId",
+        params: { threadId: threads[0]._id },
+        replace: true,
+      });
+    }
+  }, [threads, authLoading, isAuthenticated, create, navigate]);
 
   return (
     <AppShell>
       <div className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">
+        <Loader2 className="size-5 animate-spin mr-2" />
         Opening assistant…
       </div>
     </AppShell>

@@ -1,12 +1,15 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const list = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     return await ctx.db
       .query("threads")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .order("desc")
       .collect();
   },
@@ -21,7 +24,6 @@ export const get = query({
 
 export const create = mutation({
   args: {
-    userId: v.id("users"),
     title: v.string(),
     messages: v.array(
       v.object({
@@ -33,9 +35,11 @@ export const create = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
     const now = new Date().toISOString();
     return await ctx.db.insert("threads", {
-      userId: args.userId,
+      userId,
       title: args.title,
       messages: args.messages,
       createdAt: now,
@@ -76,7 +80,6 @@ export const remove = mutation({
 
 export const importMany = mutation({
   args: {
-    userId: v.id("users"),
     threads: v.array(
       v.object({
         title: v.string(),
@@ -94,9 +97,11 @@ export const importMany = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
     for (const thread of args.threads) {
       await ctx.db.insert("threads", {
-        userId: args.userId,
+        userId,
         ...thread,
       });
     }

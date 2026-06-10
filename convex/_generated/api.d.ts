@@ -14,6 +14,7 @@ import type * as emailDrafts from "../emailDrafts.js";
 import type * as plans from "../plans.js";
 import type * as summaries from "../summaries.js";
 import type * as threads from "../threads.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   plans: typeof plans;
   summaries: typeof summaries;
   threads: typeof threads;
+  users: typeof users;
 }>;
 
 /**
