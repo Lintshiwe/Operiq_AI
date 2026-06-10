@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { useConvexAuth } from "@convex-dev/auth/react";
+import { useSsrConvexAuth } from "@/lib/use-ssr-convex-auth";
 import { Loader2 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/assistant/")({
 
 function AssistantIndex() {
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const { isAuthenticated, isLoading: authLoading } = useSsrConvexAuth();
   const threads = useQuery(api.threads.list);
   const create = useMutation(api.threads.create);
 

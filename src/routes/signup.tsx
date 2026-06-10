@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useConvexAuth, useAuthActions } from "@convex-dev/auth/react";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useSsrConvexAuth } from "@/lib/use-ssr-convex-auth";
 import { useState, useEffect } from "react";
 import { UserPlus, Loader2 } from "lucide-react";
 
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/signup")({
 });
 
 function SignupPage() {
-  const { isAuthenticated } = useConvexAuth();
+  const { isAuthenticated } = useSsrConvexAuth();
   const { signIn } = useAuthActions();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");

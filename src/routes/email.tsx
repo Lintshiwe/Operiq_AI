@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "convex/react";
-import { useConvexAuth } from "@convex-dev/auth/react";
+import { useSsrConvexAuth } from "@/lib/use-ssr-convex-auth";
 import { api } from "../../convex/_generated/api";
 import {
   Mail, Loader2, Copy, Check, ShieldCheck,
@@ -42,7 +42,7 @@ function EmailPage() {
   const [sending, setSending] = useState(false);
   const refineInputRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
-  const { isAuthenticated } = useConvexAuth();
+  const { isAuthenticated } = useSsrConvexAuth();
   const user = useQuery(api.users.me);
   const [modKey, setModKey] = useState("\u2318");
 

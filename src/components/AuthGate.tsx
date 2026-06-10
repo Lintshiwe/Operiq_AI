@@ -1,9 +1,9 @@
-import { useConvexAuth } from "@convex-dev/auth/react";
 import { Navigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { useSsrConvexAuth } from "@/lib/use-ssr-convex-auth";
 
 export function AuthGate({ children }: { children: ReactNode }) {
-  const { isLoading, isAuthenticated } = useConvexAuth();
+  const { isLoading, isAuthenticated } = useSsrConvexAuth();
 
   if (isLoading) {
     return (

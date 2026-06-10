@@ -4,7 +4,7 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { useConvexAuth } from "@convex-dev/auth/react";
+import { useSsrConvexAuth } from "@/lib/use-ssr-convex-auth";
 import { GenericId as Id } from "convex/values";
 import {
   Plus,
@@ -104,7 +104,7 @@ function AssistantThreadPage() {
   const { threadId } = useParams({ from: "/assistant/$threadId" });
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const { isAuthenticated, isLoading: authLoading } = useSsrConvexAuth();
 
   const threads = useQuery(api.threads.list);
   const create = useMutation(api.threads.create);
