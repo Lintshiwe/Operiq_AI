@@ -9,6 +9,11 @@ import {
   Trash2,
   Loader2,
   ShieldCheck,
+  Mail,
+  CalendarCheck2,
+  ListChecks,
+  BookOpen,
+  ArrowUpRight,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -130,18 +135,24 @@ function ThreadSidebar({
   onDelete: (id: string) => void;
 }) {
   return (
-    <aside className="border-r border-border bg-card lg:h-dvh flex flex-col">
-      <div className="px-5 py-5 border-b border-border flex items-center justify-between gap-2">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.28em] text-secondary">FlowDesk AI</p>
-          <h2 className="font-display text-lg font-semibold">Conversations</h2>
-        </div>
-        <Button size="icon" variant="outline" onClick={onCreate} aria-label="New conversation">
-          <Plus className="size-4" />
+    <aside className="border-r border-border bg-card/40 lg:h-dvh flex flex-col">
+      <div className="px-5 py-6">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-accent">FlowDesk AI</p>
+        <h2 className="mt-1 font-display text-xl font-semibold text-foreground">Conversations</h2>
+        <Button
+          onClick={onCreate}
+          className="mt-4 w-full justify-center gap-2"
+          variant="default"
+        >
+          <Plus className="size-4" /> New conversation
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
+      <div className="px-3 pb-2">
+        <div className="h-px bg-border" />
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-2 py-1 space-y-0.5">
         {threads.length === 0 && (
           <p className="px-3 py-6 text-xs text-muted-foreground">No conversations yet.</p>
         )}
@@ -151,14 +162,14 @@ function ThreadSidebar({
             <div
               key={t.id}
               className={cn(
-                "group flex items-center gap-1 rounded-lg px-1 transition-colors",
+                "group relative flex items-center gap-1 rounded-lg transition-colors",
                 active ? "bg-muted" : "hover:bg-muted/60",
               )}
             >
               <Link
                 to="/assistant/$threadId"
                 params={{ threadId: t.id }}
-                className="flex-1 min-w-0 px-2.5 py-2.5 flex items-center gap-2.5"
+                className="flex-1 min-w-0 px-3 py-2.5 flex items-center gap-2.5"
               >
                 <MessageSquareText
                   className={cn(
@@ -176,14 +187,17 @@ function ThreadSidebar({
                     {t.title}
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    {new Date(t.updatedAt).toLocaleDateString()}
+                    {new Date(t.updatedAt).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    })}
                   </p>
                 </div>
               </Link>
               <button
                 onClick={() => onDelete(t.id)}
                 aria-label={`Delete ${t.title}`}
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
+                className="opacity-0 group-hover:opacity-100 transition-opacity mr-1.5 p-1.5 rounded-md hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
               >
                 <Trash2 className="size-3.5" />
               </button>
@@ -193,7 +207,7 @@ function ThreadSidebar({
       </div>
 
       <div className="px-5 py-4 border-t border-border text-[11px] text-muted-foreground flex items-start gap-2">
-        <ShieldCheck className="size-3.5 mt-0.5 shrink-0 text-secondary" />
+        <ShieldCheck className="size-3.5 mt-0.5 shrink-0 text-primary" />
         <p>Conversations are stored only in this browser.</p>
       </div>
     </aside>
@@ -202,11 +216,30 @@ function ThreadSidebar({
 
 /* ------------ Chat pane ------------ */
 
-const SUGGESTIONS = [
-  "Draft a polite follow-up to a client who hasn't replied in a week.",
-  "Summarize this meeting note into decisions and action items.",
-  "Help me plan a focused work day around 3 deep-work blocks.",
-  "What questions should I ask in a quarterly business review?",
+const QUICK_PROMPTS = [
+  {
+    label: "Draft a client follow-up",
+    prompt: "Draft a polite, concise follow-up to a client who hasn't replied to my proposal in a week.",
+  },
+  {
+    label: "Summarize meeting notes",
+    prompt: "Summarize these raw meeting notes into decisions, action items, and deadlines:\n\n",
+  },
+  {
+    label: "Plan a focused workday",
+    prompt: "Help me plan a focused workday around 3 deep-work blocks and a 1:1.",
+  },
+  {
+    label: "Prep for a QBR",
+    prompt: "What sharp questions should I ask in an upcoming quarterly business review?",
+  },
+];
+
+const SHORTCUTS = [
+  { to: "/email", label: "Email Studio", hint: "Draft polished messages", icon: Mail },
+  { to: "/meetings", label: "Meeting Intelligence", hint: "Notes → decisions & actions", icon: CalendarCheck2 },
+  { to: "/planner", label: "Task Planner", hint: "Daily & weekly plans", icon: ListChecks },
+  { to: "/research", label: "Research Hub", hint: "Summaries & insight", icon: BookOpen },
 ];
 
 function ChatPane({
@@ -228,19 +261,16 @@ function ChatPane({
     onError: (e) => console.error(e),
   });
 
-  // Persist on changes
   useEffect(() => {
     if (status === "submitted" || status === "streaming") return;
     onMessagesUpdate(messages);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, status]);
 
-  // Auto-scroll
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, status]);
 
-  // Focus textarea
   useEffect(() => {
     inputRef.current?.focus();
   }, [thread.id]);
@@ -255,22 +285,27 @@ function ChatPane({
     setTimeout(() => inputRef.current?.focus(), 0);
   }
 
+  const isEmpty = messages.length === 0 && !isLoading;
+
   return (
-    <section className="flex flex-col min-h-[60dvh] lg:h-dvh bg-background">
+    <section className="flex flex-col min-h-[60dvh] lg:h-dvh bg-background relative">
       {/* Header */}
-      <header className="border-b border-border bg-card/60 backdrop-blur px-6 lg:px-10 py-5">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-accent">AI Assistant</p>
-        <h1 className="mt-1 font-display text-2xl font-semibold text-foreground truncate">
-          {thread.title}
-        </h1>
+      <header className="border-b border-border bg-background/80 backdrop-blur px-6 lg:px-10 py-4 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-accent">Assistant</p>
+          <h1 className="mt-0.5 font-display text-xl font-semibold text-foreground truncate">
+            {thread.title}
+          </h1>
+        </div>
+        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[11px] text-muted-foreground">
+          <span className="size-1.5 rounded-full bg-emerald-500" /> Ready
+        </span>
       </header>
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-6 lg:px-10 py-8 space-y-6">
-          {messages.length === 0 && !isLoading && (
-            <EmptyChat onPick={(s) => submit(s)} />
-          )}
+        <div className={cn("mx-auto max-w-3xl px-6 lg:px-10", isEmpty ? "py-12 lg:py-16" : "py-8 space-y-6")}>
+          {isEmpty && <Welcome onPick={(s) => submit(s)} />}
 
           {messages.map((m) => {
             const text = m.parts
@@ -280,14 +315,19 @@ function ChatPane({
             return (
               <div key={m.id} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
                 {isUser ? (
-                  <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-primary text-primary-foreground px-4 py-3 text-sm leading-relaxed shadow-soft">
+                  <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-primary text-primary-foreground px-4 py-3 text-sm leading-relaxed shadow-soft">
                     {text}
                   </div>
                 ) : (
                   <div className="max-w-[95%] w-full">
-                    <p className="mb-1.5 text-[11px] uppercase tracking-[0.22em] text-secondary">
-                      FlowDesk AI
-                    </p>
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                        <span className="font-display text-[11px] font-semibold">F</span>
+                      </span>
+                      <p className="text-[11px] uppercase tracking-[0.22em] text-secondary">
+                        FlowDesk AI
+                      </p>
+                    </div>
                     <MarkdownView>{text || "…"}</MarkdownView>
                   </div>
                 )}
@@ -311,14 +351,14 @@ function ChatPane({
       </div>
 
       {/* Composer */}
-      <div className="border-t border-border bg-card/60 backdrop-blur">
+      <div className="border-t border-border bg-background/85 backdrop-blur">
         <div className="mx-auto max-w-3xl px-6 lg:px-10 py-4">
           <form
             onSubmit={(e) => {
               e.preventDefault();
               submit(input);
             }}
-            className="relative flex items-end gap-2 rounded-2xl border border-border bg-card shadow-soft p-2"
+            className="relative flex items-end gap-2 rounded-2xl border border-border bg-card shadow-card p-2 focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-primary/5 transition-all"
           >
             <Textarea
               ref={inputRef}
@@ -330,7 +370,7 @@ function ChatPane({
                   submit(input);
                 }
               }}
-              placeholder="Ask FlowDesk AI…"
+              placeholder="Ask FlowDesk AI anything about your workday…"
               rows={1}
               className="min-h-[44px] max-h-40 resize-none border-0 shadow-none focus-visible:ring-0 px-3 py-2.5 text-[15px] bg-transparent"
             />
@@ -339,13 +379,13 @@ function ChatPane({
               size="icon"
               disabled={isLoading || input.trim().length === 0}
               aria-label="Send message"
-              className="shrink-0"
+              className="shrink-0 rounded-xl"
             >
               {isLoading ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
             </Button>
           </form>
           <p className="mt-2 text-[11px] text-muted-foreground text-center">
-            AI may make mistakes or reflect bias. Please verify important information before acting.
+            AI may make mistakes or reflect bias — verify important information before acting.
           </p>
         </div>
       </div>
@@ -353,30 +393,66 @@ function ChatPane({
   );
 }
 
-function EmptyChat({ onPick }: { onPick: (s: string) => void }) {
+function Welcome({ onPick }: { onPick: (s: string) => void }) {
   return (
-    <div className="py-10">
-      <div className="flex flex-col items-center text-center">
-        <span className="flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-          <span className="font-display text-xl font-semibold">F</span>
+    <div>
+      {/* Hero */}
+      <div className="text-center">
+        <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-secondary">
+          <span className="size-1.5 rounded-full bg-accent" /> Workplace Intelligence
         </span>
-        <h2 className="mt-5 font-display text-2xl font-semibold text-foreground">
-          How can FlowDesk help today?
+        <h2 className="mt-6 font-display text-4xl lg:text-5xl font-semibold text-foreground leading-[1.05]">
+          Good to see you.
+          <br />
+          <span className="text-primary">What's on your desk?</span>
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground max-w-md">
-          Ask anything about your workday — drafting, summarizing, planning, or thinking out loud.
+        <p className="mt-4 text-base text-muted-foreground max-w-lg mx-auto leading-relaxed">
+          FlowDesk AI is your quiet operating system for the work around your work —
+          drafting, summarizing, planning, and researching, end to end.
         </p>
       </div>
-      <div className="mt-8 grid sm:grid-cols-2 gap-3">
-        {SUGGESTIONS.map((s) => (
+
+      {/* Quick prompts */}
+      <div className="mt-10 grid sm:grid-cols-2 gap-2.5">
+        {QUICK_PROMPTS.map((q) => (
           <button
-            key={s}
-            onClick={() => onPick(s)}
-            className="text-left rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-muted/40 px-4 py-3.5 text-sm text-foreground transition-colors"
+            key={q.label}
+            onClick={() => onPick(q.prompt)}
+            className="group text-left rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-muted/40 px-4 py-3.5 transition-colors"
           >
-            {s}
+            <p className="text-sm font-medium text-foreground">{q.label}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{q.prompt}</p>
           </button>
         ))}
+      </div>
+
+      {/* Module shortcuts */}
+      <div className="mt-12">
+        <div className="flex items-center gap-3 mb-4">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-secondary">Specialized workspaces</p>
+          <span className="flex-1 h-px bg-border" />
+        </div>
+        <div className="grid sm:grid-cols-2 gap-2.5">
+          {SHORTCUTS.map((s) => {
+            const Icon = s.icon;
+            return (
+              <Link
+                key={s.to}
+                to={s.to as "/email"}
+                className="group flex items-center gap-3 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-muted/40 px-4 py-3 transition-colors"
+              >
+                <span className="flex size-9 items-center justify-center rounded-lg bg-primary/5 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                  <Icon className="size-4" strokeWidth={1.75} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">{s.label}</p>
+                  <p className="text-xs text-muted-foreground truncate">{s.hint}</p>
+                </div>
+                <ArrowUpRight className="size-4 text-muted-foreground group-hover:text-primary group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-all" />
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
