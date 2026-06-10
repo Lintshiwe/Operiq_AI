@@ -3,6 +3,13 @@
   publish = "dist/client"
   functions = "netlify/functions"
 
+[functions]
+  # Use Node File Trace bundler so dynamic imports (server.js → ./assets/*) resolve correctly
+  # esbuild default bundles everything into one file, breaking the relative imports
+  node_bundler = "nft"
+  # External modules that should not be bundled
+  external_node_modules = ["sharp"]
+
 # All routes handled by the SSR server function
 [[redirects]]
   from = "/*"
