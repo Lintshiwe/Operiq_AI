@@ -1,7 +1,12 @@
 [build]
-  command = "vite build"
+  command = "npm run build:netlify"
   publish = "dist/client"
+  functions = "netlify/functions"
+
+[functions]
+  # nft traces imports — required for dynamic import("./assets/*") inside server.js
+  node_bundler = "nft"
 
 [dev]
-  command = "vite dev"
+  command = "bun run dev"
   port = 3000
