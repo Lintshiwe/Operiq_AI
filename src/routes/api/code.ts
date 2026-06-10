@@ -24,10 +24,10 @@ export const Route = createFileRoute("/api/code")({
           "gpt-4o-mini";
 
         const OPERIQ_TO_PROVIDER: Record<string, string> = {
-          "operiq-ultra": "nvidia/llama-3.1-nemotron-ultra-253b-v1",
-          "operiq-pro":   "nvidia/llama-3.1-nemotron-70b-instruct",
-          "operiq-plus":  "nvidia/llama-3.3-nemotron-super-49b-v1.5",
-          "operiq-nano":  "nvidia/llama-3.1-nemotron-nano-8b-v1",
+          "operiq-ultra": "mistralai/mistral-large-3-675b-instruct-2512",
+          "operiq-pro":   "meta/llama-3.3-70b-instruct",
+          "operiq-plus":  "nvidia/llama-3.3-nemotron-super-49b-v1",
+          "operiq-nano":  "nvidia/nvidia-nemotron-nano-9b-v2",
           "operiq-mini":  "nvidia/nemotron-mini-4b-instruct",
         };
 
