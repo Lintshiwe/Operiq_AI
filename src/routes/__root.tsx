@@ -4,10 +4,13 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
 import { type ReactNode } from "react";
+import { ConvexProvider } from "convex/react";
+import { AuthGate } from "@/components/AuthGate";
 
 import appCss from "../styles.css?url";
 
@@ -121,9 +124,14 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isAuthPage = pathname === "/login" || pathname === "/signup";
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <Outlet />
-    </QueryClientProvider>
+    <ConvexProvider url={import.meta.env.VITE_CONVEX_URL}>
+      <QueryClientProvider client={queryClient}>
+        {isAuthPage ? <Outlet /> : <AuthGate><Outlet /></AuthGate>}
+      </QueryClientProvider>
+    </ConvexProvider>
   );
 }

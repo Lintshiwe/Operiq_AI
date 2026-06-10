@@ -46,6 +46,7 @@ ${data.subject ? `- Subject line hint: ${data.subject}.` : ""}
 /* ---------- Meeting Intelligence ---------- */
 const MeetingInput = z.object({
   notes: z.string().min(20).max(20000),
+  meetingType: z.enum(["1:1", "team-sync", "client-call", "all-hands"]).optional(),
 });
 
 export const summarizeMeeting = createServerFn({ method: "POST" })
@@ -53,7 +54,7 @@ export const summarizeMeeting = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     run(
       `You analyze raw meeting notes/transcripts and produce a clear executive briefing.
-Return markdown with exactly these sections in this order:
+Meeting type: ${data.meetingType ?? "general"}. Return markdown with exactly these sections in this order:
 ## Summary
 A 3-5 sentence neutral synopsis.
 ## Key Decisions
@@ -97,6 +98,7 @@ Consider dependencies between tasks and energy levels.`,
 const ResearchInput = z.object({
   material: z.string().min(20).max(20000),
   question: z.string().max(1000).optional(),
+  depth: z.enum(["quick", "deep", "executive"]).optional(),
 });
 
 export const analyzeResearch = createServerFn({ method: "POST" })
@@ -104,7 +106,7 @@ export const analyzeResearch = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     run(
       `You are a senior research analyst. Distill the provided material.
-Return markdown with:
+Analysis depth: ${data.depth ?? "deep"}. Return markdown with:
 ## Executive Summary
 3-5 sentences.
 ## Key Insights

@@ -1,0 +1,161 @@
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useConvexAuth, useAuthActions } from "@convex-dev/auth/react";
+import { useState, useEffect } from "react";
+import { UserPlus, Loader2 } from "lucide-react";
+
+export const Route = createFileRoute("/signup")({
+  head: () => ({
+    meta: [
+      { title: "Sign up · Operiq AI" },
+      { name: "description", content: "Create an Operiq AI account" },
+    ],
+  }),
+  component: SignupPage,
+});
+
+function SignupPage() {
+  const { isAuthenticated } = useConvexAuth();
+  const { signIn } = useAuthActions();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate({ to: "/assistant", replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  function validate(): string | null {
+    if (password.length < 6) {
+      return "Password must be at least 6 characters";
+    }
+    if (password !== confirmPassword) {
+      return "Passwords do not match";
+    }
+    return null;
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await signIn("password", { email, password, flow: "signUp" });
+      navigate({ to: "/assistant", replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create account");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="flex h-dvh items-center justify-center bg-background px-4">
+      <div className="w-full max-w-[360px]">
+        {/* Logo */}
+        <div className="flex flex-col items-center gap-4 mb-8">
+          <div className="size-10 rounded-xl bg-[#10a37f] flex items-center justify-center">
+            <span className="text-white text-lg font-bold">O</span>
+          </div>
+          <div className="text-center">
+            <h1 className="text-lg font-semibold text-foreground">Create account</h1>
+            <p className="text-sm text-muted-foreground mt-1">Get started with Operiq AI</p>
+          </div>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label htmlFor="email" className="text-xs font-medium text-muted-foreground">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@company.com"
+              required
+              className="w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-accent/50 transition-colors"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="password" className="text-xs font-medium text-muted-foreground">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="At least 6 characters"
+              required
+              className="w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-accent/50 transition-colors"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="confirmPassword" className="text-xs font-medium text-muted-foreground">
+              Confirm password
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm your password"
+              required
+              className="w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-accent/50 transition-colors"
+            />
+          </div>
+
+          {error && (
+            <div className="rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-2 text-xs text-red-400">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isSubmitting || !email.trim() || !password.trim() || !confirmPassword.trim()}
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#10a37f] text-white px-4 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Creating account...
+              </>
+            ) : (
+              <>
+                <UserPlus className="size-4" />
+                Sign up
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Footer */}
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link to="/login" className="text-[#10a37f] hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}

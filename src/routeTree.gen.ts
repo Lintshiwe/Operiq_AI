@@ -10,21 +10,29 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResearchRouteImport } from './routes/research'
 import { Route as PlannerRouteImport } from './routes/planner'
 import { Route as MeetingsRouteImport } from './routes/meetings'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as EmailRouteImport } from './routes/email'
 import { Route as CodeRouteImport } from './routes/code'
 import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AssistantIndexRouteImport } from './routes/assistant.index'
 import { Route as AssistantThreadIdRouteImport } from './routes/assistant.$threadId'
+import { Route as ApiResendRouteImport } from './routes/api/resend'
 import { Route as ApiCodeRouteImport } from './routes/api/code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResearchRoute = ResearchRouteImport.update({
@@ -40,6 +48,11 @@ const PlannerRoute = PlannerRouteImport.update({
 const MeetingsRoute = MeetingsRouteImport.update({
   id: '/meetings',
   path: '/meetings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmailRoute = EmailRouteImport.update({
@@ -72,6 +85,11 @@ const AssistantThreadIdRoute = AssistantThreadIdRouteImport.update({
   path: '/$threadId',
   getParentRoute: () => AssistantRoute,
 } as any)
+const ApiResendRoute = ApiResendRouteImport.update({
+  id: '/api/resend',
+  path: '/api/resend',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCodeRoute = ApiCodeRouteImport.update({
   id: '/api/code',
   path: '/api/code',
@@ -88,12 +106,15 @@ export interface FileRoutesByFullPath {
   '/assistant': typeof AssistantRouteWithChildren
   '/code': typeof CodeRoute
   '/email': typeof EmailRoute
+  '/login': typeof LoginRoute
   '/meetings': typeof MeetingsRoute
   '/planner': typeof PlannerRoute
   '/research': typeof ResearchRoute
+  '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/chat': typeof ApiChatRoute
   '/api/code': typeof ApiCodeRoute
+  '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
   '/assistant/': typeof AssistantIndexRoute
 }
@@ -101,12 +122,15 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/code': typeof CodeRoute
   '/email': typeof EmailRoute
+  '/login': typeof LoginRoute
   '/meetings': typeof MeetingsRoute
   '/planner': typeof PlannerRoute
   '/research': typeof ResearchRoute
+  '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/chat': typeof ApiChatRoute
   '/api/code': typeof ApiCodeRoute
+  '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
   '/assistant': typeof AssistantIndexRoute
 }
@@ -116,12 +140,15 @@ export interface FileRoutesById {
   '/assistant': typeof AssistantRouteWithChildren
   '/code': typeof CodeRoute
   '/email': typeof EmailRoute
+  '/login': typeof LoginRoute
   '/meetings': typeof MeetingsRoute
   '/planner': typeof PlannerRoute
   '/research': typeof ResearchRoute
+  '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/chat': typeof ApiChatRoute
   '/api/code': typeof ApiCodeRoute
+  '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
   '/assistant/': typeof AssistantIndexRoute
 }
@@ -132,12 +159,15 @@ export interface FileRouteTypes {
     | '/assistant'
     | '/code'
     | '/email'
+    | '/login'
     | '/meetings'
     | '/planner'
     | '/research'
+    | '/signup'
     | '/sitemap.xml'
     | '/api/chat'
     | '/api/code'
+    | '/api/resend'
     | '/assistant/$threadId'
     | '/assistant/'
   fileRoutesByTo: FileRoutesByTo
@@ -145,12 +175,15 @@ export interface FileRouteTypes {
     | '/'
     | '/code'
     | '/email'
+    | '/login'
     | '/meetings'
     | '/planner'
     | '/research'
+    | '/signup'
     | '/sitemap.xml'
     | '/api/chat'
     | '/api/code'
+    | '/api/resend'
     | '/assistant/$threadId'
     | '/assistant'
   id:
@@ -159,12 +192,15 @@ export interface FileRouteTypes {
     | '/assistant'
     | '/code'
     | '/email'
+    | '/login'
     | '/meetings'
     | '/planner'
     | '/research'
+    | '/signup'
     | '/sitemap.xml'
     | '/api/chat'
     | '/api/code'
+    | '/api/resend'
     | '/assistant/$threadId'
     | '/assistant/'
   fileRoutesById: FileRoutesById
@@ -174,12 +210,15 @@ export interface RootRouteChildren {
   AssistantRoute: typeof AssistantRouteWithChildren
   CodeRoute: typeof CodeRoute
   EmailRoute: typeof EmailRoute
+  LoginRoute: typeof LoginRoute
   MeetingsRoute: typeof MeetingsRoute
   PlannerRoute: typeof PlannerRoute
   ResearchRoute: typeof ResearchRoute
+  SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiCodeRoute: typeof ApiCodeRoute
+  ApiResendRoute: typeof ApiResendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -189,6 +228,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/research': {
@@ -210,6 +256,13 @@ declare module '@tanstack/react-router' {
       path: '/meetings'
       fullPath: '/meetings'
       preLoaderRoute: typeof MeetingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/email': {
@@ -254,6 +307,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AssistantThreadIdRouteImport
       parentRoute: typeof AssistantRoute
     }
+    '/api/resend': {
+      id: '/api/resend'
+      path: '/api/resend'
+      fullPath: '/api/resend'
+      preLoaderRoute: typeof ApiResendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/code': {
       id: '/api/code'
       path: '/api/code'
@@ -290,23 +350,16 @@ const rootRouteChildren: RootRouteChildren = {
   AssistantRoute: AssistantRouteWithChildren,
   CodeRoute: CodeRoute,
   EmailRoute: EmailRoute,
+  LoginRoute: LoginRoute,
   MeetingsRoute: MeetingsRoute,
   PlannerRoute: PlannerRoute,
   ResearchRoute: ResearchRoute,
+  SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiChatRoute: ApiChatRoute,
   ApiCodeRoute: ApiCodeRoute,
+  ApiResendRoute: ApiResendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
