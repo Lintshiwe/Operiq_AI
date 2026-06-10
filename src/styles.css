@@ -44,49 +44,49 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Fraunces", "Cormorant Garamond", ui-serif, Georgia, serif;
 
-  --shadow-soft: 0 1px 2px oklch(0.2 0.02 250 / 0.04), 0 8px 24px -8px oklch(0.2 0.02 250 / 0.08);
-  --shadow-card: 0 1px 0 oklch(0.2 0.02 250 / 0.04), 0 12px 40px -16px oklch(0.2 0.02 250 / 0.12);
+  --shadow-soft: 0 1px 2px oklch(0.15 0.02 80 / 0.04), 0 8px 24px -8px oklch(0.15 0.02 80 / 0.10);
+  --shadow-card: 0 1px 0 oklch(0.15 0.02 80 / 0.04), 0 18px 48px -20px oklch(0.15 0.02 80 / 0.18);
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0.875rem;
 
-  /* Brand palette — Navy / Cream / Gold */
-  --background: oklch(0.984 0.004 250);          /* #F8F9FB */
-  --foreground: oklch(0.22 0.03 255);            /* deep ink */
+  /* Warm paper + ink + emerald accent */
+  --background: oklch(0.985 0.006 85);            /* warm paper */
+  --foreground: oklch(0.20 0.02 70);              /* warm ink */
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.03 255);
+  --card-foreground: oklch(0.20 0.02 70);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.03 255);
+  --popover-foreground: oklch(0.20 0.02 70);
 
-  --primary: oklch(0.32 0.06 250);               /* #1E3A5F navy */
-  --primary-foreground: oklch(0.985 0.003 250);
+  --primary: oklch(0.30 0.05 165);                /* deep emerald */
+  --primary-foreground: oklch(0.985 0.006 85);
 
-  --secondary: oklch(0.45 0.04 250);             /* #3E5C76 */
-  --secondary-foreground: oklch(0.985 0.003 250);
+  --secondary: oklch(0.45 0.03 70);
+  --secondary-foreground: oklch(0.985 0.006 85);
 
-  --muted: oklch(0.96 0.006 250);
-  --muted-foreground: oklch(0.48 0.02 255);
+  --muted: oklch(0.955 0.008 85);
+  --muted-foreground: oklch(0.48 0.015 70);
 
-  --accent: oklch(0.76 0.12 85);                 /* #CBA135 gold */
-  --accent-foreground: oklch(0.2 0.02 255);
+  --accent: oklch(0.74 0.13 75);                  /* warm amber */
+  --accent-foreground: oklch(0.20 0.02 70);
 
   --destructive: oklch(0.55 0.18 27);
-  --destructive-foreground: oklch(0.985 0.003 250);
+  --destructive-foreground: oklch(0.985 0.006 85);
 
-  --border: oklch(0.92 0.008 250);
-  --input: oklch(0.92 0.008 250);
-  --ring: oklch(0.45 0.04 250);
+  --border: oklch(0.91 0.008 80);
+  --input: oklch(0.91 0.008 80);
+  --ring: oklch(0.45 0.05 165);
 
-  --sidebar: oklch(0.22 0.03 255);
-  --sidebar-foreground: oklch(0.88 0.01 250);
-  --sidebar-primary: oklch(0.76 0.12 85);
-  --sidebar-primary-foreground: oklch(0.2 0.02 255);
-  --sidebar-accent: oklch(0.28 0.03 255);
-  --sidebar-accent-foreground: oklch(0.985 0.003 250);
-  --sidebar-border: oklch(0.3 0.03 255);
-  --sidebar-ring: oklch(0.76 0.12 85);
+  --sidebar: oklch(0.18 0.015 70);                /* near-black warm */
+  --sidebar-foreground: oklch(0.88 0.008 80);
+  --sidebar-primary: oklch(0.74 0.13 75);
+  --sidebar-primary-foreground: oklch(0.18 0.015 70);
+  --sidebar-accent: oklch(0.24 0.015 70);
+  --sidebar-accent-foreground: oklch(0.985 0.006 85);
+  --sidebar-border: oklch(0.26 0.012 70);
+  --sidebar-ring: oklch(0.74 0.13 75);
 }
 
 @layer base {
@@ -104,7 +104,13 @@
   }
 }
 
-/* Premium utility classes */
+/* Subtle grain — premium feel */
+.surface-grain {
+  background-image:
+    radial-gradient(oklch(0.20 0.02 70 / 0.025) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
 @utility surface-card {
   background: var(--color-card);
   border: 1px solid var(--color-border);
@@ -121,9 +127,9 @@
   height: 1px;
 }
 
-.prose-flow p { margin: 0 0 0.75rem; line-height: 1.65; }
+.prose-flow p { margin: 0 0 0.75rem; line-height: 1.7; }
 .prose-flow h1, .prose-flow h2, .prose-flow h3 { font-family: var(--font-display); margin: 1.25rem 0 0.5rem; }
 .prose-flow ul, .prose-flow ol { padding-left: 1.25rem; margin: 0 0 0.75rem; }
-.prose-flow li { margin: 0.2rem 0; }
+.prose-flow li { margin: 0.25rem 0; }
 .prose-flow strong { color: var(--color-primary); }
 .prose-flow code { background: var(--color-muted); padding: 0.1rem 0.35rem; border-radius: 6px; font-size: 0.85em; }
