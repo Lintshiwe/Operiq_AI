@@ -68,7 +68,6 @@ function SettingsPage() {
   const [contrast, setContrast] = useState<"default" | "high">("default");
   const [enableDictation, setEnableDictation] = useState(false);
   const [separateVoice, setSeparateVoice] = useState(false);
-  const [receiveFeedbackEmails, setReceiveFeedbackEmails] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("operiq-theme");
@@ -191,12 +190,7 @@ function SettingsPage() {
             {activeSection === "personalization" && <PersonalizationSection />}
             {activeSection === "billing" && <BillingSection />}
             {activeSection === "storage" && <StorageSection />}
-            {activeSection === "contact" && (
-              <ContactSection
-                receiveFeedbackEmails={receiveFeedbackEmails}
-                setReceiveFeedbackEmails={setReceiveFeedbackEmails}
-              />
-            )}
+            {activeSection === "contact" && <ContactSection />}
           </div>
         </div>
       </main>
@@ -341,7 +335,7 @@ function GeneralSection({
             <div className="space-y-0.5">
               <p className="text-sm font-medium text-foreground">Separate Voice</p>
               <p className="text-xs text-muted-foreground">
-                Keep ChatGPT Voice in a separate full screen, without real time transcripts and visuals.
+                Keep Operiq Voice in a separate full screen, without real time transcripts and visuals.
               </p>
             </div>
             <ToggleSwitch checked={separateVoice} onCheckedChange={setSeparateVoice} />
@@ -362,7 +356,7 @@ function PersonalizationSection() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Personalization</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Set the style and tone of how ChatGPT responds to you. This doesn&apos;t impact ChatGPT&apos;s capabilities.
+          Set how Operiq AI responds to you based on your preferences.
         </p>
       </div>
 
@@ -385,7 +379,7 @@ function PersonalizationSection() {
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <p className="text-sm font-medium text-foreground">Reference saved memories</p>
-            <p className="text-xs text-muted-foreground">Let ChatGPT save and use memories when responding.</p>
+            <p className="text-xs text-muted-foreground">Let Operiq save and use memories when responding.</p>
           </div>
           <Switch disabled />
         </div>
@@ -393,7 +387,7 @@ function PersonalizationSection() {
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <p className="text-sm font-medium text-foreground">Reference chat history</p>
-            <p className="text-xs text-muted-foreground">Let ChatGPT reference recent conversations when responding.</p>
+            <p className="text-xs text-muted-foreground">Let Operiq reference recent conversations when responding.</p>
           </div>
           <Switch disabled />
         </div>
@@ -457,13 +451,7 @@ function StorageSection() {
 /*  Contact / Profile section                                         */
 /* ------------------------------------------------------------------ */
 
-function ContactSection({
-  receiveFeedbackEmails,
-  setReceiveFeedbackEmails,
-}: {
-  receiveFeedbackEmails: boolean;
-  setReceiveFeedbackEmails: (v: boolean) => void;
-}) {
+function ContactSection() {
   return (
     <div className="space-y-8">
       <div>
@@ -482,80 +470,45 @@ function ContactSection({
             <p className="text-xs text-muted-foreground">ntoampilp@gmail.com</p>
           </div>
         </div>
+
+        {/* Links */}
+        <div className="flex items-center gap-4">
+          <a
+            href="https://linkedin.com/in/lintshiwe-ntoampi"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-sm text-foreground hover:text-accent transition-colors"
+            title="LinkedIn"
+          >
+            <LinkedinIcon className="size-4 text-muted-foreground" />
+            <span className="hidden sm:inline">LinkedIn</span>
+            <ExternalLink className="size-3 text-muted-foreground" strokeWidth={1.75} />
+          </a>
+          <a
+            href="https://github.com/Lintshiwe"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-sm text-foreground hover:text-accent transition-colors"
+            title="GitHub"
+          >
+            <GithubIcon className="size-4 text-muted-foreground" />
+            <span className="hidden sm:inline">GitHub</span>
+            <ExternalLink className="size-3 text-muted-foreground" strokeWidth={1.75} />
+          </a>
+          <a
+            href="mailto:ntoampilp@gmail.com"
+            className="flex items-center gap-1.5 text-sm text-foreground hover:text-accent transition-colors"
+            title="Email"
+          >
+            <Mail className="size-4 text-muted-foreground" strokeWidth={1.75} />
+            <span className="hidden sm:inline">Email</span>
+          </a>
+        </div>
+
         <button className="text-sm font-medium text-destructive hover:text-destructive/80 transition-colors">
           <Trash2 className="inline size-3.5 mr-1" strokeWidth={1.75} />
           Delete account
         </button>
-      </div>
-
-      <Separator />
-
-      {/* Builder profile */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Builder profile</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Personalize your builder profile to connect with users of your GPTs. These settings apply to publicly shared
-            GPTs.
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-border bg-card p-4 space-y-5">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">PlaceholderGPT</p>
-            <p className="text-sm text-muted-foreground">By Lintshiwe Ntoampi</p>
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">Preview</p>
-            <div className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-              Coming soon
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">Links</p>
-            <div className="space-y-2">
-              <a
-                href="https://linkedin.com/in/lintshiwe-ntoampi"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-foreground hover:text-accent transition-colors"
-              >
-                <LinkedinIcon className="size-4 text-muted-foreground" />
-                Lintshiwe Ntoampi
-                <ExternalLink className="size-3 text-muted-foreground" strokeWidth={1.75} />
-              </a>
-              <a
-                href="https://github.com/Lintshiwe"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-foreground hover:text-accent transition-colors"
-              >
-                <GithubIcon className="size-4 text-muted-foreground" />
-                Lintshiwe
-                <ExternalLink className="size-3 text-muted-foreground" strokeWidth={1.75} />
-              </a>
-              <a
-                href="mailto:ntoampilp@gmail.com"
-                className="flex items-center gap-2 text-sm text-foreground hover:text-accent transition-colors"
-              >
-                <Mail className="size-4 text-muted-foreground" strokeWidth={1.75} />
-                ntoampilp@gmail.com
-              </a>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <p className="text-sm font-medium text-foreground">Receive feedback emails</p>
-              <p className="text-xs text-muted-foreground">Get notified when users leave feedback on your GPTs.</p>
-            </div>
-            <ToggleSwitch checked={receiveFeedbackEmails} onCheckedChange={setReceiveFeedbackEmails} />
-          </div>
-        </div>
       </div>
     </div>
   );
