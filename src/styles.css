@@ -41,52 +41,53 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", "Cormorant Garamond", ui-serif, Georgia, serif;
+  --font-sans: ui-sans-serif, -apple-system, "Segoe UI", "Helvetica Neue", Helvetica, "Inter", Arial, sans-serif;
+  --font-display: var(--font-sans);
 
-  --shadow-soft: 0 1px 2px oklch(0.15 0.02 80 / 0.04), 0 8px 24px -8px oklch(0.15 0.02 80 / 0.10);
-  --shadow-card: 0 1px 0 oklch(0.15 0.02 80 / 0.04), 0 18px 48px -20px oklch(0.15 0.02 80 / 0.18);
+  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.04), 0 4px 16px -6px oklch(0 0 0 / 0.06);
+  --shadow-card: 0 1px 2px oklch(0 0 0 / 0.04), 0 8px 24px -10px oklch(0 0 0 / 0.10);
 }
 
 :root {
-  --radius: 0.875rem;
+  --radius: 0.75rem;
 
-  /* Warm paper + ink + emerald accent */
-  --background: oklch(0.985 0.006 85);            /* warm paper */
-  --foreground: oklch(0.20 0.02 70);              /* warm ink */
+  /* ChatGPT-inspired neutral palette */
+  --background: oklch(1 0 0);                     /* #ffffff */
+  --foreground: oklch(0.22 0 0);                  /* #0d0d0d-ish */
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.20 0.02 70);
+  --card-foreground: oklch(0.22 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.20 0.02 70);
+  --popover-foreground: oklch(0.22 0 0);
 
-  --primary: oklch(0.30 0.05 165);                /* deep emerald */
-  --primary-foreground: oklch(0.985 0.006 85);
+  --primary: oklch(0.22 0 0);                     /* near-black buttons */
+  --primary-foreground: oklch(1 0 0);
 
-  --secondary: oklch(0.45 0.03 70);
-  --secondary-foreground: oklch(0.985 0.006 85);
+  --secondary: oklch(0.45 0 0);
+  --secondary-foreground: oklch(1 0 0);
 
-  --muted: oklch(0.955 0.008 85);
-  --muted-foreground: oklch(0.48 0.015 70);
+  --muted: oklch(0.962 0 0);                      /* #f4f4f4 */
+  --muted-foreground: oklch(0.45 0 0);            /* #6b6b6b */
 
-  --accent: oklch(0.74 0.13 75);                  /* warm amber */
-  --accent-foreground: oklch(0.20 0.02 70);
+  --accent: oklch(0.55 0.13 165);                 /* subtle green accent */
+  --accent-foreground: oklch(1 0 0);
 
-  --destructive: oklch(0.55 0.18 27);
-  --destructive-foreground: oklch(0.985 0.006 85);
+  --destructive: oklch(0.55 0.20 27);
+  --destructive-foreground: oklch(1 0 0);
 
-  --border: oklch(0.91 0.008 80);
-  --input: oklch(0.91 0.008 80);
-  --ring: oklch(0.45 0.05 165);
+  --border: oklch(0.92 0 0);                      /* #e5e5e5 */
+  --input: oklch(0.92 0 0);
+  --ring: oklch(0.55 0 0);
 
-  --sidebar: oklch(0.18 0.015 70);                /* near-black warm */
-  --sidebar-foreground: oklch(0.88 0.008 80);
-  --sidebar-primary: oklch(0.74 0.13 75);
-  --sidebar-primary-foreground: oklch(0.18 0.015 70);
-  --sidebar-accent: oklch(0.24 0.015 70);
-  --sidebar-accent-foreground: oklch(0.985 0.006 85);
-  --sidebar-border: oklch(0.26 0.012 70);
-  --sidebar-ring: oklch(0.74 0.13 75);
+  /* ChatGPT sidebar: very light warm gray */
+  --sidebar: oklch(0.975 0.002 80);               /* #f9f9f9 */
+  --sidebar-foreground: oklch(0.22 0 0);
+  --sidebar-primary: oklch(0.22 0 0);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.93 0.002 80);         /* hover/selected */
+  --sidebar-accent-foreground: oklch(0.22 0 0);
+  --sidebar-border: oklch(0.92 0 0);
+  --sidebar-ring: oklch(0.55 0 0);
 }
 
 @layer base {
@@ -95,41 +96,30 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, .font-display {
-    font-family: var(--font-display);
-    letter-spacing: -0.02em;
+  h1, h2, h3 {
+    font-family: var(--font-sans);
+    letter-spacing: -0.01em;
+    font-weight: 600;
   }
-}
-
-/* Subtle grain — premium feel */
-.surface-grain {
-  background-image:
-    radial-gradient(oklch(0.20 0.02 70 / 0.025) 1px, transparent 1px);
-  background-size: 3px 3px;
 }
 
 @utility surface-card {
   background: var(--color-card);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
 }
 
 @utility hairline {
   border: 1px solid color-mix(in oklab, var(--color-foreground) 8%, transparent);
 }
 
-@utility gold-rule {
-  background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
-  height: 1px;
-}
-
-.prose-flow p { margin: 0 0 0.75rem; line-height: 1.7; }
-.prose-flow h1, .prose-flow h2, .prose-flow h3 { font-family: var(--font-display); margin: 1.25rem 0 0.5rem; }
-.prose-flow ul, .prose-flow ol { padding-left: 1.25rem; margin: 0 0 0.75rem; }
+.prose-flow p { margin: 0 0 0.85rem; line-height: 1.7; }
+.prose-flow h1, .prose-flow h2, .prose-flow h3 { margin: 1.25rem 0 0.5rem; font-weight: 600; }
+.prose-flow ul, .prose-flow ol { padding-left: 1.25rem; margin: 0 0 0.85rem; }
 .prose-flow li { margin: 0.25rem 0; }
-.prose-flow strong { color: var(--color-primary); }
-.prose-flow code { background: var(--color-muted); padding: 0.1rem 0.35rem; border-radius: 6px; font-size: 0.85em; }
+.prose-flow strong { color: var(--color-foreground); font-weight: 600; }
+.prose-flow code { background: var(--color-muted); padding: 0.1rem 0.35rem; border-radius: 6px; font-size: 0.9em; }
+.prose-flow pre { background: oklch(0.18 0 0); color: oklch(0.95 0 0); padding: 0.85rem 1rem; border-radius: 10px; overflow-x: auto; margin: 0 0 0.85rem; }
+.prose-flow pre code { background: transparent; padding: 0; color: inherit; }
