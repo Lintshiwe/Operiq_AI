@@ -7,7 +7,11 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   plugins: [
-    TanStackRouterVite({ target: "react", autoCodeSplitting: true }),
+    TanStackRouterVite({
+      target: "react",
+      autoCodeSplitting: true,
+      codeSplittingOptions: { addHmr: false },
+    }),
     ...tanstackStart(),
     viteReact(),
     tailwindcss(),
@@ -16,5 +20,6 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 3000,
+    allowedHosts: true,
   },
 });

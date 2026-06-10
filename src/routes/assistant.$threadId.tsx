@@ -13,6 +13,7 @@ import {
   ListChecks,
   BookOpen,
   MessageSquareText,
+  Code2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/assistant/$threadId")({
 });
 
 const MODULES = [
+  { to: "/code", label: "Code", icon: Code2 },
   { to: "/email", label: "Email Studio", icon: Mail },
   { to: "/meetings", label: "Meeting Intelligence", icon: CalendarCheck2 },
   { to: "/planner", label: "Task Planner", icon: ListChecks },

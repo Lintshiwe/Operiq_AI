@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -38,6 +38,11 @@ function EmailPage() {
   const [refining, setRefining] = useState(false);
   const refineInputRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  const [modKey, setModKey] = useState("\u2318");
+
+  useEffect(() => {
+    setModKey(navigator.platform?.includes("Mac") ? "\u2318" : "Ctrl");
+  }, []);
 
   async function onGenerate() {
     const topic = subject || "Email draft";
@@ -249,7 +254,7 @@ function EmailPage() {
               <span className="text-xs text-muted-foreground/50">
                 or press{" "}
                 <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted/30 text-[11px] font-mono text-muted-foreground">
-                  {navigator.platform?.includes("Mac") ? "\u2318" : "Ctrl"}+Enter
+                  {modKey}+Enter
                 </kbd>
               </span>
             </div>
