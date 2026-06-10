@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Operiq AI. All rights reserved.
+ * Proprietary and confidential. Unauthorized copying, distribution,
+ * or use of this file is strictly prohibited.
+ */
+
 import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
@@ -30,7 +36,12 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
     return response;
   }
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
+  const captured = consumeLastCapturedError();
+  if (captured instanceof Error) {
+    console.error("SSR Error:", captured.message, captured.stack?.split("\n").slice(0, 5).join("\n"));
+  } else {
+    console.error("h3 swallowed SSR error:", body);
+  }
   return new Response(renderErrorPage(), {
     status: 500,
     headers: { "content-type": "text/html; charset=utf-8" },

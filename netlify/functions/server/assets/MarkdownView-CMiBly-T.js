@@ -1,0 +1,1 @@
+import{jsx as r}from"react/jsx-runtime";import e from"react-markdown";function a({children:o}){return r("div",{className:"prose-flow text-[15px] text-foreground",children:r(e,{children:o})})}export{a as M};

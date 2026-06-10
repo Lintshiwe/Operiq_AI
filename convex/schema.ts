@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Operiq AI. All rights reserved.
+ * Proprietary and confidential. Unauthorized copying, distribution,
+ * or use of this file is strictly prohibited.
+ */
+
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";

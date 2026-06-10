@@ -1,0 +1,1 @@
+import{createOpenAICompatible as o}from"@ai-sdk/openai-compatible";function n(e,r){return o({name:"operiq-ai",baseURL:r??"https://api.openai.com/v1",headers:{Authorization:`Bearer ${e}`}})}function t(){const e=process.env.AI_API_KEY;if(!e)throw new Error("Missing AI_API_KEY environment variable");const r=process.env.AI_BASE_URL;return n(e,r)}export{t as g};

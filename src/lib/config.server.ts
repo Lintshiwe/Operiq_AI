@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Operiq AI. All rights reserved.
+ * Proprietary and confidential. Unauthorized copying, distribution,
+ * or use of this file is strictly prohibited.
+ */
+
 import process from "node:process";
 
 // Server-only config. The .server.ts suffix prevents Vite from bundling

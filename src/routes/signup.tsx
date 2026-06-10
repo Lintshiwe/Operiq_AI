@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Operiq AI. All rights reserved.
+ * Proprietary and confidential. Unauthorized copying, distribution,
+ * or use of this file is strictly prohibited.
+ */
+
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useSsrConvexAuth } from "@/lib/use-ssr-convex-auth";
@@ -68,9 +74,7 @@ function SignupPage() {
       <div className="w-full max-w-[360px]">
         {/* Logo */}
         <div className="flex flex-col items-center gap-4 mb-8">
-          <div className="size-10 rounded-xl bg-[#10a37f] flex items-center justify-center">
-            <span className="text-white text-lg font-bold">O</span>
-          </div>
+          <img src="/logo-icon.png" alt="Operiq AI" className="size-10 rounded-xl" />
           <div className="text-center">
             <h1 className="text-lg font-semibold text-foreground">Create account</h1>
             <p className="text-sm text-muted-foreground mt-1">Get started with Operiq AI</p>

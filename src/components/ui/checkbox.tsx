@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Operiq AI. All rights reserved.
+ * Proprietary and confidential. Unauthorized copying, distribution,
+ * or use of this file is strictly prohibited.
+ */
+
 import * as React from "react";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import { Check } from "lucide-react";

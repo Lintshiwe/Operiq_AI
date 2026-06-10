@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Operiq AI. All rights reserved.
+ * Proprietary and confidential. Unauthorized copying, distribution,
+ * or use of this file is strictly prohibited.
+ */
+
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
@@ -5,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useSsrConvexAuth } from "@/lib/use-ssr-convex-auth";
+import { usePromptLimit } from "@/hooks/use-prompt-limit";
 import { GenericId as Id } from "convex/values";
 import {
   Plus,
@@ -18,61 +25,16 @@ import {
   BookOpen,
   MessageSquareText,
   Code2,
+  LogIn,
+  Sparkles,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MarkdownView } from "@/components/MarkdownView";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
-import { deriveTitle, type Thread } from "@/lib/threads";
-
-/* ------------------------------------------------------------------ */
-/*  Message helpers: Convex <-> UIMessage                             */
-/* ------------------------------------------------------------------ */
-
-function toConvexMessages(messages: UIMessage[]): Array<{
-  id: string;
-  role: string;
-  content: string;
-  createdAt?: string;
-}> {
-  return messages.map((m) => ({
-    id: m.id,
-    role: m.role,
-    content: m.parts.map((p) => (p.type === "text" ? p.text : "")).join(""),
-  }));
-}
-
-function toUIMessages(
-  messages: Array<{ id: string; role: string; content: string; createdAt?: string }>,
-): UIMessage[] {
-  return messages.map(
-    (m) =>
-      ({
-        id: m.id,
-        role: m.role,
-        content: m.content,
-        parts: [{ type: "text" as const, text: m.content }],
-      }) as UIMessage,
-  );
-}
-
-function toFrontendThread(convexThread: {
-  _id: string;
-  _creationTime: number;
-  userId: string;
-  title: string;
-  messages: Array<{ id: string; role: string; content: string; createdAt?: string }>;
-  createdAt: string;
-  updatedAt: string;
-}): Thread {
-  return {
-    id: convexThread._id,
-    title: convexThread.title,
-    updatedAt: new Date(convexThread.updatedAt).getTime(),
-    messages: toUIMessages(convexThread.messages),
-  };
-}
+import { deriveTitle, type Thread, loadThreads, saveThreads, createBlankThread } from "@/lib/threads";
 
 /* ------------------------------------------------------------------ */
 /*  Route                                                             */
@@ -105,7 +67,9 @@ function AssistantThreadPage() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { isAuthenticated, isLoading: authLoading } = useSsrConvexAuth();
+  const promptLimit = usePromptLimit();
 
+  /* ---- authenticated: Convex threads ---- */
   const threads = useQuery(api.threads.list);
   const create = useMutation(api.threads.create);
   const update = useMutation(api.threads.update);
@@ -113,17 +77,37 @@ function AssistantThreadPage() {
 
   const hasCreatedRef = useRef(false);
 
-  /* ---- auth guard ---- */
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated) {
-      navigate({ to: "/login", replace: true });
-    }
-  }, [authLoading, isAuthenticated, navigate]);
+  const isGuest = !authLoading && !isAuthenticated;
 
-  /* ---- auto-create / redirect if thread missing ---- */
+  /* ---- resolve current thread ---- */
+  const currentThread = useMemo<Thread | null>(() => {
+    if (authLoading) return null;
+
+    if (isGuest) {
+      const local = loadThreads();
+      return local.find((t) => t.id === threadId) ?? null;
+    }
+
+    if (!threads) return null;
+    const found = threads.find((t) => t._id === threadId);
+    return found
+      ? {
+          id: found._id,
+          title: found.title,
+          updatedAt: new Date(found.updatedAt).getTime(),
+          messages: found.messages.map((m) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            parts: [{ type: "text" as const, text: m.content }],
+          })) as UIMessage[],
+        }
+      : null;
+  }, [authLoading, isGuest, threadId, threads]);
+
+  /* ---- auto-create / redirect if thread missing (authenticated) ---- */
   useEffect(() => {
-    if (threads === undefined || authLoading || !isAuthenticated || hasCreatedRef.current) return;
+    if (authLoading || isGuest || threads === undefined || hasCreatedRef.current) return;
 
     const current = threads.find((t) => t._id === threadId);
     if (current) {
@@ -144,22 +128,25 @@ function AssistantThreadPage() {
     } else {
       navigate({ to: "/assistant/$threadId", params: { threadId: threads[0]._id } });
     }
-  }, [threads, threadId, authLoading, isAuthenticated, create, navigate]);
+  }, [threads, threadId, authLoading, isGuest, create, navigate]);
 
-  /* ---- loading ---- */
-  if (authLoading || threads === undefined) {
-    return (
-      <div className="flex h-dvh items-center justify-center bg-background">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-  if (!isAuthenticated) return null;
+  /* ---- auto-create local thread for guests if missing ---- */
+  useEffect(() => {
+    if (!isGuest || currentThread) return;
+    const blank = createBlankThread();
+    saveThreads([blank]);
+    navigate({ to: "/assistant/$threadId", params: { threadId: blank.id }, replace: true });
+  }, [isGuest, currentThread, navigate]);
 
-  const current = threads.find((t) => t._id === threadId);
-  const currentThread = current ? toFrontendThread(current) : null;
-
+  /* ---- handles ---- */
   const handleCreate = async () => {
+    if (isGuest) {
+      const blank = createBlankThread();
+      const existing = loadThreads();
+      saveThreads([blank, ...existing]);
+      navigate({ to: "/assistant/$threadId", params: { threadId: blank.id } });
+      return;
+    }
     try {
       const id = await create({ title: "New conversation", messages: [] });
       hasCreatedRef.current = true;
@@ -170,6 +157,18 @@ function AssistantThreadPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (isGuest) {
+      const local = loadThreads().filter((t) => t.id !== id);
+      saveThreads(local);
+      if (local.length > 0) {
+        navigate({ to: "/assistant/$threadId", params: { threadId: local[0].id } });
+      } else {
+        const blank = createBlankThread();
+        saveThreads([blank]);
+        navigate({ to: "/assistant/$threadId", params: { threadId: blank.id } });
+      }
+      return;
+    }
     try {
       await remove({ threadId: id as Id<"threads"> });
       if (id === threadId) {
@@ -180,15 +179,46 @@ function AssistantThreadPage() {
     }
   };
 
+  const handleMessagesUpdate = (messages: UIMessage[]) => {
+    if (isGuest) {
+      const local = loadThreads();
+      const title = deriveTitle(messages);
+      saveThreads(local.map((t) => (t.id === threadId ? { ...t, messages, title, updatedAt: Date.now() } : t)));
+      return;
+    }
+    const title = deriveTitle(messages);
+    update({
+      threadId: threadId as Id<"threads">,
+      messages: messages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.parts.map((p) => (p.type === "text" ? p.text : "")).join(""),
+      })),
+      title,
+    }).catch((e) => console.error(e));
+  };
+
+  /* ---- loading ---- */
+  if (authLoading) {
+    return (
+      <div className="flex h-dvh items-center justify-center bg-background">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const guestThreads = isGuest ? loadThreads() : [];
+
   return (
     <div className="flex h-dvh w-full bg-background text-foreground">
       {sidebarOpen && (
         <ThreadSidebar
-          threads={threads.map(toFrontendThread)}
+          threads={isGuest ? guestThreads : (threads?.map(mapConvexThread) ?? [])}
           activeId={threadId}
           onCreate={handleCreate}
           onDelete={handleDelete}
           onClose={() => setSidebarOpen(false)}
+          isGuest={isGuest}
         />
       )}
 
@@ -205,17 +235,31 @@ function AssistantThreadPage() {
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen((v) => !v)}
         onNewChat={handleCreate}
-        onMessagesUpdate={(messages) => {
-          const title = deriveTitle(messages);
-          update({
-            threadId: threadId as Id<"threads">,
-            messages: toConvexMessages(messages),
-            title,
-          }).catch((e) => console.error(e));
-        }}
+        onMessagesUpdate={handleMessagesUpdate}
+        promptLimit={promptLimit}
+        isGuest={isGuest}
       />
     </div>
   );
+}
+
+function mapConvexThread(t: {
+  _id: string;
+  title: string;
+  updatedAt: string;
+  messages: Array<{ id: string; role: string; content: string }>;
+}): Thread {
+  return {
+    id: t._id,
+    title: t.title,
+    updatedAt: new Date(t.updatedAt).getTime(),
+    messages: t.messages.map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      parts: [{ type: "text" as const, text: m.content }],
+    })) as UIMessage[],
+  };
 }
 
 /* ------------ Sidebar ------------ */
@@ -226,12 +270,14 @@ function ThreadSidebar({
   onCreate,
   onDelete,
   onClose,
+  isGuest,
 }: {
   threads: Thread[];
   activeId: string;
   onCreate: () => void;
   onDelete: (id: string) => void;
   onClose: () => void;
+  isGuest?: boolean;
 }) {
   const groups = useMemo(() => groupThreads(threads), [threads]);
 
@@ -240,7 +286,7 @@ function ThreadSidebar({
       {/* Logo area */}
       <div className="flex items-center justify-between gap-2 px-3 h-14">
         <div className="flex items-center gap-2">
-          <BrandMark />
+          <img src="/logo-icon.png" alt="Operiq AI" className="size-7 rounded-lg" />
           <span className="font-semibold text-sm">Operiq</span>
           <span className="text-sm text-muted-foreground">AI</span>
         </div>
@@ -308,6 +354,19 @@ function ThreadSidebar({
         ))}
       </div>
 
+      {/* Guest upgrade CTA */}
+      {isGuest && (
+        <div className="border-t border-sidebar-border p-3">
+          <Link
+            to="/login"
+            className="flex items-center gap-2 rounded-lg bg-accent/10 px-3 py-2.5 text-sm font-medium text-accent hover:bg-accent/20 transition-colors"
+          >
+            <Sparkles className="size-4" />
+            Sign in – unlock full access
+          </Link>
+        </div>
+      )}
+
       {/* Workspace links at bottom */}
       <div className="border-t border-sidebar-border p-2 space-y-0.5">
         <p className="px-2 pt-1 pb-1.5 text-[11px] font-medium text-muted-foreground">Workspaces</p>
@@ -324,6 +383,13 @@ function ThreadSidebar({
             </Link>
           );
         })}
+        <Link
+          to="/settings"
+          className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        >
+          <Settings className="size-4" strokeWidth={1.75} />
+          Settings
+        </Link>
       </div>
     </aside>
   );
@@ -369,12 +435,16 @@ function ChatPane({
   onToggleSidebar,
   onNewChat,
   onMessagesUpdate,
+  promptLimit,
+  isGuest,
 }: {
   thread: Thread;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
   onNewChat: () => void;
   onMessagesUpdate: (messages: UIMessage[]) => void;
+  promptLimit: ReturnType<typeof usePromptLimit>;
+  isGuest: boolean;
 }) {
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
   const [input, setInput] = useState("");
@@ -416,6 +486,15 @@ function ChatPane({
   async function submit(text: string) {
     const value = text.trim();
     if (!value || isLoading) return;
+
+    /* Guest prompt limit check */
+    if (isGuest && promptLimit.exhausted) return;
+
+    /* Track guest prompt usage */
+    if (isGuest) {
+      promptLimit.increment();
+    }
+
     setInput("");
     await sendMessage({ text: value });
     setTimeout(() => inputRef.current?.focus(), 0);
@@ -445,7 +524,7 @@ function ChatPane({
             </>
           )}
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted cursor-default">
-            <Logo variant="full" className="h-5" />
+            <img src="/logo-full.png" alt="Operiq AI" className="h-5" />
           </div>
         </div>
         <button
@@ -460,7 +539,7 @@ function ChatPane({
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
         {isEmpty ? (
-          <EmptyState onPick={(s) => submit(s)} />
+          <EmptyState onPick={(s) => submit(s)} promptLimit={promptLimit} isGuest={isGuest} />
         ) : (
           <div className="mx-auto max-w-3xl px-4 lg:px-6 py-6 space-y-6">
             {messages.map((m) => {
@@ -503,72 +582,146 @@ function ChatPane({
         )}
       </div>
 
-      {/* Composer (ChatGPT style) */}
+      {/* Composer */}
       <div className="px-4 lg:px-6 pb-4 pt-2 bg-background">
         <div className="mx-auto max-w-3xl">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              submit(input);
-            }}
-            className="relative flex items-end rounded-xl border border-border bg-card shadow-sm focus-within:border-muted-foreground/50 transition-colors"
-          >
-            <Textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  submit(input);
-                }
+          {/* Guest prompt limit banner */}
+          {isGuest && !promptLimit.exhausted && (
+            <div className="mb-2 flex items-center justify-between rounded-lg border border-accent/20 bg-accent/5 px-3 py-2">
+              <span className="text-xs text-muted-foreground">
+                Free trial: <strong className="text-foreground">{promptLimit.remaining}</strong> of{" "}
+                {promptLimit.freeLimit} prompts remaining
+              </span>
+              <Link
+                to="/login"
+                className="text-xs font-medium text-accent hover:underline"
+              >
+                Sign in for unlimited
+              </Link>
+            </div>
+          )}
+
+          {isGuest && promptLimit.exhausted ? (
+            <div className="rounded-xl border border-accent/20 bg-card p-6 text-center">
+              <Sparkles className="mx-auto size-8 text-accent mb-3" />
+              <h3 className="text-lg font-semibold text-foreground">Free trial used up</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                You&apos;ve used all {promptLimit.freeLimit} free prompts. Sign in to continue using Operiq AI.
+              </p>
+              <div className="mt-4 flex gap-3 justify-center">
+                <Link
+                  to="/login"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+                >
+                  <LogIn className="size-4" />
+                  Sign in
+                </Link>
+                <Link
+                  to="/signup"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                >
+                  Create account
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                submit(input);
               }}
-              placeholder="Message Operiq AI..."
-              rows={1}
-              className="min-h-[44px] max-h-[200px] resize-none border-0 shadow-none focus-visible:ring-0 px-4 py-3 pr-12 text-sm bg-transparent leading-relaxed"
-            />
-            <Button
-              type="submit"
-              size="icon"
-              disabled={isLoading || input.trim().length === 0}
-              aria-label="Send message"
-              className="absolute right-1.5 bottom-1.5 size-8 rounded-lg bg-foreground text-background hover:bg-foreground/90 disabled:bg-muted disabled:text-muted-foreground"
+              className="relative flex items-end rounded-xl border border-border bg-card shadow-sm focus-within:border-muted-foreground/50 transition-colors"
             >
-              {isLoading ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <ArrowUp className="size-4" />
-              )}
-            </Button>
-          </form>
-          <p className="mt-2 text-[11px] text-muted-foreground text-center">
-            Operiq AI can make mistakes. Verify important information before acting.
-          </p>
+              <Textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    submit(input);
+                  }
+                }}
+                placeholder="Message Operiq AI..."
+                rows={1}
+                className="min-h-[44px] max-h-[200px] resize-none border-0 shadow-none focus-visible:ring-0 px-4 py-3 pr-12 text-sm bg-transparent leading-relaxed"
+              />
+              <Button
+                type="submit"
+                size="icon"
+                disabled={isLoading || input.trim().length === 0 || (isGuest && promptLimit.exhausted)}
+                aria-label="Send message"
+                className="absolute right-1.5 bottom-1.5 size-8 rounded-lg bg-foreground text-background hover:bg-foreground/90 disabled:bg-muted disabled:text-muted-foreground"
+              >
+                {isLoading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <ArrowUp className="size-4" />
+                )}
+              </Button>
+            </form>
+          )}
+
+          {!promptLimit.exhausted && (
+            <p className="mt-2 text-[11px] text-muted-foreground text-center">
+              Operiq AI can make mistakes. Verify important information before acting.
+              <br />
+              &copy; 2025 Operiq AI. All rights reserved.
+            </p>
+          )}
         </div>
       </div>
     </section>
   );
 }
 
-function EmptyState({ onPick }: { onPick: (s: string) => void }) {
+function EmptyState({
+  onPick,
+  promptLimit,
+  isGuest,
+}: {
+  onPick: (s: string) => void;
+  promptLimit?: ReturnType<typeof usePromptLimit>;
+  isGuest?: boolean;
+}) {
   return (
     <div className="h-full flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-2xl text-center">
-        <Logo variant="full" className="mx-auto h-10 mb-4" />
+        <img src="/logo-full.png" alt="Operiq AI" className="mx-auto h-10 mb-4" />
         <h2 className="text-2xl font-semibold text-foreground tracking-tight">
           What can I help with?
         </h2>
+
+        {isGuest && !promptLimit?.exhausted && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Free trial: {promptLimit?.remaining} of {promptLimit?.freeLimit} prompts remaining
+          </p>
+        )}
+
         <div className="mt-8 grid sm:grid-cols-2 gap-2">
           {QUICK_PROMPTS.map((q) => (
             <button
               key={q}
               onClick={() => onPick(q)}
-              className="text-left rounded-xl border border-border bg-card hover:bg-muted px-4 py-3 text-sm text-foreground transition-colors"
+              disabled={isGuest && !!promptLimit?.exhausted}
+              className="text-left rounded-xl border border-border bg-card hover:bg-muted px-4 py-3 text-sm text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {q}
             </button>
           ))}
         </div>
+
+        {isGuest && promptLimit?.exhausted && (
+          <div className="mt-6">
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+            >
+              <LogIn className="size-4" />
+              Sign in to continue
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

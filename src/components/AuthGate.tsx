@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Operiq AI. All rights reserved.
+ * Proprietary and confidential. Unauthorized copying, distribution,
+ * or use of this file is strictly prohibited.
+ */
+
 import { Navigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useSsrConvexAuth } from "@/lib/use-ssr-convex-auth";

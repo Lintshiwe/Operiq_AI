@@ -1,8 +1,15 @@
+/**
+ * Copyright (c) 2025 Operiq AI. All rights reserved.
+ * Proprietary and confidential. Unauthorized copying, distribution,
+ * or use of this file is strictly prohibited.
+ */
+
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useSsrConvexAuth } from "@/lib/use-ssr-convex-auth";
+import { createBlankThread, saveThreads, loadThreads } from "@/lib/threads";
 import { Loader2 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 
@@ -24,22 +31,33 @@ function AssistantIndex() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!isAuthenticated) {
-      navigate({ to: "/login", replace: true });
-      return;
-    }
-    if (threads === undefined) return;
 
-    if (threads.length === 0) {
-      create({ title: "New conversation", messages: [] }).then((id) => {
-        navigate({ to: "/assistant/$threadId", params: { threadId: id }, replace: true });
-      });
+    if (isAuthenticated) {
+      if (threads === undefined) return;
+
+      if (threads.length === 0) {
+        create({ title: "New conversation", messages: [] }).then((id) => {
+          navigate({ to: "/assistant/$threadId", params: { threadId: id }, replace: true });
+        });
+      } else {
+        navigate({
+          to: "/assistant/$threadId",
+          params: { threadId: threads[0]._id },
+          replace: true,
+        });
+      }
     } else {
-      navigate({
-        to: "/assistant/$threadId",
-        params: { threadId: threads[0]._id },
-        replace: true,
-      });
+      /* Guest: create a local thread and navigate to it */
+      const existing = loadThreads();
+      let threadId: string;
+      if (existing.length > 0) {
+        threadId = existing[0].id;
+      } else {
+        const blank = createBlankThread();
+        saveThreads([blank]);
+        threadId = blank.id;
+      }
+      navigate({ to: "/assistant/$threadId", params: { threadId }, replace: true });
     }
   }, [threads, authLoading, isAuthenticated, create, navigate]);
 
