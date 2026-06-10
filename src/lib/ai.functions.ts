@@ -20,6 +20,8 @@ const EmailInput = z.object({
   tone: z.enum(["formal", "informal", "persuasive"]),
   audience: z.enum(["client", "manager", "team"]),
   context: z.string().max(2000).optional(),
+  recipient: z.string().max(500).optional(),
+  subject: z.string().max(500).optional(),
 });
 
 export const generateEmail = createServerFn({ method: "POST" })
@@ -30,7 +32,10 @@ export const generateEmail = createServerFn({ method: "POST" })
 Constraints:
 - Tone: ${data.tone}.
 - Audience: ${data.audience}.
+${data.recipient ? `- Recipient: ${data.recipient}.` : ""}
+${data.subject ? `- Subject line hint: ${data.subject}.` : ""}
 - Include a clear subject line on the first line as "Subject: ...".
+- If a recipient was provided, address them appropriately in the salutation.
 - Concise, professional, no filler. Avoid emoji.
 - Use markdown.
 - Ensure the email is contextually appropriate for the audience and tone specified.`,
