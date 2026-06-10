@@ -21,6 +21,7 @@ import { Route as CodeRouteImport } from './routes/code'
 import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AssistantIndexRouteImport } from './routes/assistant.index'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AssistantThreadIdRouteImport } from './routes/assistant.$threadId'
 import { Route as ApiResendRouteImport } from './routes/api/resend'
 import { Route as ApiHuggingfaceRouteImport } from './routes/api/huggingface'
@@ -87,6 +88,11 @@ const AssistantIndexRoute = AssistantIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AssistantRoute,
 } as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AssistantThreadIdRoute = AssistantThreadIdRouteImport.update({
   id: '/$threadId',
   path: '/$threadId',
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/api/huggingface': typeof ApiHuggingfaceRoute
   '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/assistant/': typeof AssistantIndexRoute
 }
 export interface FileRoutesByTo {
@@ -148,6 +155,7 @@ export interface FileRoutesByTo {
   '/api/huggingface': typeof ApiHuggingfaceRoute
   '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/assistant': typeof AssistantIndexRoute
 }
 export interface FileRoutesById {
@@ -168,6 +176,7 @@ export interface FileRoutesById {
   '/api/huggingface': typeof ApiHuggingfaceRoute
   '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/assistant/': typeof AssistantIndexRoute
 }
 export interface FileRouteTypes {
@@ -189,6 +198,7 @@ export interface FileRouteTypes {
     | '/api/huggingface'
     | '/api/resend'
     | '/assistant/$threadId'
+    | '/invite/$token'
     | '/assistant/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/api/huggingface'
     | '/api/resend'
     | '/assistant/$threadId'
+    | '/invite/$token'
     | '/assistant'
   id:
     | '__root__'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/api/huggingface'
     | '/api/resend'
     | '/assistant/$threadId'
+    | '/invite/$token'
     | '/assistant/'
   fileRoutesById: FileRoutesById
 }
@@ -245,6 +257,7 @@ export interface RootRouteChildren {
   ApiCodeRoute: typeof ApiCodeRoute
   ApiHuggingfaceRoute: typeof ApiHuggingfaceRoute
   ApiResendRoute: typeof ApiResendRoute
+  InviteTokenRoute: typeof InviteTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -333,6 +346,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AssistantIndexRouteImport
       parentRoute: typeof AssistantRoute
     }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/assistant/$threadId': {
       id: '/assistant/$threadId'
       path: '/$threadId'
@@ -401,6 +421,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCodeRoute: ApiCodeRoute,
   ApiHuggingfaceRoute: ApiHuggingfaceRoute,
   ApiResendRoute: ApiResendRoute,
+  InviteTokenRoute: InviteTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

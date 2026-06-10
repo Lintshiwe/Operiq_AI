@@ -4,7 +4,7 @@
  * or use of this file is strictly prohibited.
  */
 
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   Mail,
   CalendarCheck2,
@@ -15,8 +15,14 @@ import {
   Plus,
   Code2,
   SquarePen,
+  LogOut,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 type NavItem = {
   to: string;
@@ -67,6 +73,58 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   }
 
+  function UserProfile() {
+    const user = useQuery(api.users.me);
+
+    if (user === undefined) {
+      return (
+        <div className="px-3 py-3 border-t border-sidebar-border">
+          <div className="flex items-center gap-2">
+            <Skeleton className="size-8 rounded-full" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </div>
+      );
+    }
+
+    if (!user) return null;
+
+    const name = user.name || user.email || "User";
+    const initial = name.charAt(0).toUpperCase();
+
+    return (
+      <Link
+        to="/settings"
+        className="flex items-center gap-2.5 px-3 py-2.5 border-t border-sidebar-border hover:bg-sidebar-accent transition-colors"
+      >
+        <Avatar className="size-8">
+          <AvatarFallback className="bg-accent text-accent-foreground text-sm font-medium">
+            {initial}
+          </AvatarFallback>
+        </Avatar>
+        <span className="text-sm text-sidebar-foreground truncate">{name}</span>
+      </Link>
+    );
+  }
+
+  function LogoutButton() {
+    const { signOut } = useAuthActions();
+    const navigate = useNavigate();
+
+    return (
+      <button
+        onClick={() => {
+          signOut();
+          navigate({ to: "/login" });
+        }}
+        className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+      >
+        <LogOut className="size-4" strokeWidth={1.75} />
+        Sign out
+      </button>
+    );
+  }
+
   return (
     <div className="flex h-dvh w-full bg-background text-foreground">
       {/* Desktop sidebar — always visible on md+ */}
@@ -100,6 +158,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </p>
           {STUDIO_NAV.map((item) => navLink(item))}
         </div>
+
+        <UserProfile />
+        <LogoutButton />
       </aside>
 
       {/* Mobile sidebar toggle */}
@@ -147,6 +208,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               </p>
               {STUDIO_NAV.map((item) => navLink(item, () => setMobileOpen(false)))}
             </div>
+
+            <UserProfile />
+            <LogoutButton />
           </aside>
         </div>
       )}

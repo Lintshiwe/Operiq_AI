@@ -59,6 +59,7 @@ import { InviteDialog } from "@/components/InviteDialog";
 import { cn } from "@/lib/utils";
 import { deriveTitle, type Thread, loadThreads, saveThreads, createBlankThread } from "@/lib/threads";
 import { MODELS, MODEL_STORAGE_KEY, MODEL_MAP } from "@/lib/models";
+import { timeAgo } from "@/lib/time";
 
 /* ------------------------------------------------------------------ */
 /*  Route                                                             */
@@ -771,14 +772,22 @@ function ChatPane({
               return (
                 <div key={m.id} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
                   {isUser ? (
-                    <div className="max-w-[80%] rounded-2xl bg-card text-foreground px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap border border-border">
-                      {text}
+                    <div className="flex flex-col items-end gap-0.5">
+                      <div className="max-w-[80%] rounded-2xl bg-card text-foreground px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap border border-border">
+                        {text}
+                      </div>
+                      <span className="text-[11px] text-muted-foreground/60 px-1">
+                        {timeAgo(m.createdAt ?? Date.now())}
+                      </span>
                     </div>
                   ) : (
                     <div className="flex gap-3 w-full">
                       <Logo variant="ai-avatar" className="mt-0.5 size-7 shrink-0" />
-                      <div className="min-w-0 flex-1 text-[15px] leading-relaxed">
+                      <div className="min-w-0 flex-1 flex flex-col gap-0.5 text-[15px] leading-relaxed">
                         <MarkdownView>{text || "..."}</MarkdownView>
+                        <span className="text-[11px] text-muted-foreground/60">
+                          {timeAgo(m.createdAt ?? Date.now())}
+                        </span>
                       </div>
                     </div>
                   )}

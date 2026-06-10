@@ -152,7 +152,8 @@ function RootComponent() {
   const isPublicRoute =
     pathname === "/login" ||
     pathname === "/signup" ||
-    pathname.startsWith("/assistant");
+    pathname.startsWith("/assistant") ||
+    pathname.startsWith("/invite");
 
   return (
     <ConvexAuthProvider client={convex}>

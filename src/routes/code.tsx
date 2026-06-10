@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, Loader2, Code2, Cpu } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { MarkdownView } from "@/components/MarkdownView";
+import { timeAgo } from "@/lib/time";
 import {
   Select,
   SelectContent,
@@ -130,13 +131,11 @@ function CodePage() {
                     <div className="size-2 rounded-full bg-accent" />
                   </div>
                 )}
-                <div
-                  className={`max-w-[85%] ${
-                    m.role === "user"
-                      ? "bg-accent/10 text-foreground rounded-2xl rounded-tr-md px-4 py-2.5"
-                      : "text-foreground"
-                  }`}
-                >
+                <div className={`flex flex-col gap-0.5 max-w-[85%] ${
+                  m.role === "user"
+                    ? "bg-accent/10 text-foreground rounded-2xl rounded-tr-md px-4 py-2.5"
+                    : "text-foreground"
+                }`}>
                   {m.role === "user" ? (
                     <p className="text-sm whitespace-pre-wrap">{m.content}</p>
                   ) : (
@@ -144,6 +143,9 @@ function CodePage() {
                       <MarkdownView>{m.content}</MarkdownView>
                     </div>
                   )}
+                  <span className={`text-[11px] text-muted-foreground/60 ${m.role === "user" ? "text-right px-1" : ""}`}>
+                    {timeAgo(m.createdAt ?? Date.now())}
+                  </span>
                 </div>
               </div>
             ))}

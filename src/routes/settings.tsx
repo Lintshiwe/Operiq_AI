@@ -32,6 +32,15 @@ import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/settings")({
@@ -647,6 +656,63 @@ function StorageSection() {
 /* ------------------------------------------------------------------ */
 
 function ContactSection() {
+  const user = useQuery(api.users.me);
+  const updateProfile = useMutation(api.users.updateProfile);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  if (user === undefined) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Contact</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Your profile and public information.</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 space-y-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-12 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Contact</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Your profile and public information.</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-6 text-center">
+          <p className="text-sm text-muted-foreground">Please sign in to view your profile.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const name = user.name || user.email || "User";
+  const initial = name.charAt(0).toUpperCase();
+
+  async function handleSave() {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await updateProfile({ name: editName });
+      setEditOpen(false);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -658,12 +724,28 @@ function ContactSection() {
       <div className="rounded-xl border border-border bg-card p-4 space-y-4">
         <div className="flex items-center gap-3">
           <Avatar className="size-12">
-            <AvatarFallback className="bg-accent text-accent-foreground text-lg font-medium">L</AvatarFallback>
+            <AvatarFallback className="bg-accent text-accent-foreground text-lg font-medium">
+              {initial}
+            </AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-base font-semibold text-foreground">Lintshiwe</p>
-            <p className="text-xs text-muted-foreground">ntoampilp@gmail.com</p>
+            <p className="text-base font-semibold text-foreground">{name}</p>
+            <p className="text-xs text-muted-foreground">{user.email}</p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setEditName(user.name || "");
+              setSaveError(null);
+              setEditOpen(true);
+            }}
+          >
+            Edit name
+          </Button>
         </div>
 
         {/* Links */}
@@ -691,7 +773,7 @@ function ContactSection() {
             <ExternalLink className="size-3 text-muted-foreground" strokeWidth={1.75} />
           </a>
           <a
-            href="mailto:ntoampilp@gmail.com"
+            href={`mailto:${user.email}`}
             className="flex items-center gap-1.5 text-sm text-foreground hover:text-accent transition-colors"
             title="Email"
           >
@@ -705,6 +787,34 @@ function ContactSection() {
           Delete account
         </button>
       </div>
+
+      {/* Edit name dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit name</DialogTitle>
+            <DialogDescription>Update your display name.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="Your name"
+            />
+            {saveError && (
+              <p className="text-sm text-destructive">{saveError}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={saving || !editName.trim()}>
+              {saving ? <Loader2 className="size-4 animate-spin" /> : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
