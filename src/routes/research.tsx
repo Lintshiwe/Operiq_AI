@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { BookOpen, Loader2, ShieldCheck } from "lucide-react";
+import {
+  BookOpen, Loader2, Copy, Check, ShieldCheck,
+  Sparkles, SendHorizontal,
+} from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { MarkdownView } from "@/components/MarkdownView";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { analyzeResearch } from "@/lib/ai.functions";
 import { toast } from "sonner";
 
@@ -25,108 +25,269 @@ function ResearchPage() {
   const run = useServerFn(analyzeResearch);
   const [material, setMaterial] = useState("");
   const [question, setQuestion] = useState("");
-  const [output, setOutput] = useState("");
+  const [depth, setDepth] = useState<"quick" | "deep" | "executive">("quick");
+  const [output, setOutput] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [refineText, setRefineText] = useState("");
+  const [refining, setRefining] = useState(false);
+  const refineInputRef = useRef<HTMLInputElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
+  const [modKey, setModKey] = useState("\u2318");
 
-  async function onRun() {
+  useEffect(() => {
+    setModKey(navigator.platform?.includes("Mac") ? "\u2318" : "Ctrl");
+  }, []);
+
+  async function onGenerate() {
     if (material.trim().length < 20) return;
     setLoading(true);
-    setOutput("");
+    setOutput(null);
     try {
-      const res = await run({ data: { material, question } });
+      const res = await run({ data: { material, question, depth } });
       setOutput(res.text);
     } catch (e) {
-      toast.error("Analysis failed. Try again.");
+      toast.error("Generation failed. Please try again.");
       console.error(e);
     } finally {
       setLoading(false);
     }
   }
 
+  async function onRefine() {
+    if (!output || !refineText.trim()) return;
+    setRefining(true);
+    try {
+      const res = await run({
+        data: {
+          material: `Previous analysis:\n${output}\n\nRequested changes: ${refineText}`,
+          question: "",
+          depth,
+        },
+      });
+      setOutput(res.text);
+      setRefineText("");
+    } catch (e) {
+      toast.error("Refinement failed. Please try again.");
+      console.error(e);
+    } finally {
+      setRefining(false);
+    }
+  }
+
+  async function copy() {
+    if (!output) return;
+    await navigator.clipboard.writeText(output);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        if (refineInputRef.current === document.activeElement) {
+          e.preventDefault();
+          onRefine();
+        } else {
+          e.preventDefault();
+          onGenerate();
+        }
+      }
+    }
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [material, question, depth, output, refineText]);
+
+  useEffect(() => {
+    if (output && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [output]);
+
+  const depths = [
+    { value: "quick" as const, label: "Quick Summary" },
+    { value: "deep" as const, label: "Deep Analysis" },
+    { value: "executive" as const, label: "Executive Brief" },
+  ];
+
+  function pillClass(active: boolean) {
+    return active
+      ? "bg-accent text-accent-foreground shadow-sm"
+      : "bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50";
+  }
+
   return (
     <AppShell>
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Page header */}
-        <div className="px-6 lg:px-10 py-6 border-b border-border">
-          <div className="max-w-6xl mx-auto">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              Research Hub
-            </p>
-            <h1 className="mt-1 text-2xl lg:text-3xl font-semibold text-foreground tracking-tight">
-              Read less. Understand more.
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Drop in long material — reports, articles, transcripts — and get an executive distillation.
-            </p>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 lg:px-10 py-6">
-          <div className="max-w-6xl mx-auto grid lg:grid-cols-5 gap-6">
-            {/* Form panel */}
-            <div className="lg:col-span-2 surface-card p-5 space-y-4 h-fit">
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-[680px] mx-auto px-6 py-8 lg:py-10">
+            {/* Minimal header */}
+            <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2.5">
-                <span className="flex size-8 items-center justify-center rounded-md bg-accent/10 text-accent">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                   <BookOpen className="size-4" />
                 </span>
-                <h2 className="text-base font-semibold text-foreground">Source material</h2>
+                <div>
+                  <h1 className="text-sm font-semibold text-foreground">Research Hub</h1>
+                  <p className="text-xs text-muted-foreground">Summarize research, surface insights, and generate recommendations</p>
+                </div>
               </div>
+            </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="material" className="text-sm">Paste content</Label>
-                <Textarea
-                  id="material"
-                  rows={14}
-                  placeholder="Paste the report, article, or transcript..."
-                  value={material}
-                  onChange={(e) => setMaterial(e.target.value)}
-                  className="bg-card border-border"
-                />
+            {/* Depth pills */}
+            <div className="flex flex-wrap items-center gap-3 mb-5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mr-1">
+                  Depth
+                </span>
+                {depths.map((d) => (
+                  <button
+                    key={d.value}
+                    type="button"
+                    onClick={() => setDepth(d.value)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${pillClass(depth === d.value)}`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
               </div>
+            </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="q" className="text-sm">Focus question (optional)</Label>
-                <Input
-                  id="q"
-                  placeholder="e.g. What are the implications for pricing?"
-                  value={question}
-                  onChange={(e) => setQuestion(e.target.value)}
-                  className="bg-card border-border"
-                />
-              </div>
+            {/* Material textarea */}
+            <div className="mb-5">
+              <textarea
+                placeholder="Paste report, article, or transcript..."
+                value={material}
+                onChange={(e) => setMaterial(e.target.value)}
+                rows={10}
+                className="w-full bg-card/50 border border-border/60 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 resize-vertical focus:outline-none focus:border-accent/40 transition-colors"
+              />
+            </div>
 
-              <Button onClick={onRun} disabled={loading || material.trim().length < 20} className="w-full">
-                {loading ? <><Loader2 className="size-4 animate-spin" /> Analyzing...</> : "Generate analysis"}
+            {/* Question input */}
+            <div className="mb-5">
+              <input
+                type="text"
+                placeholder="Focus question (optional)"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                className="w-full bg-card/50 border border-border/60 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-accent/40 transition-colors"
+              />
+            </div>
+
+            {/* Generate button + shortcut hint */}
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={onGenerate}
+                disabled={loading || refining || material.trim().length < 20}
+                className="rounded-xl px-5"
+              >
+                {loading ? (
+                  <><Loader2 className="size-4 animate-spin" /> Analyzing...</>
+                ) : (
+                  <><Sparkles className="size-4" /> Generate analysis</>
+                )}
               </Button>
-              <AIDisclaimer />
+              <span className="text-xs text-muted-foreground/50">
+                or press{" "}
+                <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted/30 text-[11px] font-mono text-muted-foreground">
+                  {modKey}+Enter
+                </kbd>
+              </span>
             </div>
 
-            {/* Output panel */}
-            <div className="lg:col-span-3 surface-card p-5 min-h-[400px] flex flex-col">
-              <h2 className="text-base font-semibold text-foreground mb-4">Analysis</h2>
-              {!output && !loading && (
-                <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-12">
-                  <div className="size-12 rounded-full border border-dashed border-border flex items-center justify-center text-muted-foreground">
-                    <BookOpen className="size-5" />
+            {/* Loading skeleton */}
+            {loading && !output && (
+              <div className="mt-10 space-y-3 animate-pulse">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="size-7 rounded-lg bg-muted/50" />
+                  <div className="h-3 w-40 rounded bg-muted/50" />
+                  <div className="h-3 w-16 rounded bg-muted/30" />
+                </div>
+                {[85, 70, 90, 55, 75, 60, 80].map((w, i) => (
+                  <div key={i} className="h-2.5 rounded bg-muted/40" style={{ width: `${w}%` }} />
+                ))}
+              </div>
+            )}
+
+            {/* Result */}
+            {output && (
+              <div ref={resultRef} className="mt-10">
+                <div className="flex items-start gap-3">
+                  <div className="size-7 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="size-2 rounded-full bg-accent" />
                   </div>
-                  <p className="mt-4 font-semibold text-foreground">Your analysis will appear here</p>
-                  <p className="mt-1.5 text-sm text-muted-foreground max-w-xs">Paste material and we'll produce a summary, insights, recommendations, and open questions.</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-foreground">Operiq AI</span>
+                        <span className="text-[10px] text-muted-foreground/50">\u00b7</span>
+                        <span className="text-[11px] text-muted-foreground/50">Just now</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" onClick={copy} className="h-7 px-2 text-xs gap-1">
+                          {copied ? (
+                            <><Check className="size-3.5 text-accent" /> Copied</>
+                          ) : (
+                            <><Copy className="size-3.5" /> Copy</>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl bg-card/30 border border-border/50 px-5 py-4">
+                      <div className="prose-flow prose-sm max-w-none">
+                        <MarkdownView>{output}</MarkdownView>
+                      </div>
+                    </div>
+
+                    {/* Refine input */}
+                    <div className="mt-3 flex items-center gap-2 bg-card/30 border border-border/50 rounded-xl px-4 py-2.5 focus-within:border-accent/40 transition-colors">
+                      <input
+                        ref={refineInputRef}
+                        type="text"
+                        placeholder="Tell Operiq how to improve this analysis..."
+                        value={refineText}
+                        onChange={(e) => setRefineText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                            e.preventDefault();
+                            onRefine();
+                          }
+                        }}
+                        className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground/40"
+                      />
+                      <button
+                        type="button"
+                        onClick={onRefine}
+                        disabled={refining || !refineText.trim()}
+                        className="size-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors disabled:opacity-30 shrink-0"
+                      >
+                        {refining ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <SendHorizontal className="size-3.5" />
+                        )}
+                      </button>
+                    </div>
+
+                    <AIDisclaimer />
+                  </div>
                 </div>
-              )}
-              {loading && (
-                <div className="space-y-3 animate-pulse">
-                  {[90, 75, 95, 60, 80, 70].map((w, i) => (
-                    <div key={i} className="h-3 rounded bg-muted" style={{ width: `${w}%` }} />
-                  ))}
+              </div>
+            )}
+
+            {/* Empty state */}
+            {!output && !loading && (
+              <div className="mt-16 text-center">
+                <div className="size-10 rounded-xl bg-accent/5 border border-accent/10 flex items-center justify-center mx-auto mb-3">
+                  <Sparkles className="size-4 text-accent/60" />
                 </div>
-              )}
-              {output && (
-                <div className="prose-flow flex-1">
-                  <MarkdownView>{output}</MarkdownView>
-                </div>
-              )}
-            </div>
+                <p className="text-sm text-muted-foreground/50">
+                  Paste material and click Generate analysis
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -136,11 +297,9 @@ function ResearchPage() {
 
 function AIDisclaimer() {
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-      <ShieldCheck className="size-3.5 mt-0.5 shrink-0" />
-      <p>
-        AI-generated analysis. Verify key facts and consider potential biases in the source material.
-      </p>
+    <div className="mt-4 flex items-start gap-2 rounded-lg px-3 py-2 text-[11px] text-muted-foreground/60">
+      <ShieldCheck className="size-3 mt-0.5 shrink-0" />
+      <p>AI-generated analysis. Verify key facts and consider potential biases in the source material.</p>
     </div>
   );
 }
