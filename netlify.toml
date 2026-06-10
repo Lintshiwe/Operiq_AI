@@ -7,6 +7,12 @@
   # nft traces imports — required for dynamic import("./assets/*") inside server.js
   node_bundler = "nft"
 
+# All routes handled by the SSR function
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/server"
+  status = 200
+
 [dev]
   command = "bun run dev"
   port = 3000
