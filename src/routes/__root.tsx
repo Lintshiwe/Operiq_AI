@@ -9,7 +9,8 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { type ReactNode } from "react";
-import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { ConvexReactClient } from "convex/react";
+import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { AuthGate } from "@/components/AuthGate";
 
 import appCss from "../styles.css?url";
@@ -132,7 +133,7 @@ function RootComponent() {
   const isAuthPage = pathname === "/login" || pathname === "/signup";
 
   return (
-    <ConvexProvider client={convex}>
+    <ConvexAuthProvider client={convex}>
       <QueryClientProvider client={queryClient}>
         {isAuthPage ? (
           <Outlet />
@@ -142,6 +143,6 @@ function RootComponent() {
           </AuthGate>
         )}
       </QueryClientProvider>
-    </ConvexProvider>
+    </ConvexAuthProvider>
   );
 }

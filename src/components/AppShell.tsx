@@ -38,7 +38,7 @@ const STUDIO_NAV: NavItem[] = [
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [open, setOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");
 
@@ -65,45 +65,43 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-dvh w-full bg-background text-foreground">
-      {/* Sidebar */}
-      {open && (
-        <aside className="hidden md:flex w-[260px] shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
-          {/* Logo */}
-          <div className="flex items-center gap-2 px-3 h-14">
-            <Logo variant="full" className="h-7" />
-          </div>
+      {/* Desktop sidebar — always visible on md+ */}
+      <aside className="hidden md:flex w-[260px] shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+        {/* Logo */}
+        <div className="flex items-center gap-2 px-3 h-14">
+          <Logo variant="full" className="h-7" />
+        </div>
 
-          {/* New chat button */}
-          <div className="px-2 pb-2">
-            <Link
-              to="/assistant"
-              className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:bg-sidebar-accent text-sidebar-foreground border border-sidebar-border"
-            >
-              <SquarePen className="size-4" />
-              New chat
-            </Link>
-          </div>
+        {/* New chat button */}
+        <div className="px-2 pb-2">
+          <Link
+            to="/assistant"
+            className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:bg-sidebar-accent text-sidebar-foreground border border-sidebar-border"
+          >
+            <SquarePen className="size-4" />
+            New chat
+          </Link>
+        </div>
 
-          {/* Nav items */}
-          <div className="flex-1 overflow-y-auto px-2 py-1">
-            {/* Chat section */}
-            <p className="px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">
-              Chat
-            </p>
-            {CHAT_NAV.map((item) => navLink(item))}
-            {/* Studio section */}
-            <p className="px-2.5 pt-4 pb-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">
-              Studio
-            </p>
-            {STUDIO_NAV.map((item) => navLink(item))}
-          </div>
-        </aside>
-      )}
+        {/* Nav items */}
+        <div className="flex-1 overflow-y-auto px-2 py-1">
+          {/* Chat section */}
+          <p className="px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">
+            Chat
+          </p>
+          {CHAT_NAV.map((item) => navLink(item))}
+          {/* Studio section */}
+          <p className="px-2.5 pt-4 pb-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">
+            Studio
+          </p>
+          {STUDIO_NAV.map((item) => navLink(item))}
+        </div>
+      </aside>
 
-      {/* Sidebar toggle (mobile) */}
-      {!open && (
+      {/* Mobile sidebar toggle */}
+      {!mobileOpen && (
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => setMobileOpen(true)}
           className="fixed top-3 left-3 z-50 md:hidden p-2 rounded-md bg-sidebar text-sidebar-foreground border border-sidebar-border"
           aria-label="Open sidebar"
         >
@@ -112,14 +110,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
 
       {/* Mobile sidebar overlay */}
-      {open && (
+      {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-40">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
           <aside className="fixed left-0 top-0 bottom-0 w-[260px] flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border z-50">
             <div className="flex items-center justify-between px-3 h-14">
               <Logo variant="full" className="h-6" />
               <button
-                onClick={() => setOpen(false)}
+                onClick={() => setMobileOpen(false)}
                 className="p-1.5 rounded-md text-muted-foreground hover:bg-sidebar-accent"
               >
                 <PanelLeft className="size-4" />
@@ -128,7 +126,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="px-2 pb-2">
               <Link
                 to="/assistant"
-                onClick={() => setOpen(false)}
+                onClick={() => setMobileOpen(false)}
                 className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:bg-sidebar-accent text-sidebar-foreground border border-sidebar-border"
               >
                 <Plus className="size-4" />
@@ -139,11 +137,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               <p className="px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">
                 Chat
               </p>
-              {CHAT_NAV.map((item) => navLink(item, () => setOpen(false)))}
+              {CHAT_NAV.map((item) => navLink(item, () => setMobileOpen(false)))}
               <p className="px-2.5 pt-4 pb-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">
                 Studio
               </p>
-              {STUDIO_NAV.map((item) => navLink(item, () => setOpen(false)))}
+              {STUDIO_NAV.map((item) => navLink(item, () => setMobileOpen(false)))}
             </div>
           </aside>
         </div>
