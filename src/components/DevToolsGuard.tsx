@@ -4,52 +4,45 @@
  * or use of this file is strictly prohibited.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+/**
+ * Detects DevTools via window-size difference and shows a security overlay.
+ * Uses a conservative threshold (250px) to avoid false positives from
+ * browser toolbars, bookmarks bars, or side panels.
+ */
 export function DevToolsGuard() {
   const [detected, setDetected] = useState(false);
+  const lockedRef = useRef(false);
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== "production") return;
+    // Only active in production builds
+    if (!import.meta.env.PROD) return;
 
-    let devtoolsOpen = false;
-
-    // Detection method 1: Window size difference
     function checkSize() {
-      const threshold = 160;
-      if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
-        devtoolsOpen = true;
+      if (lockedRef.current) return;
+
+      const threshold = 250;
+      const widthDiff = window.outerWidth - window.innerWidth;
+      const heightDiff = window.outerHeight - window.innerHeight;
+
+      if (widthDiff > threshold || heightDiff > threshold) {
+        lockedRef.current = true;
         setDetected(true);
       }
     }
 
-    // Detection method 2: Timing check with debugger
-    function checkTiming() {
-      const start = performance.now();
-      // eslint-disable-next-line no-debugger
-      debugger;
-      const end = performance.now();
-      // If devtools is open, debugger statement causes a significant delay
-      if (end - start > 100) {
-        devtoolsOpen = true;
-        setDetected(true);
-      }
-    }
-
-    // Run checks periodically
+    // Run once on mount, then every 10 seconds — not too aggressive
     checkSize();
-    checkTiming();
+    const interval = setInterval(checkSize, 10_000);
 
-    const sizeInterval = setInterval(checkSize, 2000);
-    const timingInterval = setInterval(checkTiming, 3000);
-
+    // Also check on resize (debounced by the interval)
     window.addEventListener("resize", checkSize);
 
     return () => {
-      clearInterval(sizeInterval);
-      clearInterval(timingInterval);
+      clearInterval(interval);
       window.removeEventListener("resize", checkSize);
     };
   }, []);
@@ -76,13 +69,11 @@ export function DevToolsGuard() {
         </h1>
 
         <p className="text-sm text-zinc-400 leading-relaxed">
-          Developer tools have been detected. For security reasons, this session has been terminated.
+          Developer tools have been detected. For security reasons, this session
+          has been terminated.
         </p>
 
-        <Button
-          onClick={handleReload}
-          className="inline-flex items-center gap-2"
-        >
+        <Button onClick={handleReload} className="inline-flex items-center gap-2">
           <RotateCcw className="size-4" />
           Reload
         </Button>
