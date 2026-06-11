@@ -128,6 +128,6 @@ h1 {
       <div class="actions">${l}</div>
     </div>
   </body>
-</html>`}let s;async function u(){return s||(s=import("./assets/server-DDWteTIE.js").then(t=>t.default??t)),s}async function m(t){if(t.status<500||!(t.headers.get("content-type")??"").includes("application/json"))return t;const e=await t.clone().text();if(!e.includes('"unhandled":true')||!e.includes('"message":"HTTPError"'))return t;const n=p();return n instanceof Error?console.error("SSR Error:",n.message,n.stack?.split(`
+</html>`}let s;async function u(){return s||(s=import("./assets/server-Ba8eJL9B.js").then(t=>t.default??t)),s}async function m(t){if(t.status<500||!(t.headers.get("content-type")??"").includes("application/json"))return t;const e=await t.clone().text();if(!e.includes('"unhandled":true')||!e.includes('"message":"HTTPError"'))return t;const n=p();return n instanceof Error?console.error("SSR Error:",n.message,n.stack?.split(`
 `).slice(0,5).join(`
 `)):console.error("h3 swallowed SSR error:",e),new Response(c(),{status:500,headers:{"content-type":"text/html; charset=utf-8"}})}const x={async fetch(t,o,e){try{const a=await(await u()).fetch(t,o,e);return await m(a)}catch(n){return console.error(n),new Response(c(),{status:500,headers:{"content-type":"text/html; charset=utf-8"}})}}};export{x as default,c as r};

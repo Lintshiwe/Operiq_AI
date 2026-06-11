@@ -4,17 +4,17 @@
  * or use of this file is strictly prohibited.
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
-  CalendarCheck2, Loader2, Copy, Check, ShieldCheck,
-  Sparkles, SendHorizontal,
+  CheckCircle2, ListChecks, Calendar, Copy, Check, Sparkles, ShieldCheck,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { MarkdownView } from "@/components/MarkdownView";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/meetings")({
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/meetings")({
       { title: "Meeting Intelligence \u00b7 Operiq AI" },
       {
         name: "description",
-        content: "Summarize meetings — extract decisions, action items and deadlines.",
+        content: "Summarize meetings \u2014 extract decisions, action items and deadlines.",
       },
     ],
   }),
@@ -37,50 +37,22 @@ function MeetingsPage() {
   const { prefill } = Route.useSearch();
   const generate = useMutation(api.summaries.generate);
   const [notes, setNotes] = useState(prefill || "");
-  const [meetingType, setMeetingType] = useState<"1:1" | "team" | "client" | "all-hands">("team");
   const [output, setOutput] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [refineText, setRefineText] = useState("");
-  const [refining, setRefining] = useState(false);
-  const refineInputRef = useRef<HTMLInputElement>(null);
-  const resultRef = useRef<HTMLDivElement>(null);
-  const [modKey, setModKey] = useState("\u2318");
 
-  useEffect(() => {
-    setModKey(navigator.platform?.includes("Mac") ? "\u2318" : "Ctrl");
-  }, []);
-
-  async function onGenerate() {
+  async function handleGenerate() {
     if (notes.trim().length < 20) return;
     setLoading(true);
     setOutput(null);
     try {
-      const result = await generate({ notes, meetingType });
+      const result = await generate({ notes, meetingType: "team" });
       setOutput(result.text);
     } catch (e) {
       toast.error("Generation failed. Please try again.");
       console.error(e);
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function onRefine() {
-    if (!output || !refineText.trim()) return;
-    setRefining(true);
-    try {
-      const result = await generate({
-        notes: `Revise this briefing: ${output}\n\nRequested changes: ${refineText}`,
-        meetingType: "",
-      });
-      setOutput(result.text);
-      setRefineText("");
-    } catch (e) {
-      toast.error("Refinement failed. Please try again.");
-      console.error(e);
-    } finally {
-      setRefining(false);
     }
   }
 
@@ -98,209 +70,222 @@ function MeetingsPage() {
   useEffect(() => {
     function handler(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-        if (refineInputRef.current === document.activeElement) {
-          e.preventDefault();
-          onRefine();
-        } else {
-          e.preventDefault();
-          onGenerate();
-        }
+        e.preventDefault();
+        handleGenerate();
       }
     }
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [notes, meetingType, output, refineText]);
+  }, [notes]);
 
-  useEffect(() => {
-    if (output && resultRef.current) {
-      resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [output]);
-
-  const meetingTypes = [
-    { value: "1:1" as const, label: "1:1" },
-    { value: "team" as const, label: "Team Sync" },
-    { value: "client" as const, label: "Client Call" },
-    { value: "all-hands" as const, label: "All-Hands" },
-  ];
-
-  function pillClass(active: boolean) {
-    return active
-      ? "bg-accent text-accent-foreground shadow-sm"
-      : "bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50";
-  }
+  const sections = parseSections(output);
 
   return (
     <AppShell>
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-[680px] mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10">
-            {/* Minimal header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-2 sm:gap-0">
-              <div className="flex items-center gap-2.5">
-                <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                  <CalendarCheck2 className="size-4" />
-                </span>
-                <div>
-                  <h1 className="text-sm font-semibold text-foreground">Meeting Intelligence</h1>
-                  <p className="text-xs text-muted-foreground">Summarize meetings — extract decisions, action items and deadlines</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Meeting type pills */}
-            <div className="flex flex-wrap items-center gap-3 mb-5">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mr-1">
-                  Type
-                </span>
-                {meetingTypes.map((t) => (
-                  <button
-                    key={t.value}
-                    type="button"
-                    onClick={() => setMeetingType(t.value)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${pillClass(meetingType === t.value)}`}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Notes textarea */}
-            <div className="mb-5">
-              <textarea
-                placeholder="Paste meeting transcript or rough notes..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={12}
-                className="w-full bg-card/50 border border-border/60 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 resize-vertical focus:outline-none focus:border-accent/40 transition-colors"
-              />
-            </div>
-
-            {/* Generate button + shortcut hint */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              <Button
-                onClick={onGenerate}
-                disabled={loading || refining || notes.trim().length < 20}
-                className="rounded-xl px-5 w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90"
-              >
-                {loading ? (
-                  <><Loader2 className="size-4 animate-spin" /> Generating...</>
-                ) : (
-                  <><Sparkles className="size-4" /> Generate briefing</>
-                )}
-              </Button>
-              <span className="text-xs text-muted-foreground/50">
-                or press{" "}
-                <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted/30 text-[11px] font-mono text-muted-foreground">
-                  {modKey}+Enter
-                </kbd>
-              </span>
-            </div>
-
-            {/* Loading skeleton */}
-            {loading && !output && (
-              <div className="mt-10 space-y-3 animate-pulse">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="size-7 rounded-lg bg-muted/50" />
-                  <div className="h-3 w-40 rounded bg-muted/50" />
-                  <div className="h-3 w-16 rounded bg-muted/30" />
-                </div>
-                {[85, 70, 90, 55, 75, 60, 80].map((w, i) => (
-                  <div key={i} className="h-2.5 rounded bg-muted/40" style={{ width: `${w}%` }} />
-                ))}
-              </div>
-            )}
-
-            {/* Result */}
-            {output && (
-              <div ref={resultRef} className="mt-10">
-                <div className="flex items-start gap-3">
-                  <div className="size-7 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <div className="size-2 rounded-full bg-accent" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-2 sm:gap-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-foreground">Operiq AI</span>
-                        <span className="text-[10px] text-muted-foreground/50">\u00b7</span>
-                        <span className="text-[11px] text-muted-foreground/50">Just now</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={copy} className="h-7 px-2 text-xs gap-1">
-                          {copied ? (
-                            <><Check className="size-3.5 text-accent" /> Copied</>
-                          ) : (
-                            <><Copy className="size-3.5" /> Copy</>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl bg-card/30 border border-border/50 px-5 py-4">
-                      <div className="prose-flow prose-sm max-w-none">
-                        <MarkdownView>{output}</MarkdownView>
-                      </div>
-                    </div>
-
-                    {/* Refine input */}
-                    <div className="mt-3 flex items-center gap-2 bg-card/30 border border-border/50 rounded-xl px-4 py-2.5 focus-within:border-accent/40 transition-colors">
-                      <input
-                        ref={refineInputRef}
-                        type="text"
-                        placeholder="Tell Operiq how to improve this briefing..."
-                        value={refineText}
-                        onChange={(e) => setRefineText(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                            e.preventDefault();
-                            onRefine();
-                          }
-                        }}
-                        className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground/40"
-                      />
-                      <button
-                        type="button"
-                        onClick={onRefine}
-                        disabled={refining || !refineText.trim()}
-                        className="size-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors disabled:opacity-30 shrink-0"
-                      >
-                        {refining ? (
-                          <Loader2 className="size-3.5 animate-spin" />
-                        ) : (
-                          <SendHorizontal className="size-3.5" />
-                        )}
-                      </button>
-                    </div>
-
-                    <AIDisclaimer />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Empty state */}
-            {!output && !loading && (
-              <div className="mt-16 text-center">
-                <div className="size-10 rounded-xl bg-accent/5 border border-accent/10 flex items-center justify-center mx-auto mb-3">
-                  <Sparkles className="size-4 text-accent/60" />
-                </div>
-                <p className="text-sm text-muted-foreground/50">
-                  Paste meeting notes and click Generate briefing
-                </p>
-              </div>
-            )}
+      <div className="h-full flex flex-col items-center py-12 px-4">
+        <div className="w-full max-w-[720px] space-y-8">
+          {/* Title + subtitle */}
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl font-semibold text-foreground">Meeting Intelligence</h1>
+            <p className="text-sm text-muted-foreground">Summarize meetings — extract decisions, action items and deadlines</p>
           </div>
+
+          {/* Input */}
+          <Textarea
+            placeholder="Paste your meeting notes here..."
+            rows={8}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="bg-card border-border/60 text-foreground placeholder:text-muted-foreground/40 resize-y"
+          />
+          
+          {/* Generate button */}
+          <div className="flex justify-center">
+            <Button
+              onClick={handleGenerate}
+              disabled={loading || notes.trim().length < 20}
+              className="rounded-full px-8 bg-accent text-accent-foreground hover:bg-accent/90"
+            >
+              {loading ? (
+                <Sparkles className="size-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="size-4 mr-2" />
+              )}
+              Generate Summary
+            </Button>
+          </div>
+
+          {/* Loading skeleton */}
+          {loading && !output && (
+            <div className="space-y-3 animate-pulse">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="rounded-xl border border-border/40 bg-card/50 p-6 space-y-3">
+                    <div className="h-4 w-32 rounded bg-muted/50" />
+                    <div className="h-3 w-full rounded bg-muted/30" />
+                    <div className="h-3 w-4/5 rounded bg-muted/30" />
+                    <div className="h-3 w-3/4 rounded bg-muted/30" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Three cards */}
+          {output && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Key Decisions */}
+                <Card className="bg-card border-border/60">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="size-5 text-blue-400" />
+                      <CardTitle className="text-sm font-semibold">Key Decisions</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      {sections.decisions.length > 0 ? (
+                        sections.decisions.map((item, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="mt-1.5 size-1.5 rounded-full bg-blue-400 shrink-0" />
+                            <span>{item}</span>
+                          </li>
+                        ))
+                      ) : (
+                        <li className="text-sm text-muted-foreground">{output}</li>
+                      )}
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                {/* Action Items */}
+                <Card className="bg-card border-border/60">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-2">
+                      <ListChecks className="size-5 text-blue-400" />
+                      <CardTitle className="text-sm font-semibold">Action Items</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      {sections.actions.length > 0 ? (
+                        sections.actions.map((item, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="mt-1 size-3 rounded-sm border border-blue-400/60 shrink-0" />
+                            <span>{item}</span>
+                          </li>
+                        ))
+                      ) : (
+                        <li className="text-sm text-muted-foreground/50 italic">No action items found</li>
+                      )}
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                {/* Upcoming Deadlines */}
+                <Card className="bg-card border-border/60">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="size-5 text-blue-400" />
+                      <CardTitle className="text-sm font-semibold">Upcoming Deadlines</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      {sections.deadlines.length > 0 ? (
+                        sections.deadlines.map((item, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="mt-1 size-3 rounded-sm border border-blue-400/60 shrink-0" />
+                            <span>{item}</span>
+                          </li>
+                        ))
+                      ) : (
+                        <li className="text-sm text-muted-foreground/50 italic">No deadlines found</li>
+                      )}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Copy button + Disclaimer */}
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <Button variant="ghost" size="sm" onClick={copy} className="h-7 px-2 text-xs gap-1">
+                  {copied ? (
+                    <><Check className="size-3.5 text-[#10a37f]" /> Copied</>
+                  ) : (
+                    <><Copy className="size-3.5" /> Copy</>
+                  )}
+                </Button>
+                <AIDisclaimer />
+              </div>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!output && !loading && (
+            <div className="mt-16 text-center">
+              <div className="size-10 rounded-xl bg-accent/5 border border-accent/10 flex items-center justify-center mx-auto mb-3">
+                <Sparkles className="size-4 text-accent/60" />
+              </div>
+              <p className="text-sm text-muted-foreground/50">
+                Paste meeting notes and click Generate Summary
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </AppShell>
   );
 }
 
+function parseSections(text: string | null) {
+  if (!text) return { decisions: [] as string[], actions: [] as string[], deadlines: [] as string[] };
+
+  const lines = text.split('\n');
+  const sections = { decisions: [] as string[], actions: [] as string[], deadlines: [] as string[] };
+  let currentSection: 'decisions' | 'actions' | 'deadlines' | null = null;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const lower = trimmed.toLowerCase();
+
+    if (lower.includes('key decision') || lower.includes('decisions') || lower.includes('decision made')) {
+      currentSection = 'decisions';
+      continue;
+    }
+    if (lower.includes('action item') || lower.includes('actions') || lower.includes('to-do') || lower.includes('todo')) {
+      currentSection = 'actions';
+      continue;
+    }
+    if (lower.includes('deadline') || lower.includes('due date') || lower.includes('upcoming')) {
+      currentSection = 'deadlines';
+      continue;
+    }
+
+    if (currentSection && (trimmed.startsWith('-') || trimmed.startsWith('•') || trimmed.match(/^\d+\./))) {
+      const clean = trimmed.replace(/^[-•]\s*/, '').replace(/^\d+\.\s*/, '').trim();
+      if (clean) sections[currentSection].push(clean);
+    } else if (currentSection && trimmed) {
+      if (trimmed.length > 10) {
+        sections[currentSection].push(trimmed);
+      }
+    }
+  }
+
+  // If no sections found at all, return the whole text as a single decision
+  if (sections.decisions.length === 0 && sections.actions.length === 0 && sections.deadlines.length === 0) {
+    return { decisions: [text], actions: [], deadlines: [] };
+  }
+
+  return sections;
+}
+
 function AIDisclaimer() {
   return (
-    <div className="mt-4 flex items-start gap-2 rounded-lg px-3 py-2 text-[11px] text-muted-foreground/60">
+    <div className="flex items-start gap-2 rounded-lg px-3 py-2 text-[11px] text-muted-foreground/60">
       <ShieldCheck className="size-3 mt-0.5 shrink-0" />
       <p>AI-generated summary. Review for accuracy, tone, and potential bias before acting on it.</p>
     </div>
