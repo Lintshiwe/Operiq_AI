@@ -7,7 +7,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { callAI } from "./ai";
 
 export const list = query({
   args: { userId: v.id("users") },
@@ -100,53 +99,4 @@ export const save = mutation({
   },
 });
 
-export const generatePlan = mutation({
-  args: {
-    horizon: v.string(),
-    tasks: v.string(),
-    goals: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
 
-    const horizonLabel = args.horizon === "weekly" ? "week" : "day";
-
-    const systemPrompt = `You are an expert task planner and project manager. Structure tasks into clear, actionable plans.
-
-For each plan:
-1. Prioritize tasks by urgency and importance
-2. Break complex tasks into subtasks
-3. Suggest time estimates for each task
-4. Identify dependencies between tasks
-5. Format the plan with clear headings and checkboxes
-
-Horizon: ${args.horizon} (planning for a ${horizonLabel})`;
-
-    const userPrompt = `Create a ${args.horizon} plan based on:
-
-Tasks:
-${args.tasks}
-
-${args.goals ? `Goals:\n${args.goals}` : ""}
-
-Please create a structured, actionable plan.`;
-
-    const output = await callAI([
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ]);
-
-    // Save to database
-    const id = await ctx.db.insert("taskPlans", {
-      userId,
-      horizon: args.horizon,
-      tasks: args.tasks,
-      goals: args.goals,
-      output,
-      createdAt: new Date().toISOString(),
-    });
-
-    return { success: true, planId: id, output };
-  },
-});

@@ -7,7 +7,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { callAI } from "./ai";
 
 export const list = query({
   args: { userId: v.id("users") },
@@ -101,52 +100,4 @@ export const save = mutation({
   },
 });
 
-export const generateAnalysis = mutation({
-  args: {
-    material: v.string(),
-    question: v.optional(v.string()),
-    depth: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
 
-    const depthLabel = args.depth ?? "quick";
-    const depthInstructions: Record<string, string> = {
-      quick: "Provide a brief, high-level overview. Keep it to key points only.",
-      deep: "Provide a thorough, detailed analysis. Go into depth on key topics.",
-      executive: "Provide a concise executive summary with key takeaways and recommendations. Focus on business impact.",
-    };
-
-    const systemPrompt = `You are an expert research analyst. Analyze materials and provide insightful, well-structured analyses.
-
-Analysis depth: ${depthLabel}
-${depthInstructions[depthLabel] || depthInstructions.quick}
-
-Format your analysis with:
-- Clear headings
-- Key findings
-- Supporting evidence
-- Recommendations (if applicable)
-- Sources or references (if mentioned in materials)`;
-
-    const userPrompt = `Analyze the following material${args.question ? ` with this question in mind: ${args.question}` : ""}:\n\n${args.material}`;
-
-    const output = await callAI([
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ]);
-
-    // Save to database
-    const id = await ctx.db.insert("researchAnalyses", {
-      userId,
-      material: args.material,
-      question: args.question,
-      depth: args.depth,
-      output,
-      createdAt: new Date().toISOString(),
-    });
-
-    return { success: true, analysisId: id, output };
-  },
-});

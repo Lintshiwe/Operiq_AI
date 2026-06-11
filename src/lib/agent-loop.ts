@@ -44,7 +44,7 @@ export interface AgentResult {
 /*  Agent System Prompt                                               */
 /* ------------------------------------------------------------------ */
 
-const AGENT_SYSTEM_EXTENSION = `
+export const AGENT_SYSTEM_EXTENSION = `
 You are Operiq AI, an autonomous agent with access to tools. Follow this ReAct pattern:
 
 1. THINK about what you need to do to answer the user's request.

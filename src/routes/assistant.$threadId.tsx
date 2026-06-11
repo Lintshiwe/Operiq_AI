@@ -1107,7 +1107,7 @@ function ChatPane({
               >
                 <Image className="size-4" />
               </button>
-              {typeof window !== "undefined" && window.isSecureContext && (
+              {typeof window !== "undefined" && location.protocol === "https:" && (
                 <button
                   type="button"
                   onClick={isRecording ? stopRecording : startRecording}

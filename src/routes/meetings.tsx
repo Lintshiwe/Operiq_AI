@@ -52,7 +52,7 @@ function MeetingsPage() {
     setLoading(true);
     setOutput(null);
     try {
-      const result = await generate({ notes, meetingType } as any);
+      const result = await generate({ notes, meetingType });
       setOutput(result.text);
     } catch (e) {
       toast.error("Generation failed. Please try again.");
@@ -68,8 +68,8 @@ function MeetingsPage() {
     try {
       const result = await generate({
         notes: `Revise this briefing: ${output}\n\nRequested changes: ${refineText}`,
-        meetingType: "" as any,
-      } as any);
+        meetingType: "",
+      });
       setOutput(result.text);
       setRefineText("");
     } catch (e) {
@@ -82,9 +82,13 @@ function MeetingsPage() {
 
   async function copy() {
     if (!output) return;
-    await navigator.clipboard.writeText(output);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(output);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Failed to copy");
+    }
   }
 
   useEffect(() => {

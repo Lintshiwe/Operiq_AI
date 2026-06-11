@@ -50,7 +50,7 @@ function PlannerPage() {
     setLoading(true);
     setOutput(null);
     try {
-      const result = await generate({ horizon, tasks, goals } as any);
+      const result = await generate({ horizon, tasks, goals });
       setOutput(result.text);
     } catch (e) {
       toast.error("Generation failed. Please try again.");
@@ -68,7 +68,7 @@ function PlannerPage() {
         horizon,
         tasks: `Previous plan:\n${output}\n\nRequested changes: ${refineText}`,
         goals: "",
-      } as any);
+      });
       setOutput(result.text);
       setRefineText("");
     } catch (e) {
@@ -81,9 +81,29 @@ function PlannerPage() {
 
   async function copy() {
     if (!output) return;
-    await navigator.clipboard.writeText(output);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(output);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Failed to copy");
+    }
+  }
+
+  function exportPlan() {
+    if (!output) return;
+    const date = new Date().toLocaleString();
+    const content = `Operiq AI Task Plan — Generated on ${date}\n${"=".repeat(60)}\n\n${output}`;
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `operiq-plan-${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Plan exported");
   }
 
   useEffect(() => {
@@ -235,12 +255,8 @@ function PlannerPage() {
                             <><Copy className="size-3.5" /> Copy</>
                           )}
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={copy} className="h-7 px-2 text-xs gap-1">
-                          {copied ? (
-                            <><Check className="size-3.5 text-accent" /> Exported</>
-                          ) : (
-                            <><Download className="size-3.5" /> Export</>
-                          )}
+                        <Button variant="ghost" size="sm" onClick={exportPlan} className="h-7 px-2 text-xs gap-1">
+                          <><Download className="size-3.5" /> Export</>
                         </Button>
                       </div>
                     </div>

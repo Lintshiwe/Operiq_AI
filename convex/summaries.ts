@@ -7,7 +7,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { callAI } from "./ai";
 
 export const list = query({
   args: { userId: v.id("users") },
@@ -97,46 +96,4 @@ export const save = mutation({
   },
 });
 
-export const generateSummary = mutation({
-  args: {
-    meetingType: v.optional(v.string()),
-    notes: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
 
-    const meetingTypeInfo = args.meetingType
-      ? `Meeting type: ${args.meetingType}`
-      : "General meeting";
-
-    const systemPrompt = `You are an expert meeting analyst. Summarize meeting notes into clear, actionable formats.
-
-For each summary:
-1. Extract key decisions made
-2. List action items with owners (if mentioned)
-3. Identify important deadlines
-4. Note any open questions or follow-ups
-5. Keep the summary concise and scannable
-
-${meetingTypeInfo}`;
-
-    const userPrompt = `Please summarize these meeting notes:\n\n${args.notes}`;
-
-    const output = await callAI([
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ]);
-
-    // Save to database
-    const id = await ctx.db.insert("meetingSummaries", {
-      userId,
-      meetingType: args.meetingType,
-      notes: args.notes,
-      output,
-      createdAt: new Date().toISOString(),
-    });
-
-    return { success: true, summaryId: id, output };
-  },
-});

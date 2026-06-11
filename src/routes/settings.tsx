@@ -7,6 +7,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../convex/_generated/api";
 import {
   ArrowLeft,
@@ -34,6 +35,14 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -85,6 +94,11 @@ function SettingsPage() {
   const [contrast, setContrast] = useState<"default" | "high">("default");
   const [enableDictation, setEnableDictation] = useState(false);
   const [separateVoice, setSeparateVoice] = useState(false);
+  const [language, setLanguage] = useState("en");
+  const [spokenLanguage, setSpokenLanguage] = useState("English");
+  const [voice, setVoice] = useState("Aria");
+  const [referenceMemories, setReferenceMemories] = useState(false);
+  const [referenceHistory, setReferenceHistory] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("operiq-theme");
@@ -95,6 +109,11 @@ function SettingsPage() {
     } else {
       setIsDark(document.documentElement.classList.contains("dark"));
     }
+    setLanguage(localStorage.getItem("operiq-language") || "en");
+    setSpokenLanguage(localStorage.getItem("operiq-spoken-language") || "English");
+    setVoice(localStorage.getItem("operiq-voice") || "Aria");
+    setReferenceMemories(localStorage.getItem("operiq-reference-memories") === "true");
+    setReferenceHistory(localStorage.getItem("operiq-reference-history") === "true");
   }, []);
 
   function toggleDarkMode() {
@@ -202,9 +221,22 @@ function SettingsPage() {
                 setEnableDictation={setEnableDictation}
                 separateVoice={separateVoice}
                 setSeparateVoice={setSeparateVoice}
+                language={language}
+                setLanguage={setLanguage}
+                spokenLanguage={spokenLanguage}
+                setSpokenLanguage={setSpokenLanguage}
+                voice={voice}
+                setVoice={setVoice}
               />
             )}
-            {activeSection === "personalization" && <PersonalizationSection />}
+            {activeSection === "personalization" && (
+              <PersonalizationSection
+                referenceMemories={referenceMemories}
+                setReferenceMemories={setReferenceMemories}
+                referenceHistory={referenceHistory}
+                setReferenceHistory={setReferenceHistory}
+              />
+            )}
             {activeSection === "billing" && <BillingSection />}
             {activeSection === "storage" && <StorageSection />}
             {activeSection === "contact" && <ContactSection />}
@@ -230,6 +262,12 @@ function GeneralSection({
   setEnableDictation,
   separateVoice,
   setSeparateVoice,
+  language,
+  setLanguage,
+  spokenLanguage,
+  setSpokenLanguage,
+  voice,
+  setVoice,
 }: {
   isDark: boolean;
   toggleDarkMode: () => void;
@@ -241,6 +279,12 @@ function GeneralSection({
   setEnableDictation: (v: boolean) => void;
   separateVoice: boolean;
   setSeparateVoice: (v: boolean) => void;
+  language: string;
+  setLanguage: (v: string) => void;
+  spokenLanguage: string;
+  setSpokenLanguage: (v: string) => void;
+  voice: string;
+  setVoice: (v: string) => void;
 }) {
   return (
     <div className="space-y-8">
@@ -311,7 +355,23 @@ function GeneralSection({
           {/* Language */}
           <div className="space-y-2">
             <p className="text-sm font-medium text-foreground">Language</p>
-            <DisabledSelect placeholder="Coming soon" />
+            <Select
+              value={language}
+              onValueChange={(v) => {
+                setLanguage(v);
+                localStorage.setItem("operiq-language", v);
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English (en)</SelectItem>
+                <SelectItem value="es">Spanish (es)</SelectItem>
+                <SelectItem value="fr">French (fr)</SelectItem>
+                <SelectItem value="de">German (de)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <Separator />
@@ -334,7 +394,25 @@ function GeneralSection({
               For best results, select the language you mainly speak. If it&apos;s not listed, it may still be supported
               via auto-detection.
             </p>
-            <DisabledSelect placeholder="Coming soon" />
+            <Select
+              value={spokenLanguage}
+              onValueChange={(v) => {
+                setSpokenLanguage(v);
+                localStorage.setItem("operiq-spoken-language", v);
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select spoken language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="English">English</SelectItem>
+                <SelectItem value="Spanish">Spanish</SelectItem>
+                <SelectItem value="French">French</SelectItem>
+                <SelectItem value="German">German</SelectItem>
+                <SelectItem value="Japanese">Japanese</SelectItem>
+                <SelectItem value="Korean">Korean</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <Separator />
@@ -342,7 +420,22 @@ function GeneralSection({
           {/* Voice */}
           <div className="space-y-2">
             <p className="text-sm font-medium text-foreground">Voice</p>
-            <DisabledSelect placeholder="Coming soon" />
+            <Select
+              value={voice}
+              onValueChange={(v) => {
+                setVoice(v);
+                localStorage.setItem("operiq-voice", v);
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select voice" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Aria">Aria (Female)</SelectItem>
+                <SelectItem value="Roger">Roger (Male)</SelectItem>
+                <SelectItem value="Sarah">Sarah (Female)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <Separator />
@@ -367,7 +460,50 @@ function GeneralSection({
 /*  Personalization section                                           */
 /* ------------------------------------------------------------------ */
 
-function PersonalizationSection() {
+function PersonalizationSection({
+  referenceMemories,
+  setReferenceMemories,
+  referenceHistory,
+  setReferenceHistory,
+}: {
+  referenceMemories: boolean;
+  setReferenceMemories: (v: boolean) => void;
+  referenceHistory: boolean;
+  setReferenceHistory: (v: boolean) => void;
+}) {
+  const profile = useQuery(api.profiles.getProfile);
+  const updateProfile = useMutation(api.profiles.updateProfile);
+  const [customInstructions, setCustomInstructions] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [occupation, setOccupation] = useState("");
+  const [aboutMe, setAboutMe] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  useEffect(() => {
+    setCustomInstructions(localStorage.getItem("operiq-custom-instructions") || "");
+    setOccupation(localStorage.getItem("operiq-occupation") || "");
+    setAboutMe(localStorage.getItem("operiq-about-me") || "");
+  }, []);
+
+  useEffect(() => {
+    if (profile?.displayName) {
+      setNickname(profile.displayName);
+    }
+  }, [profile]);
+
+  async function handleNicknameSave() {
+    if (!nickname.trim()) return;
+    setSavingProfile(true);
+    try {
+      await updateProfile({ displayName: nickname.trim() });
+      toast.success("Nickname saved");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to save nickname");
+    } finally {
+      setSavingProfile(false);
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -378,35 +514,114 @@ function PersonalizationSection() {
       </div>
 
       <div className="rounded-xl border border-border bg-card p-4 space-y-5">
-        <DisabledField label="Custom instructions" type="textarea" />
-        <Separator />
-        <DisabledField label="Nickname" type="input" />
-        <Separator />
-        <DisabledField label="Occupation" type="input" />
-        <Separator />
-        <DisabledField label="More about you" type="textarea" />
-        <Separator />
+        {/* Custom instructions */}
         <div className="space-y-2">
-          <p className="text-sm font-medium text-foreground">Learn more</p>
-          <div className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-            Coming soon
-          </div>
+          <p className="text-sm font-medium text-foreground">Custom instructions</p>
+          <Textarea
+            value={customInstructions}
+            onChange={(e) => {
+              setCustomInstructions(e.target.value);
+              localStorage.setItem("operiq-custom-instructions", e.target.value);
+            }}
+            placeholder="Tell Operiq how you want it to respond..."
+            rows={4}
+          />
         </div>
         <Separator />
+
+        {/* Nickname */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-foreground">Nickname</p>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleNicknameSave}
+              disabled={savingProfile || !nickname.trim()}
+              className="h-7 text-xs"
+            >
+              {savingProfile ? <Loader2 className="size-3.5 animate-spin" /> : "Save"}
+            </Button>
+          </div>
+          <Input
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            placeholder="Your nickname"
+          />
+        </div>
+        <Separator />
+
+        {/* Occupation */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-foreground">Occupation</p>
+          <Input
+            value={occupation}
+            onChange={(e) => {
+              setOccupation(e.target.value);
+              localStorage.setItem("operiq-occupation", e.target.value);
+            }}
+            placeholder="Your occupation"
+          />
+        </div>
+        <Separator />
+
+        {/* More about you */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-foreground">More about you</p>
+          <Textarea
+            value={aboutMe}
+            onChange={(e) => {
+              setAboutMe(e.target.value);
+              localStorage.setItem("operiq-about-me", e.target.value);
+            }}
+            placeholder="Share a bit more about yourself..."
+            rows={4}
+          />
+        </div>
+        <Separator />
+
+        {/* Learn more */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-foreground">Learn more</p>
+          <Link
+            to="/docs"
+            className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline"
+          >
+            Read documentation
+            <ExternalLink className="size-3.5" />
+          </Link>
+        </div>
+        <Separator />
+
+        {/* Reference saved memories */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <p className="text-sm font-medium text-foreground">Reference saved memories</p>
             <p className="text-xs text-muted-foreground">Let Operiq save and use memories when responding.</p>
           </div>
-          <Switch disabled />
+          <Switch
+            checked={referenceMemories}
+            onCheckedChange={(v) => {
+              setReferenceMemories(v);
+              localStorage.setItem("operiq-reference-memories", String(v));
+            }}
+          />
         </div>
         <Separator />
+
+        {/* Reference chat history */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <p className="text-sm font-medium text-foreground">Reference chat history</p>
             <p className="text-xs text-muted-foreground">Let Operiq reference recent conversations when responding.</p>
           </div>
-          <Switch disabled />
+          <Switch
+            checked={referenceHistory}
+            onCheckedChange={(v) => {
+              setReferenceHistory(v);
+              localStorage.setItem("operiq-reference-history", String(v));
+            }}
+          />
         </div>
       </div>
     </div>
@@ -474,13 +689,13 @@ function BillingSection() {
     };
   }, [billing]);
 
-  const currentPlan = ((billing as any)?.plan as string) || "free";
+  const currentPlan = (billing?.plan as string) || "free";
 
   async function handleUpgrade(planId: string) {
     setUpgradingId(planId);
     setBillingError(null);
     try {
-      await upgrade({ plan: planId } as any);
+      await upgrade({ plan: planId });
     } catch (e) {
       setBillingError(e instanceof Error ? e.message : "Failed to upgrade plan");
     } finally {
@@ -633,9 +848,33 @@ function BillingSection() {
 
 function StorageSection() {
   const billing = useQuery(api.billing.getBilling);
-  const storageUsed = Number((billing as any)?.storageUsed ?? 0);
-  const storageLimit = Number((billing as any)?.storageLimit ?? 50);
+  const storageUsed = Number(billing?.storageUsed ?? 0);
+  const storageLimit = Number(billing?.storageLimit ?? 50);
   const percentUsed = storageLimit > 0 ? Math.round((storageUsed / storageLimit) * 100) : 0;
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+
+  function handleClearAllData() {
+    const keysToClear = [
+      "operiq-theme",
+      "operiq-language",
+      "operiq-spoken-language",
+      "operiq-voice",
+      "operiq-custom-instructions",
+      "operiq-occupation",
+      "operiq-about-me",
+      "operiq-reference-memories",
+      "operiq-reference-history",
+      "operiq-linkedin",
+      "operiq-github",
+      "operiq-agent-mode",
+      "operiq-model",
+    ];
+    for (const key of keysToClear) {
+      localStorage.removeItem(key);
+    }
+    toast.success("Local data cleared successfully");
+    setClearDialogOpen(false);
+  }
 
   if (billing === undefined) {
     return (
@@ -677,11 +916,31 @@ function StorageSection() {
           <p className="text-sm text-muted-foreground">No files uploaded yet</p>
         </div>
 
-        <Button variant="outline" disabled>
+        <Button variant="outline" onClick={() => setClearDialogOpen(true)}>
+          <Trash2 className="size-3.5 mr-1.5" />
           Clear all data
-          <span className="ml-2 text-xs text-muted-foreground">(Coming soon)</span>
         </Button>
       </div>
+
+      {/* Clear all data confirmation dialog */}
+      <Dialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Clear all local data</DialogTitle>
+            <DialogDescription>
+              This will clear all locally stored preferences and settings. Your Convex data (threads, profile) will remain intact.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setClearDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleClearAllData}>
+              Clear data
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -692,11 +951,22 @@ function StorageSection() {
 
 function ContactSection() {
   const user = useQuery(api.users.me);
-  const updateProfile = useMutation(api.users.updateProfile);
+  const updateProfile = useMutation(api.profiles.updateProfile);
+  const { signOut } = useAuthActions();
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
+  const [editLinkedIn, setEditLinkedIn] = useState("");
+  const [editGitHub, setEditGitHub] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    setEditLinkedIn(localStorage.getItem("operiq-linkedin") || "");
+    setEditGitHub(localStorage.getItem("operiq-github") || "");
+  }, []);
 
   if (user === undefined) {
     return (
@@ -734,12 +1004,18 @@ function ContactSection() {
 
   const name = user.name || user.email || "User";
   const initial = name.charAt(0).toUpperCase();
+  const linkedInUrl = localStorage.getItem("operiq-linkedin") || "https://linkedin.com";
+  const githubUrl = localStorage.getItem("operiq-github") || "https://github.com";
 
   async function handleSave() {
     setSaving(true);
     setSaveError(null);
     try {
-      await updateProfile({ name: editName } as any);
+      if (editName.trim()) {
+        await updateProfile({ displayName: editName.trim() });
+      }
+      localStorage.setItem("operiq-linkedin", editLinkedIn.trim());
+      localStorage.setItem("operiq-github", editGitHub.trim());
       toast.success("Profile updated successfully");
       setEditOpen(false);
     } catch (e) {
@@ -748,6 +1024,22 @@ function ContactSection() {
       toast.error(errMsg);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    try {
+      // Clear all localStorage
+      localStorage.clear();
+      // Sign out
+      await signOut();
+      toast.success("Account deleted. Goodbye!");
+      // Redirect to login
+      window.location.href = "/login";
+    } catch (e) {
+      toast.error("Failed to delete account. Please try again.");
+      setDeleting(false);
     }
   }
 
@@ -778,11 +1070,13 @@ function ContactSection() {
             size="sm"
             onClick={() => {
               setEditName(user.name || "");
+              setEditLinkedIn(localStorage.getItem("operiq-linkedin") || "");
+              setEditGitHub(localStorage.getItem("operiq-github") || "");
               setSaveError(null);
               setEditOpen(true);
             }}
           >
-            Edit name
+            Edit profile
           </Button>
           <Button
             variant="ghost"
@@ -797,10 +1091,15 @@ function ContactSection() {
           </Button>
         </div>
 
+        {/* Social links note */}
+        <p className="text-xs text-muted-foreground">
+          (set your links in profile)
+        </p>
+
         {/* Links */}
         <div className="flex items-center gap-4">
           <a
-            href="https://linkedin.com/in/lintshiwe-ntoampi"
+            href={linkedInUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-sm text-foreground hover:text-accent transition-colors"
@@ -811,7 +1110,7 @@ function ContactSection() {
             <ExternalLink className="size-3 text-muted-foreground" strokeWidth={1.75} />
           </a>
           <a
-            href="https://github.com/Lintshiwe"
+            href={githubUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-sm text-foreground hover:text-accent transition-colors"
@@ -831,25 +1130,50 @@ function ContactSection() {
           </a>
         </div>
 
-        <button className="text-sm font-medium text-destructive hover:text-destructive/80 transition-colors">
+        <button
+          onClick={() => {
+            setDeleteConfirmText("");
+            setDeleteDialogOpen(true);
+          }}
+          className="text-sm font-medium text-destructive hover:text-destructive/80 transition-colors"
+        >
           <Trash2 className="inline size-3.5 mr-1" strokeWidth={1.75} />
           Delete account
         </button>
       </div>
 
-      {/* Edit name dialog */}
+      {/* Edit profile dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit name</DialogTitle>
-            <DialogDescription>Update your display name.</DialogDescription>
+            <DialogTitle>Edit profile</DialogTitle>
+            <DialogDescription>Update your display name and social links.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <Input
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              placeholder="Your name"
-            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Name</label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Your name"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">LinkedIn URL</label>
+              <Input
+                value={editLinkedIn}
+                onChange={(e) => setEditLinkedIn(e.target.value)}
+                placeholder="https://linkedin.com/in/yourprofile"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">GitHub URL</label>
+              <Input
+                value={editGitHub}
+                onChange={(e) => setEditGitHub(e.target.value)}
+                placeholder="https://github.com/yourusername"
+              />
+            </div>
             {saveError && (
               <p className="text-sm text-destructive">{saveError}</p>
             )}
@@ -858,8 +1182,42 @@ function ContactSection() {
             <Button variant="outline" onClick={() => setEditOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving || !editName.trim()}>
+            <Button onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 className="size-4 animate-spin" /> : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete account confirmation dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Delete Account</DialogTitle>
+            <DialogDescription>
+              This action is permanent and cannot be undone. All your data, threads, and settings will be permanently deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              To confirm, type <strong className="text-foreground">DELETE</strong> below:
+            </p>
+            <Input
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="Type DELETE to confirm"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={deleteConfirmText !== "DELETE" || deleting}
+            >
+              {deleting ? <Loader2 className="size-4 animate-spin" /> : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

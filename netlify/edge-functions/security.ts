@@ -18,7 +18,7 @@ export default async function handler(
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set(
     "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=()",
+    "camera=(), microphone=(self), geolocation=()",
   );
 
   return response;

@@ -7,7 +7,8 @@
 import { getProvider } from "@/lib/ai-gateway.server";
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
-import { runAgentLoop, type AgentStep } from "@/lib/agent-loop";
+import { toolsToAISDK } from "@/lib/tools/index";
+import { AGENT_SYSTEM_EXTENSION } from "@/lib/agent-loop";
 import { checkUsageLimit, trackAiUsage } from "@/lib/usage-tracker";
 
 const SYSTEM_PROMPT = `You are Operiq AI, a calm, precise executive productivity assistant for working professionals.
@@ -46,11 +47,6 @@ export const Route = createFileRoute("/api/chat")({
           );
         }
 
-        // Fire-and-forget usage tracking (non-blocking)
-        trackAiUsage(request).catch((e) =>
-          console.warn("Failed to track AI usage:", e),
-        );
-
         const provider = getProvider();
         const modelName =
           request.headers.get("x-operiq-model") ??
@@ -61,18 +57,23 @@ export const Route = createFileRoute("/api/chat")({
 
         const agentMode = request.headers.get("x-operiq-agent-mode") === "on";
 
-        if (agentMode) {
-          return handleAgentMode(provider, actualModel, messages);
-        }
-
         try {
-          const result = streamText({
-            model: provider(actualModel),
-            system: SYSTEM_PROMPT,
-            messages: await convertToModelMessages(messages),
-          });
+          const result = agentMode
+            ? await handleAgentMode(provider, actualModel, messages)
+            : streamText({
+                model: provider(actualModel),
+                system: SYSTEM_PROMPT,
+                messages: await convertToModelMessages(messages),
+              });
 
-          return result.toUIMessageStreamResponse({ originalMessages: messages });
+          const response = result.toUIMessageStreamResponse({ originalMessages: messages });
+
+          // Track usage after streaming is initiated (fire-and-forget)
+          trackAiUsage(request).catch((e) =>
+            console.warn("Failed to track AI usage:", e),
+          );
+
+          return response;
         } catch (err) {
           const status = (err as { status?: number })?.status;
           if (status === 429)
@@ -89,91 +90,22 @@ export const Route = createFileRoute("/api/chat")({
 });
 
 /* ------------------------------------------------------------------ */
-/*  Agent Mode Handler                                                */
+/*  Agent Mode Handler — uses AI SDK native multi-step tool calling   */
 /* ------------------------------------------------------------------ */
 
-function handleAgentMode(
+async function handleAgentMode(
   provider: ReturnType<typeof getProvider>,
-  actualModel: string,
+  modelName: string,
   messages: UIMessage[],
-): Response {
-  // Extract the last user message for the agent
-  const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
-  const userMessage = lastUserMsg
-    ? lastUserMsg.parts
-        .map((p) => (p.type === "text" ? p.text : ""))
-        .join(" ")
-        .trim()
-    : "";
+) {
+  const sdkTools = toolsToAISDK();
 
-  if (!userMessage) {
-    return new Response("No user message found", { status: 400 });
-  }
-
-  const encoder = new TextEncoder();
-  const messageId = `agent_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
-
-  const stream = new ReadableStream({
-    async start(controller) {
-      const write = (type: string, data: unknown) => {
-        controller.enqueue(encoder.encode(`${type}:${JSON.stringify(data)}\n`));
-      };
-
-      try {
-        // Start frame
-        write("f", { messageId });
-
-        const agentResult = await runAgentLoop(
-          {
-            maxSteps: 10,
-            model: provider(actualModel),
-            systemPrompt: SYSTEM_PROMPT,
-          },
-          userMessage,
-          (step: AgentStep) => {
-            // Stream each agent step as it happens
-            const parts: string[] = [];
-
-            if (step.action) {
-              parts.push(
-                `\n**Using tool:** \`${step.action.name}\` (${JSON.stringify(step.action.params)})\n`,
-              );
-            }
-
-            if (step.observation) {
-              const summary =
-                step.observation.length > 500
-                  ? step.observation.substring(0, 500) + "..."
-                  : step.observation;
-              parts.push(`**Result:** ${summary}\n`);
-            }
-
-            if (parts.length > 0) {
-              write("0", parts.join(""));
-            }
-          },
-        );
-
-        // Write final answer
-        write("0", `\n${agentResult.finalAnswer}`);
-
-        // End frame
-        write("e", { finishReason: "stop" });
-
-        controller.close();
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Agent execution failed";
-        write("0", `\n**Error:** ${errorMsg}`);
-        write("e", { finishReason: "error" });
-        controller.close();
-      }
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "x-vercel-ai-ui-message-stream": "v1",
-    },
+  return streamText({
+    model: provider(modelName),
+    messages: await convertToModelMessages(messages),
+    tools: sdkTools,
+    system: SYSTEM_PROMPT + "\n\n" + AGENT_SYSTEM_EXTENSION,
+    temperature: 0.3,
+    maxSteps: 10,
   });
 }

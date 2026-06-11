@@ -50,7 +50,7 @@ function ResearchPage() {
     setLoading(true);
     setOutput(null);
     try {
-      const result = await generate({ material, question, depth } as any);
+      const result = await generate({ material, question, depth });
       setOutput(result.text);
     } catch (e) {
       toast.error("Generation failed. Please try again.");
@@ -68,7 +68,7 @@ function ResearchPage() {
         material: `Previous analysis:\n${output}\n\nRequested changes: ${refineText}`,
         question: "",
         depth,
-      } as any);
+      });
       setOutput(result.text);
       setRefineText("");
     } catch (e) {
@@ -81,9 +81,13 @@ function ResearchPage() {
 
   async function copy() {
     if (!output) return;
-    await navigator.clipboard.writeText(output);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(output);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Failed to copy");
+    }
   }
 
   useEffect(() => {

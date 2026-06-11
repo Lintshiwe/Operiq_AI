@@ -21,13 +21,37 @@ export const Route = createFileRoute("/api/resend")({
         if (!to || !subject || !text || !from) {
           return new Response("Missing required fields", { status: 400 });
         }
-        const resend = new Resend(process.env.RESEND_API_KEY);
+
+        // Validate API key presence
+        const apiKey = process.env.RESEND_API_KEY;
+        if (!apiKey) {
+          console.error("Resend: RESEND_API_KEY environment variable is not configured");
+          return new Response(
+            "Email service is not configured. Please set RESEND_API_KEY.",
+            { status: 500 },
+          );
+        }
+
+        const resend = new Resend(apiKey);
         try {
           const result = await resend.emails.send({ from, to, subject, text });
           return Response.json(result);
         } catch (err) {
-          console.error("Resend error:", err);
-          return new Response("Failed to send email", { status: 500 });
+          const error = err as { statusCode?: number; message?: string };
+          console.error("Resend error:", error);
+
+          // Handle validation_errors from Resend (e.g., unverified domain)
+          if (error.statusCode === 403) {
+            return new Response(
+              `Email send failed: ${error.message || "The sender domain may not be verified in Resend. Please verify your domain at https://resend.com/domains."}`,
+              { status: 403 },
+            );
+          }
+
+          return new Response(
+            `Failed to send email: ${error.message || "Unknown error"}`,
+            { status: 500 },
+          );
         }
       },
     },

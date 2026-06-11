@@ -66,7 +66,7 @@ function EmailPage() {
         tone,
         audience,
         context,
-      } as any);
+      });
       setDraft(result.draft);
     } catch (e) {
       toast.error("Generation failed. Please try again.");
@@ -86,7 +86,7 @@ function EmailPage() {
         tone,
         audience,
         context: `Previous draft:\n${draft}\n\nRequested changes: ${refineText}`,
-      } as any);
+      });
       setDraft(result.draft);
       setRefineText("");
     } catch (e) {
@@ -126,9 +126,13 @@ function EmailPage() {
 
   async function copy() {
     if (!draft) return;
-    await navigator.clipboard.writeText(draft);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(draft);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Failed to copy");
+    }
   }
 
   // Keyboard shortcut: Cmd+Enter to compose / refine

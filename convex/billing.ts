@@ -5,7 +5,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 /* ------------------------------------------------------------------ */
@@ -71,6 +71,46 @@ async function getOrCreateBilling(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Internal: Reset usage counters when billing period ends           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Checks if the current billing period has ended and, if so, resets
+ * usage counters and advances to the next 30-day period.
+ * Safe to call before any billing read/write — it's idempotent.
+ */
+export const resetUsage = internalMutation({
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return;
+
+    const existing = await ctx.db
+      .query("billing")
+      .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+      .first();
+
+    if (!existing) return;
+
+    const now = Date.now();
+    const periodEnd = new Date(existing.currentPeriodEnd as string).getTime();
+
+    // If period hasn't ended yet, nothing to do
+    if (now < periodEnd) return;
+
+    // Advance to next 30-day period
+    const newStart = new Date(periodEnd).toISOString();
+    const newEnd = new Date(periodEnd + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    await ctx.db.patch(existing._id, {
+      aiRequestsUsed: 0,
+      imagesGenerated: 0,
+      currentPeriodStart: newStart,
+      currentPeriodEnd: newEnd,
+    });
+  },
+});
+
+/* ------------------------------------------------------------------ */
 /*  Queries                                                           */
 /* ------------------------------------------------------------------ */
 
@@ -78,9 +118,24 @@ export const getBilling = query({
   args: {},
   handler: async (ctx) => {
     try {
+      // Note: queries can't call mutations, so we check period in-band
       const billing = await getOrCreateBilling(ctx);
+
+      // Check if period has ended and return reset values if so
+      const now = Date.now();
+      const periodEnd = new Date(billing.currentPeriodEnd as string).getTime();
+
+      if (now >= periodEnd) {
+        // Return the record with usage zeroed (optimistic — actual reset happens on next mutation)
+        return {
+          ...billing,
+          aiRequestsUsed: 0,
+          imagesGenerated: 0,
+        };
+      }
+
       return billing;
-    } catch (e) {
+    } catch {
       return null;
     }
   },
@@ -110,10 +165,12 @@ export const upgradePlan = mutation({
         storageLimit: limits.storageLimit,
         currentPeriodStart: now,
         currentPeriodEnd: thirtyDays,
+        aiRequestsUsed: 0,
+        imagesGenerated: 0,
       });
 
       return { success: true, plan: args.plan };
-    } catch (e) {
+    } catch {
       return { success: false, error: "Not authenticated" };
     }
   },
@@ -146,14 +203,18 @@ export const recordAiRequest = mutation({
   args: {},
   handler: async (ctx) => {
     try {
+      // Check and reset usage period if needed
+      await resetUsageHandler(ctx);
+
       const billing = await getOrCreateBilling(ctx);
 
+      const newCount = ((billing.aiRequestsUsed as number) || 0) + 1;
       await ctx.db.patch(billing._id, {
-        aiRequestsUsed: (billing.aiRequestsUsed as number) + 1,
+        aiRequestsUsed: newCount,
       });
 
-      return { success: true, aiRequestsUsed: (billing.aiRequestsUsed as number) + 1 };
-    } catch (e) {
+      return { success: true, aiRequestsUsed: newCount };
+    } catch {
       return { success: false, error: "Not authenticated" };
     }
   },
@@ -163,15 +224,52 @@ export const recordImageGeneration = mutation({
   args: {},
   handler: async (ctx) => {
     try {
+      // Check and reset usage period if needed
+      await resetUsageHandler(ctx);
+
       const billing = await getOrCreateBilling(ctx);
 
+      const newCount = ((billing.imagesGenerated as number) || 0) + 1;
       await ctx.db.patch(billing._id, {
-        imagesGenerated: (billing.imagesGenerated as number) + 1,
+        imagesGenerated: newCount,
       });
 
-      return { success: true, imagesGenerated: (billing.imagesGenerated as number) + 1 };
-    } catch (e) {
+      return { success: true, imagesGenerated: newCount };
+    } catch {
       return { success: false, error: "Not authenticated" };
     }
   },
 });
+
+/* ------------------------------------------------------------------ */
+/*  Inline reset helper (called within mutations)                     */
+/* ------------------------------------------------------------------ */
+
+async function resetUsageHandler(
+  ctx: { db: any; auth: any },
+): Promise<void> {
+  const userId = await getAuthUserId(ctx);
+  if (!userId) return;
+
+  const existing = await ctx.db
+    .query("billing")
+    .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+    .first();
+
+  if (!existing) return;
+
+  const now = Date.now();
+  const periodEnd = new Date(existing.currentPeriodEnd as string).getTime();
+
+  if (now < periodEnd) return;
+
+  const newStart = new Date(periodEnd).toISOString();
+  const newEnd = new Date(periodEnd + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  await ctx.db.patch(existing._id, {
+    aiRequestsUsed: 0,
+    imagesGenerated: 0,
+    currentPeriodStart: newStart,
+    currentPeriodEnd: newEnd,
+  });
+}
