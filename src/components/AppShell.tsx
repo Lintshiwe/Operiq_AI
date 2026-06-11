@@ -145,7 +145,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="hidden md:flex w-[260px] shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
         {/* Logo */}
         <div className="flex items-center gap-2 px-3 h-14">
-          <img src="/logo-full.png" alt="Operiq AI" className="h-8" />
+          <img src="/logo-full.png" alt="Operiq AI" className="h-12" />
         </div>
 
         {/* New chat button */}
@@ -201,7 +201,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="fixed inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
           <aside className="fixed left-0 top-0 bottom-0 w-[260px] flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border z-50">
             <div className="flex items-center justify-between px-3 h-14">
-              <img src="/logo-full.png" alt="Operiq AI" className="h-7" />
+              <img src="/logo-full.png" alt="Operiq AI" className="h-10" />
               <button
                 onClick={() => setMobileOpen(false)}
                 className="p-1.5 rounded-md text-muted-foreground hover:bg-sidebar-accent"

@@ -460,7 +460,7 @@ function ThreadSidebar({
       {/* Logo area */}
       <div className="flex items-center justify-between gap-2 px-3 h-14">
         <div className="flex items-center gap-2">
-          <img src="/logo-full.png" alt="Operiq AI" className="h-8" />
+          <img src="/logo-full.png" alt="Operiq AI" className="h-12" />
         </div>
         <div className="flex items-center gap-1">
           <NotificationBell />
@@ -1215,7 +1215,7 @@ function ChatPane({
             </>
           )}
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted cursor-default">
-            <img src="/logo-full.png" alt="Operiq AI" className="h-7" />
+            <img src="/logo-full.png" alt="Operiq AI" className="h-10" />
           </div>
         </div>
         <div className="flex items-center gap-2">
