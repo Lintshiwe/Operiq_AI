@@ -10,35 +10,33 @@ import { Button } from "@/components/ui/button";
 
 /**
  * Detects DevTools via window-size difference and shows a security overlay.
- * Uses a conservative threshold (250px) to avoid false positives from
- * browser toolbars, bookmarks bars, or side panels.
+ * Only runs on desktop (skips mobile/tablet to avoid false positives).
  */
 export function DevToolsGuard() {
   const [detected, setDetected] = useState(false);
   const lockedRef = useRef(false);
 
   useEffect(() => {
-    // Only active in production builds
+    // Skip in development
     if (!import.meta.env.PROD) return;
+    // Skip on mobile/tablet — browser chrome differences cause false positives
+    if ("ontouchstart" in window || navigator.maxTouchPoints > 0) return;
 
     function checkSize() {
       if (lockedRef.current) return;
 
-      const threshold = 250;
       const widthDiff = window.outerWidth - window.innerWidth;
       const heightDiff = window.outerHeight - window.innerHeight;
 
-      if (widthDiff > threshold || heightDiff > threshold) {
+      // Only trigger if BOTH dimensions differ significantly (real devtools)
+      if (widthDiff > 400 && heightDiff > 300) {
         lockedRef.current = true;
         setDetected(true);
       }
     }
 
-    // Run once on mount, then every 10 seconds — not too aggressive
     checkSize();
-    const interval = setInterval(checkSize, 10_000);
-
-    // Also check on resize (debounced by the interval)
+    const interval = setInterval(checkSize, 15_000);
     window.addEventListener("resize", checkSize);
 
     return () => {
@@ -56,23 +54,11 @@ export function DevToolsGuard() {
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 px-4">
       <div className="max-w-md text-center space-y-6">
-        <div className="flex justify-center">
-          <img
-            src="/logo-full.png"
-            alt="Operiq AI"
-            className="h-10 opacity-80"
-          />
-        </div>
-
-        <h1 className="text-3xl font-semibold text-white tracking-tight">
-          Session Terminated
-        </h1>
-
+        <img src="/logo-full.png" alt="Operiq AI" className="h-10 opacity-80 mx-auto" />
+        <h1 className="text-3xl font-semibold text-white tracking-tight">Session Terminated</h1>
         <p className="text-sm text-zinc-400 leading-relaxed">
-          Developer tools have been detected. For security reasons, this session
-          has been terminated.
+          Developer tools have been detected. For security reasons, this session has been terminated.
         </p>
-
         <Button onClick={handleReload} className="inline-flex items-center gap-2">
           <RotateCcw className="size-4" />
           Reload
