@@ -132,12 +132,18 @@ function RootShell({ children }: { children: ReactNode }) {
     } else if (saved === "light") {
       document.documentElement.classList.remove("dark");
     }
+    document.documentElement.setAttribute("data-theme", saved === "light" ? "light" : "dark");
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(console.error);
+    }
   }, []);
 
   return (
     <html lang="en">
       <head>
         <HeadContent />
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body>
         {children}

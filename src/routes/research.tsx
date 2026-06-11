@@ -10,12 +10,14 @@ import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
   BookOpen, Loader2, Copy, Check, ShieldCheck,
-  Sparkles, SendHorizontal,
+  Sparkles, SendHorizontal, Upload,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { MarkdownView } from "@/components/MarkdownView";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+
+const SUPPORTED_FILE_TYPES = ".txt,.md,.json";
 
 export const Route = createFileRoute("/research")({
   head: () => ({
@@ -39,7 +41,12 @@ function ResearchPage() {
   const [refining, setRefining] = useState(false);
   const refineInputRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [modKey, setModKey] = useState("\u2318");
+
+  // File upload state
+  const [uploading, setUploading] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
   useEffect(() => {
     setModKey(navigator.platform?.includes("Mac") ? "\u2318" : "Ctrl");
@@ -89,6 +96,66 @@ function ResearchPage() {
       toast.error("Failed to copy");
     }
   }
+
+  /* ------------------------------------------------------------------ */
+  /*  File Upload                                                        */
+  /* ------------------------------------------------------------------ */
+
+  function triggerFileUpload() {
+    fileInputRef.current?.click();
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input so the same file can be re-uploaded
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    setUploading(true);
+    setOutput(null);
+    setUploadedFileName(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const resp = await fetch("/api/documents", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!resp.ok) {
+        const errData = (await resp.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(errData?.error ?? `Upload failed (${resp.status})`);
+      }
+
+      const data = (await resp.json()) as {
+        success: boolean;
+        documentId: string;
+        summary: string | null;
+      };
+
+      setUploadedFileName(file.name);
+
+      if (data.summary) {
+        setOutput(data.summary);
+      } else {
+        toast.warning("File uploaded but no summary was generated. Try pasting the text manually.");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed. Please try again.");
+      console.error(e);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Keyboard Shortcuts                                                 */
+  /* ------------------------------------------------------------------ */
 
   useEffect(() => {
     function handler(e: KeyboardEvent) {
@@ -172,6 +239,39 @@ function ResearchPage() {
               />
             </div>
 
+            {/* Document Upload */}
+            <div className="mb-5">
+              <div className="flex items-center gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={SUPPORTED_FILE_TYPES}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  onClick={triggerFileUpload}
+                  disabled={uploading || loading}
+                  className="rounded-xl px-4 text-xs gap-2"
+                >
+                  {uploading ? (
+                    <><Loader2 className="size-3.5 animate-spin" /> Uploading...</>
+                  ) : (
+                    <><Upload className="size-3.5" /> Upload document for AI summary</>
+                  )}
+                </Button>
+                {uploadedFileName && (
+                  <span className="text-xs text-muted-foreground">
+                    {uploadedFileName} — summarised below
+                  </span>
+                )}
+              </div>
+              <p className="mt-1.5 text-[11px] text-muted-foreground/50">
+                Supports .txt, .md, and .json files (max 10 MB)
+              </p>
+            </div>
+
             {/* Question input */}
             <div className="mb-5">
               <input
@@ -187,7 +287,7 @@ function ResearchPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <Button
                 onClick={onGenerate}
-                disabled={loading || refining || material.trim().length < 20}
+                disabled={loading || refining || uploading || material.trim().length < 20}
                 className="rounded-xl px-5 w-full sm:w-auto"
               >
                 {loading ? (
@@ -218,6 +318,19 @@ function ResearchPage() {
               </div>
             )}
 
+            {/* Upload loading state */}
+            {uploading && !output && (
+              <div className="mt-10 space-y-3 animate-pulse">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="size-7 rounded-lg bg-muted/50" />
+                  <div className="h-3 w-56 rounded bg-muted/50" />
+                </div>
+                {[85, 70, 55, 75].map((w, i) => (
+                  <div key={i} className="h-2.5 rounded bg-muted/40" style={{ width: `${w}%` }} />
+                ))}
+              </div>
+            )}
+
             {/* Result */}
             {output && (
               <div ref={resultRef} className="mt-10">
@@ -230,7 +343,9 @@ function ResearchPage() {
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-foreground">Operiq AI</span>
                         <span className="text-[10px] text-muted-foreground/50">\u00b7</span>
-                        <span className="text-[11px] text-muted-foreground/50">Just now</span>
+                        <span className="text-[11px] text-muted-foreground/50">
+                          {uploadedFileName ? `Summary of ${uploadedFileName}` : "Just now"}
+                        </span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="sm" onClick={copy} className="h-7 px-2 text-xs gap-1">
@@ -286,13 +401,13 @@ function ResearchPage() {
             )}
 
             {/* Empty state */}
-            {!output && !loading && (
+            {!output && !loading && !uploading && (
               <div className="mt-16 text-center">
                 <div className="size-10 rounded-xl bg-accent/5 border border-accent/10 flex items-center justify-center mx-auto mb-3">
                   <Sparkles className="size-4 text-accent/60" />
                 </div>
                 <p className="text-sm text-muted-foreground/50">
-                  Paste material and click Generate analysis
+                  Paste material and click Generate analysis, or upload a document for AI summarisation
                 </p>
               </div>
             )}

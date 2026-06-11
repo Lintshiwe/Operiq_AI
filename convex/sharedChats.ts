@@ -94,6 +94,33 @@ export const joinByToken = mutation({
       invitedUserIds: [...sharedChat.invitedUserIds, userId],
     });
 
+    // Notify the thread owner that someone joined
+    const user = await ctx.db.get(userId);
+    const joinerName = user?.name || user?.email || "Someone";
+    await ctx.db.insert("notifications", {
+      userId: sharedChat.ownerId,
+      type: "share",
+      title: "User joined your thread",
+      body: `${joinerName} joined your shared thread`,
+      read: false,
+      metadata: { threadId: sharedChat.threadId },
+      createdAt: new Date().toISOString(),
+    });
+
+    // Notify existing participants (excluding the new joiner and owner)
+    for (const participantId of sharedChat.invitedUserIds) {
+      if (participantId === userId || participantId === sharedChat.ownerId) continue;
+      await ctx.db.insert("notifications", {
+        userId: participantId,
+        type: "share",
+        title: "New collaborator",
+        body: `${joinerName} joined a shared thread`,
+        read: false,
+        metadata: { threadId: sharedChat.threadId },
+        createdAt: new Date().toISOString(),
+      });
+    }
+
     return { threadId: sharedChat.threadId };
   },
 });

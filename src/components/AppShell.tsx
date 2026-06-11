@@ -18,14 +18,17 @@ import {
   LogOut,
   Image,
   Film,
+  Bookmark,
+  LayoutTemplate,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/NotificationBell";
 type NavItem = {
   to: string;
   label: string;
@@ -37,6 +40,8 @@ const CHAT_NAV: NavItem[] = [
 ];
 
 const STUDIO_NAV: NavItem[] = [
+  { to: "/templates", label: "Templates", icon: LayoutTemplate },
+  { to: "/prompts", label: "Prompts", icon: Bookmark },
   { to: "/code", label: "Code", icon: Code2 },
   { to: "/email", label: "Email Studio", icon: Mail },
   { to: "/meetings", label: "Meetings", icon: CalendarCheck2 },
@@ -53,6 +58,11 @@ const STUDIO_NAV: NavItem[] = [
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("operiq-theme");
+    document.documentElement.setAttribute("data-theme", saved === "light" ? "light" : "dark");
+  }, []);
 
   const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");
 
@@ -163,6 +173,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           {STUDIO_NAV.map((item) => navLink(item))}
         </div>
 
+        <div className="flex-shrink-0 border-t border-sidebar-border px-3 py-2 flex items-center justify-between">
+          <NotificationBell />
+        </div>
         <div className="flex-shrink-0">
           <UserProfile />
         </div>
@@ -217,6 +230,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               {STUDIO_NAV.map((item) => navLink(item, () => setMobileOpen(false)))}
             </div>
 
+            <div className="flex-shrink-0 border-t border-sidebar-border px-3 py-2 flex items-center justify-between">
+              <NotificationBell />
+            </div>
             <div className="flex-shrink-0">
               <UserProfile />
             </div>

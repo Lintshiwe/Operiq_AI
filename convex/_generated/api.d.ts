@@ -10,11 +10,16 @@
 
 import type * as ai from "../ai.js";
 import type * as analyses from "../analyses.js";
+import type * as analytics from "../analytics.js";
+import type * as apiKeys from "../apiKeys.js";
 import type * as auth from "../auth.js";
 import type * as billing from "../billing.js";
+import type * as documents from "../documents.js";
 import type * as emailDrafts from "../emailDrafts.js";
 import type * as http from "../http.js";
+import type * as notifications from "../notifications.js";
 import type * as plans from "../plans.js";
+import type * as presence from "../presence.js";
 import type * as profiles from "../profiles.js";
 import type * as sharedChats from "../sharedChats.js";
 import type * as summaries from "../summaries.js";
@@ -30,11 +35,16 @@ import type {
 declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   analyses: typeof analyses;
+  analytics: typeof analytics;
+  apiKeys: typeof apiKeys;
   auth: typeof auth;
   billing: typeof billing;
+  documents: typeof documents;
   emailDrafts: typeof emailDrafts;
   http: typeof http;
+  notifications: typeof notifications;
   plans: typeof plans;
+  presence: typeof presence;
   profiles: typeof profiles;
   sharedChats: typeof sharedChats;
   summaries: typeof summaries;

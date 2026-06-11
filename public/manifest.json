@@ -1,0 +1,9 @@
+{
+  "name": "Operiq AI",
+  "short_name": "Operiq",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0d0d",
+  "theme_color": "#10a37f",
+  "icons": [{ "src": "/logo-icon.png", "sizes": "512x512", "type": "image/png" }]
+}

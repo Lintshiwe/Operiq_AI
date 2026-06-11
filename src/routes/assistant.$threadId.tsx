@@ -39,6 +39,15 @@ import {
   Volume2,
   Link as LinkIcon,
   Share2,
+  Download,
+  FileDown,
+  Star,
+  Search,
+  Keyboard,
+  User,
+  BadgeCheck,
+  AlertTriangle,
+  HelpCircle,
 } from "lucide-react";
 import {
   Select,
@@ -59,6 +68,8 @@ import {
 import { MarkdownView } from "@/components/MarkdownView";
 import { Logo } from "@/components/Logo";
 import { InviteDialog } from "@/components/InviteDialog";
+import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
+import { NotificationBell } from "@/components/NotificationBell";
 import { cn } from "@/lib/utils";
 import { deriveTitle, type Thread, loadThreads, saveThreads, createBlankThread } from "@/lib/threads";
 import { MODELS, MODEL_STORAGE_KEY, MODEL_MAP } from "@/lib/models";
@@ -93,11 +104,32 @@ const MODULES = [
 /*  Main page                                                         */
 /* ------------------------------------------------------------------ */
 
+const PINNED_KEY = "operiq-pinned-threads";
+
+function loadPinned(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(PINNED_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as string[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function savePinned(ids: string[]) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(PINNED_KEY, JSON.stringify(ids));
+}
+
 function AssistantThreadPage() {
   const { threadId } = useParams({ from: "/assistant/$threadId" });
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [shareThreadId, setShareThreadId] = useState<string | null>(null);
+  const [pinnedIds, setPinnedIds] = useState<string[]>(loadPinned);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const { isAuthenticated, isLoading: authLoading } = useSsrConvexAuth();
   const promptLimit = usePromptLimit();
 
@@ -230,6 +262,35 @@ function AssistantThreadPage() {
     }).catch((e) => console.error(e));
   };
 
+  function togglePin(id: string) {
+    const next = pinnedIds.includes(id)
+      ? pinnedIds.filter((pid) => pid !== id)
+      : [id, ...pinnedIds];
+    setPinnedIds(next);
+    savePinned(next);
+  }
+
+  /* ---- keyboard shortcuts ---- */
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+      if (isCmdOrCtrl && (e.key === "/" || e.key === "k")) {
+        e.preventDefault();
+        setShortcutsOpen((v) => !v);
+      }
+      if (isCmdOrCtrl && e.key === "n" && !e.shiftKey) {
+        e.preventDefault();
+        handleCreate();
+      }
+      if (isCmdOrCtrl && e.key === "n" && e.shiftKey) {
+        e.preventDefault();
+        handleCreate();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   /* ---- loading ---- */
   if (authLoading) {
     return (
@@ -265,6 +326,8 @@ function AssistantThreadPage() {
           onClose={() => setSidebarOpen(false)}
           isGuest={isGuest}
           onShare={setShareThreadId}
+          pinnedIds={pinnedIds}
+          onTogglePin={togglePin}
         />
       )}
 
@@ -281,6 +344,8 @@ function AssistantThreadPage() {
             onClose={() => setSidebarOpen(false)}
             isGuest={isGuest}
             onShare={setShareThreadId}
+            pinnedIds={pinnedIds}
+            onTogglePin={togglePin}
           />
         </div>
       )}
@@ -301,6 +366,8 @@ function AssistantThreadPage() {
         onMessagesUpdate={handleMessagesUpdate}
         promptLimit={promptLimit}
         isGuest={isGuest}
+        shortcutsOpen={shortcutsOpen}
+        onShortcutsOpenChange={setShortcutsOpen}
       />
 
       {shareThreadId && (
@@ -312,6 +379,8 @@ function AssistantThreadPage() {
           threadId={shareThreadId}
         />
       )}
+
+      <KeyboardShortcuts open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
     </div>
   );
 }
@@ -346,6 +415,8 @@ function ThreadSidebar({
   isGuest,
   className,
   onShare,
+  pinnedIds,
+  onTogglePin,
 }: {
   threads: Thread[];
   activeId: string;
@@ -355,8 +426,30 @@ function ThreadSidebar({
   isGuest?: boolean;
   className?: string;
   onShare?: (id: string) => void;
+  pinnedIds?: string[];
+  onTogglePin?: (id: string) => void;
 }) {
-  const groups = useMemo(() => groupThreads(threads), [threads]);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const pinnedThreads = useMemo(() => {
+    if (!pinnedIds || pinnedIds.length === 0) return [];
+    return pinnedIds
+      .map((id) => threads.find((t) => t.id === id))
+      .filter((t): t is Thread => !!t);
+  }, [threads, pinnedIds]);
+
+  const filteredGroups = useMemo(() => {
+    if (!debouncedSearch.trim()) return groupThreads(threads);
+    const q = debouncedSearch.toLowerCase();
+    const filtered = threads.filter((t) => t.title.toLowerCase().includes(q));
+    return filtered.length > 0 ? [{ label: "Results", threads: filtered }] : [];
+  }, [threads, debouncedSearch]);
 
   return (
     <aside className={cn("w-[260px] shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border", className)}>
@@ -365,13 +458,16 @@ function ThreadSidebar({
         <div className="flex items-center gap-2">
           <img src="/logo-full.png" alt="Operiq AI" className="h-8" />
         </div>
-        <button
-          onClick={onClose}
-          aria-label="Hide sidebar"
-          className="p-1.5 rounded-md text-muted-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-        >
-          <PanelLeft className="size-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <button
+            onClick={onClose}
+            aria-label="Hide sidebar"
+            className="p-1.5 rounded-md text-muted-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          >
+            <PanelLeft className="size-4" />
+          </button>
+        </div>
       </div>
 
       {/* New chat */}
@@ -385,16 +481,36 @@ function ThreadSidebar({
         </button>
       </div>
 
+      {/* Search */}
+      <div className="px-2 pb-2">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search conversations..."
+            className="w-full rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 py-1.5 pl-8 text-xs text-sidebar-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+      </div>
+
       {/* Threads */}
       <div className="flex-1 overflow-y-auto px-2 py-1 space-y-4">
         {threads.length === 0 && (
           <p className="px-3 py-6 text-xs text-muted-foreground">No conversations yet.</p>
         )}
-        {groups.map((group) => (
-          <div key={group.label}>
-            <p className="px-2 pb-1 text-[11px] font-medium text-muted-foreground">{group.label}</p>
+
+        {debouncedSearch.trim() && filteredGroups.length === 0 && (
+          <p className="px-3 py-6 text-xs text-muted-foreground">No threads found.</p>
+        )}
+
+        {/* Pinned section */}
+        {pinnedThreads.length > 0 && !debouncedSearch.trim() && (
+          <div>
+            <p className="px-2 pb-1 text-[11px] font-medium text-muted-foreground">Pinned</p>
             <ul className="space-y-0.5">
-              {group.threads.map((t) => {
+              {pinnedThreads.map((t) => {
                 const active = t.id === activeId;
                 return (
                   <li
@@ -407,7 +523,60 @@ function ThreadSidebar({
                     <Link
                       to="/assistant/$threadId"
                       params={{ threadId: t.id }}
-                      className="block truncate pl-2.5 pr-16 py-2 text-sm text-sidebar-foreground"
+                      className="block truncate pl-2.5 pr-20 py-2 text-sm text-sidebar-foreground"
+                    >
+                      {t.title}
+                    </Link>
+                    <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                      <button
+                        onClick={() => onTogglePin?.(t.id)}
+                        aria-label={`Unpin ${t.title}`}
+                        className="p-1 rounded-md text-accent hover:bg-background"
+                      >
+                        <Star className="size-3.5 fill-accent" />
+                      </button>
+                      <button
+                        onClick={() => onShare?.(t.id)}
+                        aria-label={`Share ${t.title}`}
+                        className="p-1 rounded-md text-muted-foreground hover:bg-background hover:text-accent"
+                      >
+                        <Share2 className="size-3.5" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(t.id)}
+                        aria-label={`Delete ${t.title}`}
+                        className="p-1 rounded-md text-muted-foreground hover:bg-background hover:text-destructive"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="my-2 border-b border-sidebar-border" />
+          </div>
+        )}
+
+        {filteredGroups.map((group) => (
+          <div key={group.label}>
+            <p className="px-2 pb-1 text-[11px] font-medium text-muted-foreground">{group.label}</p>
+            <ul className="space-y-0.5">
+              {group.threads.map((t) => {
+                const active = t.id === activeId;
+                const isPinned = pinnedIds?.includes(t.id);
+                return (
+                  <li
+                    key={t.id}
+                    className={cn(
+                      "group relative rounded-md transition-colors",
+                      active ? "bg-sidebar-accent" : "hover:bg-sidebar-accent/70",
+                    )}
+                  >
+                    <Link
+                      to="/assistant/$threadId"
+                      params={{ threadId: t.id }}
+                      className="block truncate pl-2.5 pr-20 py-2 text-sm text-sidebar-foreground"
                     >
                       {t.title}
                     </Link>
@@ -418,16 +587,26 @@ function ThreadSidebar({
                       )}
                     >
                       <button
+                        onClick={() => onTogglePin?.(t.id)}
+                        aria-label={isPinned ? `Unpin ${t.title}` : `Pin ${t.title}`}
+                        className={cn(
+                          "p-1 rounded-md hover:bg-background",
+                          isPinned ? "text-accent" : "text-muted-foreground hover:text-accent"
+                        )}
+                      >
+                        <Star className={cn("size-3.5", isPinned && "fill-accent")} />
+                      </button>
+                      <button
                         onClick={() => onShare?.(t.id)}
                         aria-label={`Share ${t.title}`}
-                        className="p-1.5 rounded-md text-muted-foreground hover:bg-background hover:text-accent"
+                        className="p-1 rounded-md text-muted-foreground hover:bg-background hover:text-accent"
                       >
                         <Share2 className="size-3.5" />
                       </button>
                       <button
                         onClick={() => onDelete(t.id)}
                         aria-label={`Delete ${t.title}`}
-                        className="p-1.5 rounded-md text-muted-foreground hover:bg-background hover:text-destructive"
+                        className="p-1 rounded-md text-muted-foreground hover:bg-background hover:text-destructive"
                       >
                         <Trash2 className="size-3.5" />
                       </button>
@@ -515,6 +694,48 @@ const QUICK_PROMPTS = [
   "What sharp questions should I ask in a QBR?",
 ];
 
+const PERSONALITIES = [
+  { id: "default", label: "Default Assistant", prompt: "You are a helpful assistant." },
+  { id: "teacher", label: "Teacher", prompt: "You are a patient teacher. Explain concepts clearly and simply. Use examples where helpful." },
+  { id: "coach", label: "Business Coach", prompt: "You are a seasoned business coach. Give strategic, actionable advice. Be concise and results-oriented." },
+  { id: "coder", label: "Code Reviewer", prompt: "You are an expert code reviewer. Analyze code for bugs, performance, and best practices. Be thorough but constructive." },
+  { id: "writer", label: "Creative Writer", prompt: "You are a creative writer. Help with storytelling, copy, and creative expression. Be vivid and imaginative." },
+  { id: "analyst", label: "Analyst", prompt: "You are a data analyst. Break down problems methodically. Use structured reasoning and highlight assumptions." },
+];
+
+function calculateConfidence(text: string): { level: "high" | "moderate" | "low"; label: string } {
+  const uncertaintyWords = ["might", "may", "possibly", "uncertain", "probably", "likely", "could", "unsure", "guess"];
+  const hasUncertainty = uncertaintyWords.some((w) => text.toLowerCase().includes(w));
+  const length = text.length;
+  if (length < 80 || hasUncertainty) {
+    return { level: "low", label: "Review suggested" };
+  }
+  if (length < 200 || hasUncertainty) {
+    return { level: "moderate", label: "Moderate confidence" };
+  }
+  return { level: "high", label: "High confidence" };
+}
+
+function ConfidenceBadge({ text }: { text: string }) {
+  const { level, label } = calculateConfidence(text);
+  const icons = {
+    high: <BadgeCheck className="size-3" />,
+    moderate: <HelpCircle className="size-3" />,
+    low: <AlertTriangle className="size-3" />,
+  };
+  const colors = {
+    high: "bg-green-100 text-green-800 border-green-200",
+    moderate: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    low: "bg-red-100 text-red-800 border-red-200",
+  };
+  return (
+    <span className={cn("inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[10px] font-medium", colors[level])}>
+      {icons[level]}
+      {label}
+    </span>
+  );
+}
+
 function ChatPane({
   thread,
   sidebarOpen,
@@ -523,6 +744,8 @@ function ChatPane({
   onMessagesUpdate,
   promptLimit,
   isGuest,
+  shortcutsOpen,
+  onShortcutsOpenChange,
 }: {
   thread: Thread;
   sidebarOpen: boolean;
@@ -531,6 +754,8 @@ function ChatPane({
   onMessagesUpdate: (messages: UIMessage[]) => void;
   promptLimit: ReturnType<typeof usePromptLimit>;
   isGuest: boolean;
+  shortcutsOpen: boolean;
+  onShortcutsOpenChange: (v: boolean) => void;
 }) {
   /* ---- Model selector state ---- */
   const [selectedModel, setSelectedModel] = useState(() => {
@@ -588,6 +813,32 @@ function ChatPane({
   const audioChunksRef = useRef<Blob[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedPersonality, setSelectedPersonality] = useState(PERSONALITIES[0]);
+  const personalityRef = useRef(selectedPersonality);
+
+  useEffect(() => {
+    personalityRef.current = selectedPersonality;
+  }, [selectedPersonality]);
+
+  /* ---- Auto-save draft ---- */
+  const draftKey = `operiq-draft-${thread.id}`;
+  useEffect(() => {
+    const saved = localStorage.getItem(draftKey);
+    if (saved && !input) {
+      setInput(saved);
+    }
+  }, [thread.id, draftKey]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (input.trim()) {
+        localStorage.setItem(draftKey, input);
+      } else {
+        localStorage.removeItem(draftKey);
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [input, draftKey]);
 
   const { messages, sendMessage, status, error } = useChat({
     id: thread.id,
@@ -687,11 +938,65 @@ function ChatPane({
       promptLimit.increment();
     }
 
+    /* Clear draft */
+    localStorage.removeItem(draftKey);
+
+    const personality = personalityRef.current;
     const messageWithFiles = buildMessageWithFiles(value);
+    const finalText = personality.id !== "default"
+      ? `[Persona: ${personality.label}]\n${personality.prompt}\n\n${messageWithFiles}`
+      : messageWithFiles;
+
     setInput("");
     setFiles([]);
-    await sendMessage({ text: messageWithFiles });
+    await sendMessage({ text: finalText });
     setTimeout(() => inputRef.current?.focus(), 0);
+  }
+
+  function exportAsMarkdown() {
+    const lines = [`# ${thread.title}`, ""];
+    for (const m of messages) {
+      const text = m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
+      lines.push(`## ${m.role === "user" ? "You" : "Operiq"}`, "", text, "");
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${thread.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported as Markdown");
+  }
+
+  function exportAsPDF() {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast.error("Please allow popups to export as PDF");
+      return;
+    }
+    const lines = [`<h1>${thread.title}</h1>`];
+    for (const m of messages) {
+      const text = m.parts.map((p) => (p.type === "text" ? p.text : "")).join("").replace(/\n/g, "<br/>");
+      lines.push(`<h2>${m.role === "user" ? "You" : "Operiq"}</h2><p>${text}</p>`);
+    }
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${thread.title}</title>
+          <style>
+            body { font-family: Inter, sans-serif; padding: 40px; max-width: 700px; margin: 0 auto; color: #111; }
+            h1 { font-size: 24px; margin-bottom: 20px; }
+            h2 { font-size: 16px; margin-top: 24px; margin-bottom: 8px; color: #333; }
+            p { line-height: 1.6; }
+          </style>
+        </head>
+        <body>${lines.join("")}</body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+    toast.success("Exported as PDF");
   }
 
   async function speakMessage(messageId: string, text: string) {
@@ -864,12 +1169,39 @@ function ChatPane({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="p-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label="Export conversation"
+              >
+                <Download className="size-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover border-border">
+              <DropdownMenuItem onClick={exportAsMarkdown}>
+                <FileDown className="size-4 mr-2" />
+                Export as Markdown
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportAsPDF}>
+                <FileDown className="size-4 mr-2" />
+                Export as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <button
             onClick={() => setInviteOpen(true)}
             className="p-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
             aria-label="Share conversation"
           >
             <Share2 className="size-4" />
+          </button>
+          <button
+            onClick={() => onShortcutsOpenChange(true)}
+            className="hidden md:flex p-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-label="Keyboard shortcuts"
+          >
+            <Keyboard className="size-4" />
           </button>
           <button
             onClick={onNewChat}
@@ -925,9 +1257,14 @@ function ChatPane({
                             )}
                           </button>
                         </div>
-                        <span className="text-[11px] text-muted-foreground/60">
-                          {timeAgo(m.createdAt ?? Date.now())}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-muted-foreground/60">
+                            {timeAgo(m.createdAt ?? Date.now())}
+                          </span>
+                          {!isLoading && text && (
+                            <ConfidenceBadge text={text} />
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1044,11 +1381,26 @@ function ChatPane({
                       ))}
                     </SelectContent>
                   </Select>
+                  <Select value={selectedPersonality.id} onValueChange={(id) => setSelectedPersonality(PERSONALITIES.find((p) => p.id === id) || PERSONALITIES[0])}>
+                    <SelectTrigger className="h-7 w-auto min-w-0 px-2 py-0 text-[11px] rounded-md bg-transparent border-0 text-muted-foreground hover:text-foreground hover:bg-muted focus:ring-0 gap-1 shrink-0">
+                      <User className="size-3.5" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border min-w-[180px]">
+                      {PERSONALITIES.map((p) => (
+                        <SelectItem key={p.id} value={p.id} className="text-sm cursor-pointer">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{p.label}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <button
                     type="button"
                     onClick={() => setAgentMode((v) => !v)}
                     className={cn(
-                      "shrink-0 size-7 rounded-md flex items-center justify-center transition-colors",
+                      "shrink-0 size-7 rounded-md flex items-center justify-center transition-colors relative",
                       agentMode
                         ? "bg-accent text-white hover:bg-accent/90"
                         : "bg-transparent text-muted-foreground hover:bg-muted",
@@ -1057,6 +1409,9 @@ function ChatPane({
                     title={agentMode ? "Agent mode: on" : "Agent mode: off"}
                   >
                     <Bot className="size-4" />
+                    {selectedPersonality.id !== "default" && (
+                      <span className="absolute -top-1 -right-1 size-2 rounded-full bg-accent" />
+                    )}
                   </button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -1125,6 +1480,13 @@ function ChatPane({
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
                       submit(input);
+                    }
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault();
+                      submit(input);
+                    }
+                    if (e.key === "Escape") {
+                      onShortcutsOpenChange(false);
                     }
                   }}
                   placeholder="Message Operiq AI..."

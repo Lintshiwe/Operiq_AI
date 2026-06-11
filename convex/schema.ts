@@ -97,4 +97,40 @@ export default defineSchema({
     currentPeriodEnd: v.string(),
     createdAt: v.string(),
   }).index("by_userId", ["userId"]),
+
+  documents: defineTable({
+    userId: v.id("users"),
+    filename: v.string(),
+    content: v.string(),
+    summary: v.optional(v.string()),
+    createdAt: v.string(),
+  }).index("by_userId", ["userId"]),
+
+  presence: defineTable({
+    userId: v.id("users"),
+    threadId: v.id("threads"),
+    lastSeen: v.string(),
+  })
+    .index("by_user_thread", ["userId", "threadId"])
+    .index("by_thread", ["threadId"]),
+
+  apiKeys: defineTable({
+    userId: v.id("users"),
+    name: v.string(),
+    key: v.string(),
+    fullKey: v.string(),
+    isActive: v.boolean(),
+    createdAt: v.string(),
+    lastUsedAt: v.optional(v.string()),
+  }).index("by_userId", ["userId"]).index("by_key", ["fullKey"]),
+
+  notifications: defineTable({
+    userId: v.id("users"),
+    type: v.string(),
+    title: v.string(),
+    body: v.string(),
+    read: v.boolean(),
+    metadata: v.optional(v.object({ threadId: v.optional(v.id("threads")) })),
+    createdAt: v.string(),
+  }).index("by_userId", ["userId"]),
 });
