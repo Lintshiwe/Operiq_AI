@@ -4,17 +4,17 @@
  * or use of this file is strictly prohibited.
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
-  ListChecks, Loader2, Copy, Check, ShieldCheck,
-  Sparkles, SendHorizontal, Download,
+  Sparkles, Star, CalendarDays, Lightbulb,
+  Copy, Check, Download, ShieldCheck, Loader2,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { MarkdownView } from "@/components/MarkdownView";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/planner")({
@@ -30,56 +30,76 @@ export const Route = createFileRoute("/planner")({
   component: PlannerPage,
 });
 
+function parsePlan(text: string) {
+  const priorities: string[] = [];
+  const overview: string[] = [];
+  const suggestions: string[] = [];
+
+  const lines = text.split("\n");
+  let section: "none" | "priorities" | "overview" | "suggestions" = "none";
+
+  for (const line of lines) {
+    const lower = line.toLowerCase();
+    if (/^priorities[:\s]/.test(lower)) {
+      section = "priorities";
+      continue;
+    }
+    if (/^overview[:\s]/.test(lower)) {
+      section = "overview";
+      continue;
+    }
+    if (/^suggestions[:\s]/.test(lower)) {
+      section = "suggestions";
+      continue;
+    }
+    if (line.trim().startsWith("-") || /^\d+\.\s/.test(line.trim())) {
+      const item = line.replace(/^[-\d.\s]+/, "").trim();
+      if (!item) continue;
+      if (section === "priorities") priorities.push(item);
+      else if (section === "overview") overview.push(item);
+      else if (section === "suggestions") suggestions.push(item);
+    } else if (line.trim()) {
+      // Non-list line within a section — treat as a single item if in section
+      if (section === "priorities") priorities.push(line.trim());
+      else if (section === "overview") overview.push(line.trim());
+      else if (section === "suggestions") suggestions.push(line.trim());
+    }
+  }
+
+  const fallback = !priorities.length && !overview.length && !suggestions.length;
+  return { priorities, overview, suggestions, fallback };
+}
+
 function PlannerPage() {
   const { prefill } = Route.useSearch();
   const generate = useMutation(api.plans.generate);
-  const [horizon, setHorizon] = useState<"daily" | "weekly">("daily");
+  const [horizon, setHorizon] = useState<"Day" | "Week" | "Month">("Day");
   const [tasks, setTasks] = useState(prefill || "");
-  const [goals, setGoals] = useState("");
   const [output, setOutput] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [refineText, setRefineText] = useState("");
-  const [refining, setRefining] = useState(false);
-  const refineInputRef = useRef<HTMLInputElement>(null);
-  const resultRef = useRef<HTMLDivElement>(null);
-  const [modKey, setModKey] = useState("\u2318");
 
   useEffect(() => {
-    setModKey(navigator.platform?.includes("Mac") ? "\u2318" : "Ctrl");
-  }, []);
+    if (prefill) setTasks(prefill);
+  }, [prefill]);
 
-  async function onGenerate() {
+  async function handleGenerate() {
     if (tasks.trim().length < 5) return;
     setLoading(true);
     setOutput(null);
     try {
-      const result = await generate({ horizon, tasks, goals });
+      const convexHorizon = horizon === "Day" ? "daily" : horizon === "Week" ? "weekly" : "monthly";
+      const result = await generate({
+        horizon: convexHorizon as "daily" | "weekly" | "monthly",
+        tasks,
+        goals: "",
+      });
       setOutput(result.text);
     } catch (e) {
       toast.error("Generation failed. Please try again.");
       console.error(e);
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function onRefine() {
-    if (!output || !refineText.trim()) return;
-    setRefining(true);
-    try {
-      const result = await generate({
-        horizon,
-        tasks: `Previous plan:\n${output}\n\nRequested changes: ${refineText}`,
-        goals: "",
-      });
-      setOutput(result.text);
-      setRefineText("");
-    } catch (e) {
-      toast.error("Refinement failed. Please try again.");
-      console.error(e);
-    } finally {
-      setRefining(false);
     }
   }
 
@@ -110,215 +130,225 @@ function PlannerPage() {
     toast.success("Plan exported");
   }
 
-  useEffect(() => {
-    function handler(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-        if (refineInputRef.current === document.activeElement) {
-          e.preventDefault();
-          onRefine();
-        } else {
-          e.preventDefault();
-          onGenerate();
-        }
-      }
-    }
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [horizon, tasks, goals, output, refineText]);
+  const parsed = output ? parsePlan(output) : null;
+  const priorities = parsed?.priorities ?? [];
+  const overview = parsed?.overview ?? [];
+  const suggestions = parsed?.suggestions ?? [];
+  const fallback = parsed?.fallback ?? true;
 
-  useEffect(() => {
-    if (output && resultRef.current) {
-      resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [output]);
-
-  const horizons = [
-    { value: "daily" as const, label: "Daily" },
-    { value: "weekly" as const, label: "Weekly" },
-  ];
-
-  function pillClass(active: boolean) {
-    return active
-      ? "bg-accent text-accent-foreground shadow-sm"
-      : "bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50";
-  }
+  const horizons: Array<"Day" | "Week" | "Month"> = ["Day", "Week", "Month"];
 
   return (
     <AppShell>
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-[680px] mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10">
-            {/* Minimal header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-2 sm:gap-0">
-              <div className="flex items-center gap-2.5">
-                <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                  <ListChecks className="size-4" />
-                </span>
-                <div>
-                  <h1 className="text-sm font-semibold text-foreground">Task Planner</h1>
-                  <p className="text-xs text-muted-foreground">Generate prioritized daily and weekly plans</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Horizon pills */}
-            <div className="flex flex-wrap items-center gap-3 mb-5">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mr-1">
-                  Horizon
-                </span>
-                {horizons.map((h) => (
-                  <button
-                    key={h.value}
-                    type="button"
-                    onClick={() => setHorizon(h.value)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${pillClass(horizon === h.value)}`}
-                  >
-                    {h.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Tasks textarea */}
-            <div className="mb-5">
-              <textarea
-                placeholder="List your tasks (one per line)..."
-                value={tasks}
-                onChange={(e) => setTasks(e.target.value)}
-                rows={8}
-                className="w-full bg-card/50 border border-border/60 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 resize-vertical focus:outline-none focus:border-accent/40 transition-colors"
-              />
-            </div>
-
-            {/* Goals textarea */}
-            <div className="mb-5">
-              <textarea
-                placeholder="Goals or context (optional)"
-                value={goals}
-                onChange={(e) => setGoals(e.target.value)}
-                rows={3}
-                className="w-full bg-card/50 border border-border/60 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 resize-vertical focus:outline-none focus:border-accent/40 transition-colors"
-              />
-            </div>
-
-            {/* Generate button + shortcut hint */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              <Button
-                onClick={onGenerate}
-                disabled={loading || refining || tasks.trim().length < 5}
-                className="rounded-xl px-5 w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90"
-              >
-                {loading ? (
-                  <><Loader2 className="size-4 animate-spin" /> Generating...</>
-                ) : (
-                  <><Sparkles className="size-4" /> Generate plan</>
-                )}
-              </Button>
-              <span className="text-xs text-muted-foreground/50">
-                or press{" "}
-                <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted/30 text-[11px] font-mono text-muted-foreground">
-                  {modKey}+Enter
-                </kbd>
-              </span>
-            </div>
-
-            {/* Loading skeleton */}
-            {loading && !output && (
-              <div className="mt-10 space-y-3 animate-pulse">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="size-7 rounded-lg bg-muted/50" />
-                  <div className="h-3 w-40 rounded bg-muted/50" />
-                  <div className="h-3 w-16 rounded bg-muted/30" />
-                </div>
-                {[85, 70, 90, 55, 75, 60, 80].map((w, i) => (
-                  <div key={i} className="h-2.5 rounded bg-muted/40" style={{ width: `${w}%` }} />
-                ))}
-              </div>
-            )}
-
-            {/* Result */}
-            {output && (
-              <div ref={resultRef} className="mt-10">
-                <div className="flex items-start gap-3">
-                  <div className="size-7 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <div className="size-2 rounded-full bg-accent" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-2 sm:gap-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-foreground">Operiq AI</span>
-                        <span className="text-[10px] text-muted-foreground/50">\u00b7</span>
-                        <span className="text-[11px] text-muted-foreground/50">Just now</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={copy} className="h-7 px-2 text-xs gap-1">
-                          {copied ? (
-                            <><Check className="size-3.5 text-accent" /> Copied</>
-                          ) : (
-                            <><Copy className="size-3.5" /> Copy</>
-                          )}
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={exportPlan} className="h-7 px-2 text-xs gap-1">
-                          <><Download className="size-3.5" /> Export</>
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl bg-card/30 border border-border/50 px-5 py-4">
-                      <div className="prose-flow prose-sm max-w-none">
-                        <MarkdownView>{output}</MarkdownView>
-                      </div>
-                    </div>
-
-                    {/* Refine input */}
-                    <div className="mt-3 flex items-center gap-2 bg-card/30 border border-border/50 rounded-xl px-4 py-2.5 focus-within:border-accent/40 transition-colors">
-                      <input
-                        ref={refineInputRef}
-                        type="text"
-                        placeholder="Tell Operiq how to improve this plan..."
-                        value={refineText}
-                        onChange={(e) => setRefineText(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                            e.preventDefault();
-                            onRefine();
-                          }
-                        }}
-                        className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground/40"
-                      />
-                      <button
-                        type="button"
-                        onClick={onRefine}
-                        disabled={refining || !refineText.trim()}
-                        className="size-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors disabled:opacity-30 shrink-0"
-                      >
-                        {refining ? (
-                          <Loader2 className="size-3.5 animate-spin" />
-                        ) : (
-                          <SendHorizontal className="size-3.5" />
-                        )}
-                      </button>
-                    </div>
-
-                    <AIDisclaimer />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Empty state */}
-            {!output && !loading && (
-              <div className="mt-16 text-center">
-                <div className="size-10 rounded-xl bg-accent/5 border border-accent/10 flex items-center justify-center mx-auto mb-3">
-                  <Sparkles className="size-4 text-accent/60" />
-                </div>
-                <p className="text-sm text-muted-foreground/50">
-                  Add your tasks and click Generate plan
-                </p>
-              </div>
-            )}
+      <div className="h-full flex flex-col items-center py-12 px-4">
+        <div className="w-full max-w-[720px] space-y-8">
+          {/* Title */}
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl font-semibold text-foreground">Task Planner</h1>
+            <p className="text-sm text-muted-foreground">Generate prioritized daily and weekly plans</p>
           </div>
+
+          {/* Horizon pills */}
+          <div className="flex justify-center gap-2">
+            {horizons.map((h) => (
+              <Button
+                key={h}
+                variant={h === horizon ? "default" : "outline"}
+                size="sm"
+                className="rounded-full"
+                onClick={() => setHorizon(h)}
+              >
+                {h}
+              </Button>
+            ))}
+          </div>
+
+          {/* Input */}
+          <Textarea
+            placeholder="Describe your goals, tasks, and constraints..."
+            rows={6}
+            value={tasks}
+            onChange={(e) => setTasks(e.target.value)}
+          />
+
+          {/* Generate */}
+          <div className="flex justify-center">
+            <Button
+              onClick={handleGenerate}
+              disabled={loading || tasks.trim().length < 5}
+              className="rounded-full px-8"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="size-4 mr-2" />
+                  Generate Plan
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Loading skeleton */}
+          {loading && !output && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="rounded-xl border border-border bg-card p-5 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="size-5 rounded-full bg-muted/50" />
+                    <div className="h-4 w-32 rounded bg-muted/50" />
+                  </div>
+                  {[80, 60, 70, 50].map((w, j) => (
+                    <div key={j} className="h-2.5 rounded bg-muted/40" style={{ width: `${w}%` }} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Results */}
+          {output && !fallback && (
+            <div className="space-y-4">
+              {/* Copy / Export */}
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={copy} className="h-7 px-2 text-xs gap-1">
+                  {copied ? (
+                    <>
+                      <Check className="size-3.5 text-accent" /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="size-3.5" /> Copy
+                    </>
+                  )}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={exportPlan} className="h-7 px-2 text-xs gap-1">
+                  <Download className="size-3.5" /> Export
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Today's Priorities */}
+                <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Star className="size-5 text-red-400" />
+                    <h3 className="text-sm font-semibold text-foreground">Today&apos;s Priorities</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {priorities.length ? (
+                      priorities.map((p, i) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span className="size-1.5 rounded-full bg-red-400/50 shrink-0" />
+                          {p}
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-sm text-muted-foreground/60">No priorities found.</li>
+                    )}
+                  </ul>
+                </div>
+
+                {/* Weekly Overview */}
+                <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="size-5 text-blue-400" />
+                    <h3 className="text-sm font-semibold text-foreground">Weekly Overview</h3>
+                  </div>
+                  {overview.length ? (
+                    <ul className="space-y-2">
+                      {overview.map((o, i) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span className="size-1.5 rounded-full bg-blue-400/50 shrink-0" />
+                          {o}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="space-y-2">
+                      {["Mon", "Tue", "Wed", "Thu", "Fri"].map((d) => (
+                        <div key={d} className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="w-8">{d}</span>
+                          <div className="flex-1 h-2 rounded-full bg-blue-400/20">
+                            <div
+                              className="h-full rounded-full bg-blue-400/60"
+                              style={{ width: `${Math.floor(Math.random() * 80 + 20)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Smart Suggestions */}
+                <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="size-5 text-yellow-400" />
+                    <h3 className="text-sm font-semibold text-foreground">Smart Suggestions</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {suggestions.length ? (
+                      suggestions.map((s, i) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span className="size-1.5 rounded-full bg-yellow-400/50 shrink-0" />
+                          {s}
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-sm text-muted-foreground/60">No suggestions found.</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+
+              <AIDisclaimer />
+            </div>
+          )}
+
+          {/* Fallback: all in first card */}
+          {output && fallback && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={copy} className="h-7 px-2 text-xs gap-1">
+                  {copied ? (
+                    <>
+                      <Check className="size-3.5 text-accent" /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="size-3.5" /> Copy
+                    </>
+                  )}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={exportPlan} className="h-7 px-2 text-xs gap-1">
+                  <Download className="size-3.5" /> Export
+                </Button>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Star className="size-5 text-red-400" />
+                  <h3 className="text-sm font-semibold text-foreground">Plan</h3>
+                </div>
+                <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-sans">{output}</pre>
+              </div>
+              <AIDisclaimer />
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!output && !loading && (
+            <div className="mt-16 text-center">
+              <div className="size-10 rounded-xl bg-accent/5 border border-accent/10 flex items-center justify-center mx-auto mb-3">
+                <Sparkles className="size-4 text-accent/60" />
+              </div>
+              <p className="text-sm text-muted-foreground/50">
+                Add your tasks and click Generate Plan
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </AppShell>
