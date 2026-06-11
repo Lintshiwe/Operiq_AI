@@ -9,6 +9,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useSsrConvexAuth } from "@/lib/use-ssr-convex-auth";
 import { useState, useEffect } from "react";
 import { LogIn, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -81,7 +82,7 @@ function LoginPage() {
             <label htmlFor="email" className="text-xs font-medium text-muted-foreground">
               Email
             </label>
-            <input
+            <Input
               id="email"
               type="email"
               value={email}
@@ -96,7 +97,7 @@ function LoginPage() {
             <label htmlFor="password" className="text-xs font-medium text-muted-foreground">
               Password
             </label>
-            <input
+            <Input
               id="password"
               type="password"
               value={password}

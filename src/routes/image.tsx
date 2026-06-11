@@ -175,7 +175,7 @@ function ImagePage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <Button
                 onClick={generateImage}
-                disabled={loading}
+                disabled={loading || !prompt.trim()}
                 className="rounded-xl px-5 w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90"
               >
                 {loading ? (

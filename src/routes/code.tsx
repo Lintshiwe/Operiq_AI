@@ -8,7 +8,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Loader2, Code2, Cpu } from "lucide-react";
+import { ArrowUp, Loader2, Code2, Cpu, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { MarkdownView } from "@/components/MarkdownView";
 import { timeAgo } from "@/lib/time";
@@ -221,9 +221,10 @@ function CodePage() {
                 )}
               </button>
             </div>
-            <p className="text-[11px] text-muted-foreground/50 mt-2 text-center">
-              Operiq Code can make mistakes. Review generated code before using it.
-            </p>
+            <div className="mt-4 flex items-start gap-2 rounded-lg px-3 py-2 text-[11px] text-muted-foreground/60">
+              <ShieldCheck className="size-3 mt-0.5 shrink-0" />
+              <p>Operiq Code can make mistakes. Review generated code before using it.</p>
+            </div>
           </div>
         </div>
       </div>

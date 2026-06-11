@@ -38,7 +38,8 @@ import {
   Bot,
   Upload,
   Volume2,
-  Link as LinkIcon,
+  Image,
+  Film,
   Share2,
   Download,
   FileDown,
@@ -65,7 +66,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import { MarkdownView } from "@/components/MarkdownView";
 import { Logo } from "@/components/Logo";
@@ -100,6 +100,8 @@ const MODULES = [
   { to: "/meetings", label: "Meeting Intelligence", icon: CalendarCheck2 },
   { to: "/planner", label: "Task Planner", icon: ListChecks },
   { to: "/research", label: "Research Hub", icon: BookOpen },
+  { to: "/image", label: "Image Gen", icon: Image },
+  { to: "/video", label: "Video Gen", icon: Film },
 ];
 
 
@@ -1145,6 +1147,7 @@ function ChatPane({
 
   async function startVoiceLoop() {
     voiceModeRef.current = true;
+    toast.info("Voice mode active \u2014 listening\u2026");
     while (voiceModeRef.current) {
       try {
         setVoiceState('listening');
@@ -1160,6 +1163,7 @@ function ChatPane({
         const audioBlob = new Blob(chunks, { type: 'audio/webm' });
         
         setVoiceState('thinking');
+        toast.info("Processing\u2026");
         const formData = new FormData();
         formData.append('audio', audioBlob, 'recording.webm');
         const sttRes = await fetch('/api/elevenlabs-stt', { method: 'POST', body: formData });
@@ -1214,9 +1218,7 @@ function ChatPane({
               </button>
             </>
           )}
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted cursor-default">
-            <img src="/logo-full.png" alt="Operiq AI" className="h-10" />
-          </div>
+
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
@@ -1264,7 +1266,7 @@ function ChatPane({
       </header>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} key={threadId} className="flex-1 overflow-y-auto transition-opacity duration-200">
         {isEmpty ? (
           <EmptyState onPick={(s) => submit(s)} promptLimit={promptLimit} isGuest={isGuest} />
         ) : (
@@ -1316,9 +1318,9 @@ function ChatPane({
                           )}
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+              </div>
+            )}
+              </div>
               );
             })}
 
@@ -1478,11 +1480,7 @@ function ChatPane({
                         <Upload className="size-4 mr-2" />
                         Upload file
                       </DropdownMenuItem>
-                  <DropdownMenuItem disabled>
-                    <LinkIcon className="size-4 mr-2" />
-                    Upload from URL
-                    <DropdownMenuShortcut>Coming soon</DropdownMenuShortcut>
-                  </DropdownMenuItem>
+
                 </DropdownMenuContent>
               </DropdownMenu>
               <button
@@ -1540,14 +1538,15 @@ function ChatPane({
 
               {/* Voice mode indicator */}
               {voiceMode && (
-                <div className="flex items-center gap-2 px-3 py-1.5 text-xs">
+                <div className="flex items-center gap-2 px-3 py-1.5 mb-1 rounded-md bg-accent/5 border border-accent/20 text-xs">
                   <span className={cn(
-                    "size-2 rounded-full animate-pulse",
+                    "size-2.5 rounded-full animate-pulse",
                     voiceState === 'listening' && "bg-red-500",
                     voiceState === 'thinking' && "bg-yellow-500",
                     voiceState === 'speaking' && "bg-green-500",
                     voiceState === 'idle' && "bg-blue-500",
                   )} />
+                  <span className="text-foreground font-medium">Voice</span>
                   <span className="text-muted-foreground capitalize">{voiceState}</span>
                 </div>
               )}
@@ -1583,9 +1582,9 @@ function EmptyState({
   isGuest?: boolean;
 }) {
   return (
-    <div className="h-full flex flex-col items-center justify-center px-4 py-10">
+    <div className="min-h-full flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-2xl text-center">
-        <img src="/logo-full.png" alt="Operiq AI" className="mx-auto h-64 mb-4" />
+        <img src="/logo-full.png" alt="Operiq AI" className="mx-auto h-16 md:h-20 mb-4" />
         <h2 className="text-2xl font-semibold text-foreground tracking-tight">
           What can I help with?
         </h2>

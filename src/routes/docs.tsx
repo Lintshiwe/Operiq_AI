@@ -87,6 +87,7 @@ const sections: Section[] = [
 function DocsPage() {
   const [activeSection, setActiveSection] = useState<string>("problem-statement");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   return (
     <div className="relative min-h-dvh bg-background text-foreground">
@@ -127,7 +128,7 @@ function DocsPage() {
 
         {/* Sidebar TOC */}
         <aside className={cn(
-          "lg:w-64 lg:min-h-[calc(100dvh-57px)] lg:border-r lg:border-border lg:sticky lg:top-0",
+          "lg:w-64 lg:min-h-[calc(100dvh-57px)] lg:border-r lg:border-border lg:sticky lg:top-[57px]",
           mobileSidebarOpen ? "block" : "hidden lg:block"
         )}>
           <nav className="p-4 lg:p-6">
@@ -290,21 +291,18 @@ function DocsPage() {
               <div className="space-y-4 mt-4">
                 <div className="border border-border rounded-xl p-4 bg-card">
                   <p className="text-sm font-medium text-muted-foreground mb-3">System Architecture Overview</p>
-                  <img
-                    src="/docs/operiq-architecture.png"
-                    alt="Operiq AI System Architecture"
-                    className="w-full rounded-lg border border-border/50"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                      const parent = e.currentTarget.parentElement;
-                      if (parent) {
-                        const placeholder = document.createElement("div");
-                        placeholder.className = "text-sm text-muted-foreground text-center py-8 bg-card rounded-lg";
-                        placeholder.textContent = "Architecture diagram: docs/operiq-architecture.png";
-                        parent.appendChild(placeholder);
-                      }
-                    }}
-                  />
+                  {imgError ? (
+                    <div className="text-sm text-muted-foreground text-center py-8 bg-card rounded-lg border border-border/50">
+                      Architecture diagram
+                    </div>
+                  ) : (
+                    <img
+                      src="/docs/operiq-architecture.png"
+                      alt="Operiq AI System Architecture"
+                      className="w-full rounded-lg border border-border/50"
+                      onError={() => setImgError(true)}
+                    />
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   The architecture diagram above illustrates the full system topology including frontend,

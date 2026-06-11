@@ -28,7 +28,6 @@ import {
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
@@ -70,7 +69,6 @@ const SECTIONS: {
   id: Section;
   label: string;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-  badge?: string;
 }[] = [
   { id: "general", label: "General", icon: Settings },
   { id: "personalization", label: "Personalization", icon: Palette },
@@ -164,11 +162,6 @@ function SettingsPage() {
                 >
                   <Icon className="size-4" strokeWidth={1.75} />
                   <span className="flex-1">{s.label}</span>
-                  {s.badge && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                      {s.badge}
-                    </Badge>
-                  )}
                 </button>
               );
             })}
@@ -1097,10 +1090,6 @@ function ContactSection() {
           </Button>
         </div>
 
-        {/* Social links note */}
-        <p className="text-xs text-muted-foreground">
-          (set your links in profile)
-        </p>
 
         {/* Links */}
         <div className="flex flex-wrap items-center gap-4">
@@ -1311,29 +1300,6 @@ function ContrastButton({
     >
       {children}
     </button>
-  );
-}
-
-function DisabledSelect({ placeholder }: { placeholder: string }) {
-  return (
-    <div className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground cursor-not-allowed">
-      {placeholder}
-    </div>
-  );
-}
-
-function DisabledField({ label, type }: { label: string; type: "input" | "textarea" }) {
-  const baseClass =
-    "w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground cursor-not-allowed";
-  return (
-    <div className="space-y-2">
-      <p className="text-sm font-medium text-foreground">{label}</p>
-      {type === "input" ? (
-        <div className={baseClass}>Coming soon</div>
-      ) : (
-        <div className={cn(baseClass, "min-h-[80px]")}>Coming soon</div>
-      )}
-    </div>
   );
 }
 

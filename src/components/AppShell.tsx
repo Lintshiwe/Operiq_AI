@@ -12,7 +12,6 @@ import {
   BookOpen,
   MessageSquareText,
   PanelLeft,
-  Plus,
   Code2,
   SquarePen,
   LogOut,
@@ -218,7 +217,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 onClick={() => setMobileOpen(false)}
                 className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:bg-sidebar-accent text-sidebar-foreground border border-sidebar-border"
               >
-                <Plus className="size-4" />
+                <SquarePen className="size-4" />
                 New chat
               </Link>
             </div>
