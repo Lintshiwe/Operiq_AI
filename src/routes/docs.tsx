@@ -89,35 +89,35 @@ function DocsPage() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="relative min-h-dvh bg-white text-zinc-900">
+    <div className="relative min-h-dvh bg-background text-foreground">
       {/* Watermark */}
       <div
         className="pointer-events-none fixed inset-0 z-0 bg-no-repeat bg-center"
         style={{
           backgroundImage: "url('/logo-icon.png')",
           backgroundSize: "800px",
-          opacity: 0.04,
+          opacity: 0.02,
         }}
       />
 
       {/* Header */}
-      <header className="relative z-10 border-b border-zinc-200 bg-white/80 backdrop-blur-sm">
+      <header className="relative z-10 border-b border-border bg-background/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2.5">
             <img src="/logo-icon.png" alt="Operiq AI" className="h-7 w-7" />
-            <span className="text-sm font-semibold tracking-tight text-zinc-900">Operiq AI</span>
+            <span className="text-sm font-semibold tracking-tight text-foreground">Operiq AI</span>
           </a>
-          <span className="text-xs text-zinc-500 font-mono">v2.0.0</span>
+          <span className="text-xs text-muted-foreground font-mono">v2.0.0</span>
         </div>
       </header>
 
       {/* Main layout */}
       <div className="relative z-10 max-w-7xl mx-auto flex flex-col lg:flex-row">
         {/* Mobile sidebar toggle */}
-        <div className="lg:hidden px-4 py-3 border-b border-zinc-200">
+        <div className="lg:hidden px-4 py-3 border-b border-border">
           <button
             onClick={() => setMobileSidebarOpen((v) => !v)}
-            className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
             aria-label="Toggle table of contents"
           >
             <Menu className="size-4" />
@@ -127,11 +127,11 @@ function DocsPage() {
 
         {/* Sidebar TOC */}
         <aside className={cn(
-          "lg:w-64 lg:min-h-[calc(100dvh-57px)] lg:border-r lg:border-zinc-200 lg:sticky lg:top-0",
+          "lg:w-64 lg:min-h-[calc(100dvh-57px)] lg:border-r lg:border-border lg:sticky lg:top-0",
           mobileSidebarOpen ? "block" : "hidden lg:block"
         )}>
           <nav className="p-4 lg:p-6">
-            <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-[0.2em] mb-4">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.2em] mb-4">
               Documentation
             </p>
             <ul className="space-y-0.5">
@@ -147,8 +147,8 @@ function DocsPage() {
                       }}
                       className={"w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left " +
                         (isActive
-                          ? "bg-[#10a37f]/10 text-[#10a37f] font-medium"
-                          : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50")
+                          ? "bg-accent/10 text-accent font-medium"
+                          : "text-muted-foreground hover:text-foreground hover:bg-card")
                       }
                     >
                       <span className="shrink-0">{section.icon}</span>
@@ -167,11 +167,11 @@ function DocsPage() {
           <div className="max-w-3xl space-y-16">
             {/* Page title */}
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-[#10a37f] font-medium">Operiq AI</p>
-              <h1 className="mt-3 text-3xl lg:text-4xl font-semibold tracking-tight text-zinc-900">
+              <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium">Operiq AI</p>
+              <h1 className="mt-3 text-3xl lg:text-4xl font-semibold tracking-tight text-foreground">
                 Operiq AI Technical Documentation
               </h1>
-              <p className="mt-3 text-sm text-zinc-600 leading-relaxed max-w-xl">
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-xl">
                 Comprehensive documentation covering system architecture, prompt engineering,
                 responsible AI practices, and evaluation alignment.
               </p>
@@ -288,25 +288,25 @@ function DocsPage() {
 
               <SubHeading>Architecture Diagrams</SubHeading>
               <div className="space-y-4 mt-4">
-                <div className="border border-zinc-200 rounded-xl p-4 bg-white">
-                  <p className="text-sm font-medium text-zinc-700 mb-3">System Architecture Overview</p>
+                <div className="border border-border rounded-xl p-4 bg-card">
+                  <p className="text-sm font-medium text-muted-foreground mb-3">System Architecture Overview</p>
                   <img
                     src="/docs/operiq-architecture.png"
                     alt="Operiq AI System Architecture"
-                    className="w-full rounded-lg border border-zinc-100"
+                    className="w-full rounded-lg border border-border/50"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = "none";
                       const parent = e.currentTarget.parentElement;
                       if (parent) {
                         const placeholder = document.createElement("div");
-                        placeholder.className = "text-sm text-zinc-500 text-center py-8 bg-zinc-50 rounded-lg";
+                        placeholder.className = "text-sm text-muted-foreground text-center py-8 bg-card rounded-lg";
                         placeholder.textContent = "Architecture diagram: docs/operiq-architecture.png";
                         parent.appendChild(placeholder);
                       }
                     }}
                   />
                 </div>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-muted-foreground">
                   The architecture diagram above illustrates the full system topology including frontend,
                   SSR layer, API gateway, Convex backend, and external AI service integrations.
                 </p>
@@ -587,29 +587,29 @@ Focus question: {question}`}</CodeBlock>
               <div className="overflow-x-auto">
                 <table className="w-full mt-4 text-sm border-collapse">
                   <thead>
-                    <tr className="border-b border-zinc-200">
-                      <th className="text-left py-2 pr-4 font-semibold text-zinc-900">Operiq Tier</th>
-                      <th className="text-left py-2 pr-4 font-semibold text-zinc-900">Provider Model</th>
-                      <th className="text-left py-2 font-semibold text-zinc-900">Use Case</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 pr-4 font-semibold text-foreground">Operiq Tier</th>
+                      <th className="text-left py-2 pr-4 font-semibold text-foreground">Provider Model</th>
+                      <th className="text-left py-2 font-semibold text-foreground">Use Case</th>
                     </tr>
                   </thead>
-                  <tbody className="text-zinc-600">
-                    <tr className="border-b border-zinc-100">
+                  <tbody className="text-muted-foreground">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">Operiq Ultra</td>
                       <td className="py-2 pr-4">Mistral Large 3</td>
                       <td className="py-2">Most capable reasoning</td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">Operiq Pro</td>
                       <td className="py-2 pr-4">Llama 3.3 70B</td>
                       <td className="py-2">Balanced performance</td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">Operiq Plus</td>
                       <td className="py-2 pr-4">Nemotron Super 49B</td>
                       <td className="py-2">Fast & capable</td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">Operiq Nano</td>
                       <td className="py-2 pr-4">Nemotron Nano 9B</td>
                       <td className="py-2">Quick responses</td>
@@ -736,14 +736,14 @@ Focus question: {question}`}</CodeBlock>
                 <table className="w-full text-sm border-collapse">
                   <thead>
                     <tr className="border-b-2 border-[#10a37f]">
-                      <th className="text-left py-3 pr-4 font-semibold text-zinc-900">Criterion</th>
-                      <th className="text-left py-3 pr-4 font-semibold text-zinc-900">Weight</th>
-                      <th className="text-left py-3 font-semibold text-zinc-900">How Operiq AI Addresses It</th>
+                      <th className="text-left py-3 pr-4 font-semibold text-foreground">Criterion</th>
+                      <th className="text-left py-3 pr-4 font-semibold text-foreground">Weight</th>
+                      <th className="text-left py-3 font-semibold text-foreground">How Operiq AI Addresses It</th>
                     </tr>
                   </thead>
-                  <tbody className="text-zinc-700">
-                    <tr className="border-b border-zinc-100">
-                      <td className="py-3 pr-4 font-medium text-zinc-900">
+                  <tbody className="text-muted-foreground">
+                    <tr className="border-b border-border/50">
+                      <td className="py-3 pr-4 font-medium text-foreground">
                         <div className="flex items-center gap-2">
                           <Target className="size-4 text-[#10a37f]" />
                           Problem Relevance
@@ -756,8 +756,8 @@ Focus question: {question}`}</CodeBlock>
                         administrative tasks.
                       </td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
-                      <td className="py-3 pr-4 font-medium text-zinc-900">
+                    <tr className="border-b border-border/50">
+                      <td className="py-3 pr-4 font-medium text-foreground">
                         <div className="flex items-center gap-2">
                           <GitBranch className="size-4 text-[#10a37f]" />
                           Prompt Engineering
@@ -770,8 +770,8 @@ Focus question: {question}`}</CodeBlock>
                         meeting, planner, research). Includes refinement loop and multi-model selection.
                       </td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
-                      <td className="py-3 pr-4 font-medium text-zinc-900">
+                    <tr className="border-b border-border/50">
+                      <td className="py-3 pr-4 font-medium text-foreground">
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="size-4 text-[#10a37f]" />
                           Functionality Accuracy
@@ -784,8 +784,8 @@ Focus question: {question}`}</CodeBlock>
                         functional and deployed in production.
                       </td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
-                      <td className="py-3 pr-4 font-medium text-zinc-900">
+                    <tr className="border-b border-border/50">
+                      <td className="py-3 pr-4 font-medium text-foreground">
                         <div className="flex items-center gap-2">
                           <Sparkles className="size-4 text-[#10a37f]" />
                           Innovation / Creativity
@@ -797,8 +797,8 @@ Focus question: {question}`}</CodeBlock>
                         image generation (FLUX.1), video generation, file attachment, and shared collaborative chats.
                       </td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
-                      <td className="py-3 pr-4 font-medium text-zinc-900">
+                    <tr className="border-b border-border/50">
+                      <td className="py-3 pr-4 font-medium text-foreground">
                         <div className="flex items-center gap-2">
                           <Shield className="size-4 text-[#10a37f]" />
                           Responsible AI
@@ -812,7 +812,7 @@ Focus question: {question}`}</CodeBlock>
                       </td>
                     </tr>
                     <tr>
-                      <td className="py-3 pr-4 font-medium text-zinc-900">
+                      <td className="py-3 pr-4 font-medium text-foreground">
                         <div className="flex items-center gap-2">
                           <FileText className="size-4 text-[#10a37f]" />
                           Presentation Clarity
@@ -839,87 +839,87 @@ Focus question: {question}`}</CodeBlock>
               <div className="overflow-x-auto mt-4">
                 <table className="w-full text-sm border-collapse">
                   <thead>
-                    <tr className="border-b border-zinc-200">
-                      <th className="text-left py-2 pr-4 font-semibold text-zinc-900">Tool / Technology</th>
-                      <th className="text-left py-2 pr-4 font-semibold text-zinc-900">Purpose</th>
-                      <th className="text-left py-2 font-semibold text-zinc-900">Category</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 pr-4 font-semibold text-foreground">Tool / Technology</th>
+                      <th className="text-left py-2 pr-4 font-semibold text-foreground">Purpose</th>
+                      <th className="text-left py-2 font-semibold text-foreground">Category</th>
                     </tr>
                   </thead>
-                  <tbody className="text-zinc-700">
-                    <tr className="border-b border-zinc-100">
+                  <tbody className="text-muted-foreground">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">OpenAI-Compatible API</td>
                       <td className="py-2 pr-4">Text generation, chat, reasoning</td>
                       <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#10a37f]/10 text-[#10a37f] text-xs font-medium">AI</span></td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">NVIDIA Models (via OpenRouter)</td>
                       <td className="py-2 pr-4">Mistral Large 3, Llama 3.3, Nemotron variants</td>
                       <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#10a37f]/10 text-[#10a37f] text-xs font-medium">AI</span></td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">Hugging Face</td>
                       <td className="py-2 pr-4">Image generation (FLUX.1-schnell) and video generation</td>
                       <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#10a37f]/10 text-[#10a37f] text-xs font-medium">AI</span></td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">ElevenLabs</td>
                       <td className="py-2 pr-4">Text-to-speech (Aria, Roger, Sarah voices) and speech-to-text (Scribe v1)</td>
                       <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#10a37f]/10 text-[#10a37f] text-xs font-medium">AI</span></td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">DuckDuckGo API</td>
                       <td className="py-2 pr-4">Web search for agent mode and research</td>
                       <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#10a37f]/10 text-[#10a37f] text-xs font-medium">AI</span></td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">React 19</td>
                       <td className="py-2 pr-4">UI framework with concurrent features</td>
-                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 text-xs font-medium">Frontend</span></td>
+                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-card text-muted-foreground text-xs font-medium">Frontend</span></td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">TanStack Start</td>
                       <td className="py-2 pr-4">Full-stack React framework with SSR and file-system routing</td>
-                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 text-xs font-medium">Frontend</span></td>
+                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-card text-muted-foreground text-xs font-medium">Frontend</span></td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">Tailwind CSS v4</td>
                       <td className="py-2 pr-4">Utility-first CSS styling</td>
-                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 text-xs font-medium">Frontend</span></td>
+                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-card text-muted-foreground text-xs font-medium">Frontend</span></td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">shadcn/ui</td>
                       <td className="py-2 pr-4">Accessible UI component primitives</td>
-                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 text-xs font-medium">Frontend</span></td>
+                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-card text-muted-foreground text-xs font-medium">Frontend</span></td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">TypeScript</td>
                       <td className="py-2 pr-4">Type-safe development across frontend and backend</td>
-                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 text-xs font-medium">Frontend</span></td>
+                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-card text-muted-foreground text-xs font-medium">Frontend</span></td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">Convex Cloud</td>
                       <td className="py-2 pr-4">Real-time database, auth, serverless functions</td>
-                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-xs font-medium">Backend</span></td>
+                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium">Backend</span></td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">Resend</td>
                       <td className="py-2 pr-4">Transactional email API</td>
-                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-xs font-medium">Backend</span></td>
+                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium">Backend</span></td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">Stripe</td>
                       <td className="py-2 pr-4">Subscription billing and payment processing (ZAR)</td>
-                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-xs font-medium">Backend</span></td>
+                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium">Backend</span></td>
                     </tr>
-                    <tr className="border-b border-zinc-100">
+                    <tr className="border-b border-border/50">
                       <td className="py-2 pr-4 font-medium">Netlify</td>
                       <td className="py-2 pr-4">CDN, edge functions, SSR hosting, deploy previews</td>
-                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 text-xs font-medium">Infra</span></td>
+                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 text-xs font-medium">Infra</span></td>
                     </tr>
                     <tr>
                       <td className="py-2 pr-4 font-medium">Vite + Bun</td>
                       <td className="py-2 pr-4">Build tooling and package management</td>
-                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 text-xs font-medium">Infra</span></td>
+                      <td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 text-xs font-medium">Infra</span></td>
                     </tr>
                   </tbody>
                 </table>
@@ -934,16 +934,16 @@ Focus question: {question}`}</CodeBlock>
               </p>
 
               <SubHeading>Example 1: Email Generation</SubHeading>
-              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 mt-3">
+              <div className="bg-card border border-border rounded-xl p-4 mt-3">
                 <p className="text-xs font-semibold text-[#10a37f] uppercase tracking-wider mb-2">Input</p>
-                <div className="text-sm text-zinc-700 space-y-1">
+                <div className="text-sm text-muted-foreground space-y-1">
                   <p><strong>Topic:</strong> Request project deadline extension</p>
                   <p><strong>Tone:</strong> Formal</p>
                   <p><strong>Audience:</strong> Manager</p>
                   <p><strong>Context:</strong> Need 2 extra days due to unexpected API integration complexity</p>
                 </div>
               </div>
-              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 mt-3">
+              <div className="bg-card border border-border rounded-xl p-4 mt-3">
                 <p className="text-xs font-semibold text-[#10a37f] uppercase tracking-wider mb-2">Output</p>
                 <CodeBlock>{`Subject: Request for Project Deadline Extension
 
@@ -969,14 +969,14 @@ Best regards,
               </div>
 
               <SubHeading>Example 2: Meeting Summary</SubHeading>
-              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 mt-3">
+              <div className="bg-card border border-border rounded-xl p-4 mt-3">
                 <p className="text-xs font-semibold text-[#10a37f] uppercase tracking-wider mb-2">Input</p>
-                <div className="text-sm text-zinc-700">
+                <div className="text-sm text-muted-foreground">
                   <p><strong>Meeting Type:</strong> Team Sync</p>
                   <p className="mt-1"><strong>Notes:</strong> Sarah updated the team on Q3 metrics. Revenue up 12% but churn increased to 8%. Mike suggested improving onboarding flow. Decision to hire 2 new engineers by end of Q3. Action: Sarah to prepare hiring plan by Friday. John to review onboarding analytics by Monday. Next sync: next Tuesday 10am.</p>
                 </div>
               </div>
-              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 mt-3">
+              <div className="bg-card border border-border rounded-xl p-4 mt-3">
                 <p className="text-xs font-semibold text-[#10a37f] uppercase tracking-wider mb-2">Output</p>
                 <CodeBlock>{`## Summary
 
@@ -1007,15 +1007,15 @@ Tuesday, 10:00 AM`}</CodeBlock>
               </div>
 
               <SubHeading>Example 3: Research Analysis</SubHeading>
-              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 mt-3">
+              <div className="bg-card border border-border rounded-xl p-4 mt-3">
                 <p className="text-xs font-semibold text-[#10a37f] uppercase tracking-wider mb-2">Input</p>
-                <div className="text-sm text-zinc-700">
+                <div className="text-sm text-muted-foreground">
                   <p><strong>Depth:</strong> Executive</p>
                   <p><strong>Question:</strong> Should we adopt AI for customer support?</p>
                   <p className="mt-1"><strong>Material:</strong> [Research report on AI customer support tools, cost analysis, case studies from 3 competitors, and a survey of 200 customers on chatbot preferences.]</p>
                 </div>
               </div>
-              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 mt-3">
+              <div className="bg-card border border-border rounded-xl p-4 mt-3">
                 <p className="text-xs font-semibold text-[#10a37f] uppercase tracking-wider mb-2">Output</p>
                 <CodeBlock>{`## Executive Summary
 
@@ -1054,18 +1054,18 @@ comfortable with AI-assisted support when human escalation is available.
               </p>
 
               <div className="space-y-6 mt-6">
-                <div className="bg-white border border-zinc-200 rounded-xl p-5">
+                <div className="bg-card border border-border rounded-xl p-5">
                   <div className="flex items-start gap-3">
-                    <div className="shrink-0 size-8 rounded-lg bg-red-50 flex items-center justify-center">
-                      <Lock className="size-4 text-red-600" />
+                    <div className="shrink-0 size-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                      <Lock className="size-4 text-destructive" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-zinc-900">Authentication in SSR</h4>
-                      <p className="text-sm text-zinc-600 mt-1">
+                      <h4 className="text-sm font-semibold text-foreground">Authentication in SSR</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
                         <strong>Challenge:</strong> <code>useConvexAuth()</code> returns <code>undefined</code>
                         during server-side rendering, causing a crash when destructured.
                       </p>
-                      <p className="text-sm text-zinc-600 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         <strong>Solution:</strong> Created <code>useSsrConvexAuth()</code> hook that returns a safe
                         default ({`isLoading: true, isAuthenticated: false`}) when the context is unavailable.
                         Updated all 6 consumer files to use the SSR-safe wrapper.
@@ -1074,19 +1074,19 @@ comfortable with AI-assisted support when human escalation is available.
                   </div>
                 </div>
 
-                <div className="bg-white border border-zinc-200 rounded-xl p-5">
+                <div className="bg-card border border-border rounded-xl p-5">
                   <div className="flex items-start gap-3">
-                    <div className="shrink-0 size-8 rounded-lg bg-red-50 flex items-center justify-center">
-                      <Zap className="size-4 text-red-600" />
+                    <div className="shrink-0 size-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                      <Zap className="size-4 text-destructive" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-zinc-900">Streaming Response Format</h4>
-                      <p className="text-sm text-zinc-600 mt-1">
+                      <h4 className="text-sm font-semibold text-foreground">Streaming Response Format</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
                         <strong>Challenge:</strong> Agent mode required custom multi-step tool calling with
                         streaming, but the initial custom text stream implementation was incompatible with
                         the <code>useChat</code> hook on the frontend.
                       </p>
-                      <p className="text-sm text-zinc-600 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         <strong>Solution:</strong> Rewrote agent mode to use AI SDK&apos;s native
                         <code>streamText()</code> with <code>maxSteps</code> and <code>toolsToAISDK()</code>.
                         This uses the standard AI SDK v1 stream protocol compatible with <code>useChat</code>
@@ -1096,18 +1096,18 @@ comfortable with AI-assisted support when human escalation is available.
                   </div>
                 </div>
 
-                <div className="bg-white border border-zinc-200 rounded-xl p-5">
+                <div className="bg-card border border-border rounded-xl p-5">
                   <div className="flex items-start gap-3">
-                    <div className="shrink-0 size-8 rounded-lg bg-red-50 flex items-center justify-center">
-                      <Server className="size-4 text-red-600" />
+                    <div className="shrink-0 size-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                      <Server className="size-4 text-destructive" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-zinc-900">Netlify Deployment Architecture</h4>
-                      <p className="text-sm text-zinc-600 mt-1">
+                      <h4 className="text-sm font-semibold text-foreground">Netlify Deployment Architecture</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
                         <strong>Challenge:</strong> TanStack Start v1 uses SSR with dynamic asset imports
                         that esbuild bundling could not resolve, causing 500 errors in production.
                       </p>
-                      <p className="text-sm text-zinc-600 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         <strong>Solution:</strong> Switched Netlify bundler from esbuild to <code>nft</code>
                         (node file trace), which preserves dynamic imports. Created a manual SSR function
                         wrapper that imports the server bundle and exports the fetch handler.
@@ -1116,19 +1116,19 @@ comfortable with AI-assisted support when human escalation is available.
                   </div>
                 </div>
 
-                <div className="bg-white border border-zinc-200 rounded-xl p-5">
+                <div className="bg-card border border-border rounded-xl p-5">
                   <div className="flex items-start gap-3">
-                    <div className="shrink-0 size-8 rounded-lg bg-red-50 flex items-center justify-center">
-                      <Database className="size-4 text-red-600" />
+                    <div className="shrink-0 size-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                      <Database className="size-4 text-destructive" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-zinc-900">Convex Auth + Environment Variables</h4>
-                      <p className="text-sm text-zinc-600 mt-1">
+                      <h4 className="text-sm font-semibold text-foreground">Convex Auth + Environment Variables</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
                         <strong>Challenge:</strong> Convex auth required <code>SESSION_SECRET</code> for
                         production, but the deployment would fail silently without it. Additionally, environment
                         variables had to be set in both dev and production contexts in Netlify.
                       </p>
-                      <p className="text-sm text-zinc-600 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         <strong>Solution:</strong> Added <code>SESSION_SECRET</code> to the Convex deployment
                         configuration. Documented that all Netlify env vars must be duplicated across both
                         deploy contexts. Added explicit error handling for missing configuration.
@@ -1137,18 +1137,18 @@ comfortable with AI-assisted support when human escalation is available.
                   </div>
                 </div>
 
-                <div className="bg-white border border-zinc-200 rounded-xl p-5">
+                <div className="bg-card border border-border rounded-xl p-5">
                   <div className="flex items-start gap-3">
-                    <div className="shrink-0 size-8 rounded-lg bg-red-50 flex items-center justify-center">
-                      <CircleDollarSign className="size-4 text-red-600" />
+                    <div className="shrink-0 size-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                      <CircleDollarSign className="size-4 text-destructive" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-zinc-900">Usage Tracking and Billing</h4>
-                      <p className="text-sm text-zinc-600 mt-1">
+                      <h4 className="text-sm font-semibold text-foreground">Usage Tracking and Billing</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
                         <strong>Challenge:</strong> Tracking AI requests and image generations across both
                         normal chat and agent mode, with usage resets on billing period rollover.
                       </p>
-                      <p className="text-sm text-zinc-600 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         <strong>Solution:</strong> Implemented unified usage tracker middleware
                         (<code>src/lib/usage-tracker.ts</code>) that checks limits before processing and
                         records usage after stream initiation. Added auto-reset logic that checks
@@ -1158,19 +1158,19 @@ comfortable with AI-assisted support when human escalation is available.
                   </div>
                 </div>
 
-                <div className="bg-white border border-zinc-200 rounded-xl p-5">
+                <div className="bg-card border border-border rounded-xl p-5">
                   <div className="flex items-start gap-3">
-                    <div className="shrink-0 size-8 rounded-lg bg-red-50 flex items-center justify-center">
-                      <Bot className="size-4 text-red-600" />
+                    <div className="shrink-0 size-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                      <Bot className="size-4 text-destructive" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-zinc-900">Multi-Provider Model Management</h4>
-                      <p className="text-sm text-zinc-600 mt-1">
+                      <h4 className="text-sm font-semibold text-foreground">Multi-Provider Model Management</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
                         <strong>Challenge:</strong> The application needed to present branded model names
                         (Operiq Ultra, Pro, Plus, Nano, Mini) while mapping to different actual provider
                         model IDs across both frontend and backend.
                       </p>
-                      <p className="text-sm text-zinc-600 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         <strong>Solution:</strong> Created a shared model registry at
                         <code>src/lib/models.ts</code> with <code>MODELS</code>, <code>CODE_MODELS</code>, and
                         <code>MODEL_MAP</code>. Both frontend (model selector UI) and backend (API endpoints)
@@ -1212,20 +1212,20 @@ comfortable with AI-assisted support when human escalation is available.
           </div>
 
           {/* Footer */}
-          <footer className="mt-16 sm:mt-20 pt-8 sm:pt-10 border-t border-zinc-200">
+          <footer className="mt-16 sm:mt-20 pt-8 sm:pt-10 border-t border-border">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-2.5">
                 <img src="/logo-icon.png" alt="Operiq AI" className="h-6 w-6" />
-                <span className="text-sm font-semibold text-zinc-900">Operiq AI</span>
+                <span className="text-sm font-semibold text-foreground">Operiq AI</span>
               </div>
-              <p className="text-sm text-zinc-500 text-center px-4">
+              <p className="text-sm text-muted-foreground text-center px-4">
                 AI-powered workplace productivity platform built with React, Convex, and cutting-edge AI models.
               </p>
-              <div className="flex items-center gap-4 text-sm text-zinc-500">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span>operiq.ai</span>
               </div>
             </div>
-            <p className="text-xs text-zinc-400 text-center mt-6">
+            <p className="text-xs text-muted-foreground/60 text-center mt-6">
               &copy; 2025 Operiq AI. All rights reserved. Proprietary and confidential.
             </p>
           </footer>
@@ -1251,12 +1251,12 @@ function SectionBlock({
   return (
     <section id={id} className="scroll-mt-20">
       <div className="flex items-center gap-3 mb-6">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-[#10a37f]/10 text-[#10a37f] shrink-0">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-accent/10 text-accent shrink-0">
           {icon}
         </span>
-        <h2 className="text-xl font-semibold tracking-tight text-zinc-900">{title}</h2>
+        <h2 className="text-xl font-semibold tracking-tight text-foreground">{title}</h2>
       </div>
-      <div className="space-y-4 text-sm text-zinc-600 leading-relaxed [&_strong]:text-zinc-900 [&_code]:text-[#10a37f] [&_code]:bg-[#10a37f]/5 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono">
+      <div className="space-y-4 text-sm text-muted-foreground leading-relaxed [&_strong]:text-foreground [&_code]:text-accent [&_code]:bg-accent/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono">
         {children}
       </div>
     </section>
@@ -1265,15 +1265,15 @@ function SectionBlock({
 
 function SubHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mt-8 mb-3 text-sm font-semibold text-zinc-900 tracking-tight">{children}</h3>
+    <h3 className="mt-8 mb-3 text-sm font-semibold text-foreground tracking-tight">{children}</h3>
   );
 }
 
 function ListItem({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <li className="flex gap-3">
-      <span className="shrink-0 mt-0.5 text-[#10a37f]">{icon}</span>
-      <span className="text-sm text-zinc-600 leading-relaxed [&_strong]:text-zinc-900 [&_code]:text-[#10a37f] [&_code]:bg-[#10a37f]/5 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono">
+      <span className="shrink-0 mt-0.5 text-accent">{icon}</span>
+      <span className="text-sm text-muted-foreground leading-relaxed [&_strong]:text-foreground [&_code]:text-accent [&_code]:bg-accent/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono">
         {children}
       </span>
     </li>
@@ -1282,7 +1282,7 @@ function ListItem({ icon, children }: { icon: React.ReactNode; children: React.R
 
 function CodeBlock({ children }: { children: string }) {
   return (
-    <pre className="mt-3 overflow-x-auto rounded-xl bg-zinc-100 border border-zinc-200 p-4 text-xs font-mono text-zinc-700 leading-relaxed whitespace-pre">
+    <pre className="mt-3 overflow-x-auto rounded-xl bg-card border border-border p-4 text-xs font-mono text-muted-foreground leading-relaxed whitespace-pre">
       {children}
     </pre>
   );
@@ -1298,13 +1298,13 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="flex gap-4 p-4 rounded-xl border border-zinc-200 bg-white hover:border-[#10a37f]/30 transition-colors">
-      <div className="shrink-0 size-10 rounded-lg bg-[#10a37f]/10 flex items-center justify-center text-[#10a37f]">
+    <div className="flex gap-4 p-4 rounded-xl border border-border bg-card hover:border-accent/30 transition-colors">
+      <div className="shrink-0 size-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent">
         {icon}
       </div>
       <div>
-        <h4 className="text-sm font-semibold text-zinc-900">{title}</h4>
-        <p className="text-sm text-zinc-600 mt-1 leading-relaxed">{description}</p>
+        <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+        <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{description}</p>
       </div>
     </div>
   );

@@ -51,12 +51,12 @@ export const Route = createFileRoute("/prompts")({
 const CATEGORIES = ["Email", "Meeting", "Planning", "Research", "Code", "Custom"];
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Email: "bg-blue-100 text-blue-800",
-  Meeting: "bg-purple-100 text-purple-800",
-  Planning: "bg-green-100 text-green-800",
-  Research: "bg-amber-100 text-amber-800",
-  Code: "bg-rose-100 text-rose-800",
-  Custom: "bg-gray-100 text-gray-800",
+  Email: "bg-blue-500/10 text-blue-400",
+  Meeting: "bg-purple-500/10 text-purple-400",
+  Planning: "bg-emerald-500/10 text-emerald-400",
+  Research: "bg-amber-500/10 text-amber-400",
+  Code: "bg-rose-500/10 text-rose-400",
+  Custom: "bg-muted text-muted-foreground",
 };
 
 type Prompt = {
@@ -181,7 +181,7 @@ function PromptsPage() {
               <h1 className="text-2xl font-semibold tracking-tight text-foreground">Prompt Library</h1>
               <p className="mt-1 text-sm text-muted-foreground">Save and reuse your favorite prompts.</p>
             </div>
-            <Button onClick={openAdd} className="shrink-0">
+            <Button onClick={openAdd} className="shrink-0 bg-accent text-accent-foreground hover:bg-accent/90">
               <Plus className="size-4 mr-1.5" />
               Add prompt
             </Button>
@@ -240,7 +240,7 @@ function PromptsPage() {
               {filtered.map((p) => (
                 <div
                   key={p.id}
-                  className="group rounded-xl border border-border bg-card p-4 flex flex-col gap-3 hover:border-muted-foreground/30 transition-colors"
+                  className="group rounded-xl border border-border bg-card p-4 flex flex-col gap-3 hover:border-accent/30 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -332,7 +332,7 @@ function PromptsPage() {
               <X className="size-4 mr-1.5" />
               Cancel
             </Button>
-            <Button onClick={handleSave}>
+            <Button onClick={handleSave} className="bg-accent text-accent-foreground hover:bg-accent/90">
               <Bookmark className="size-4 mr-1.5" />
               {editingPrompt ? "Update" : "Save"}
             </Button>

@@ -203,7 +203,7 @@ function PlannerPage() {
               <Button
                 onClick={onGenerate}
                 disabled={loading || refining || tasks.trim().length < 5}
-                className="rounded-xl px-5 w-full sm:w-auto"
+                className="rounded-xl px-5 w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90"
               >
                 {loading ? (
                   <><Loader2 className="size-4 animate-spin" /> Generating...</>

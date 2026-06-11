@@ -167,7 +167,7 @@ function CodePage() {
             )}
 
             {error && (
-              <div className="rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+              <div className="rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">
                 Something went wrong. Please try again.
               </div>
             )}
@@ -212,7 +212,7 @@ function CodePage() {
               <button
                 onClick={onSend}
                 disabled={!input.trim() || isLoading}
-                className="absolute right-1.5 bottom-1.5 size-8 rounded-lg bg-foreground text-background hover:bg-foreground/90 flex items-center justify-center shrink-0 transition-opacity disabled:opacity-30"
+                className="absolute right-1.5 bottom-1.5 size-8 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 flex items-center justify-center shrink-0 transition-opacity disabled:opacity-30"
               >
                 {isLoading ? (
                   <Loader2 className="size-4 animate-spin" />

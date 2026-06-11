@@ -547,7 +547,7 @@ function PersonalizationSection({
               variant="ghost"
               onClick={handleNicknameSave}
               disabled={savingProfile || !nickname.trim()}
-              className="h-7 text-xs"
+              className="h-7 text-xs hover:bg-accent/10 hover:text-accent"
             >
               {savingProfile ? <Loader2 className="size-3.5 animate-spin" /> : "Save"}
             </Button>
@@ -815,7 +815,7 @@ function BillingSection() {
                 variant={isCurrent ? "secondary" : "default"}
                 disabled={isCurrent || upgradingId === plan.id}
                 onClick={() => !isCurrent && handleUpgrade(plan.id)}
-                className={cn(isCurrent && "cursor-default")}
+                className={cn(isCurrent ? "cursor-default" : "bg-accent text-accent-foreground hover:bg-accent/90")}
               >
                 {upgradingId === plan.id ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -1191,7 +1191,7 @@ function ContactSection() {
             <Button variant="outline" onClick={() => setEditOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving}>
+            <Button onClick={handleSave} disabled={saving} className="bg-accent text-accent-foreground hover:bg-accent/90">
               {saving ? <Loader2 className="size-4 animate-spin" /> : "Save"}
             </Button>
           </DialogFooter>
@@ -1277,9 +1277,9 @@ function ToggleSwitch({
         checked ? "bg-accent" : "bg-muted-foreground/30",
       )}
     >
-      <span
+        <span
         className={cn(
-          "inline-flex size-4 items-center justify-center rounded-full bg-white transition-transform",
+          "inline-flex size-4 items-center justify-center rounded-full bg-background transition-transform",
           checked ? "translate-x-6" : "translate-x-1",
         )}
       >

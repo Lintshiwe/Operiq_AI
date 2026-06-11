@@ -1457,7 +1457,7 @@ function ChatPane({
                   title={isRecording ? "Stop recording" : "Record voice"}
                 >
                   {isRecording ? (
-                    <span className="size-2 rounded-full bg-white animate-pulse" />
+                    <span className="size-2 rounded-full bg-foreground animate-pulse" />
                   ) : (
                     <Mic className="size-4" />
                   )}

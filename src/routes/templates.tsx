@@ -192,7 +192,7 @@ function TemplatesPage() {
               return (
                 <div
                   key={t.id}
-                  className="group rounded-xl border border-border bg-card p-4 flex flex-col gap-3 hover:border-muted-foreground/30 transition-colors"
+                  className="group rounded-xl border border-border bg-card p-4 flex flex-col gap-3 hover:border-accent/30 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-md bg-accent/10 text-accent">
@@ -208,7 +208,7 @@ function TemplatesPage() {
                   </div>
                   <Button
                     size="sm"
-                    className="w-full"
+                    className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
                     onClick={() => handleUse(t)}
                   >
                     <ArrowRight className="size-3.5 mr-1.5" />
