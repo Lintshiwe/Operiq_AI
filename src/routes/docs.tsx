@@ -48,7 +48,9 @@ import {
   Mic,
   Package,
   TypeScript,
+  Menu,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/docs")({
   head: () => ({
@@ -84,6 +86,7 @@ const sections: Section[] = [
 
 function DocsPage() {
   const [activeSection, setActiveSection] = useState<string>("problem-statement");
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
     <div className="relative min-h-dvh bg-white text-zinc-900">
@@ -99,7 +102,7 @@ function DocsPage() {
 
       {/* Header */}
       <header className="relative z-10 border-b border-zinc-200 bg-white/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2.5">
             <img src="/logo-icon.png" alt="Operiq AI" className="h-7 w-7" />
             <span className="text-sm font-semibold tracking-tight text-zinc-900">Operiq AI</span>
@@ -110,8 +113,23 @@ function DocsPage() {
 
       {/* Main layout */}
       <div className="relative z-10 max-w-7xl mx-auto flex flex-col lg:flex-row">
+        {/* Mobile sidebar toggle */}
+        <div className="lg:hidden px-4 py-3 border-b border-zinc-200">
+          <button
+            onClick={() => setMobileSidebarOpen((v) => !v)}
+            className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900"
+            aria-label="Toggle table of contents"
+          >
+            <Menu className="size-4" />
+            {mobileSidebarOpen ? "Hide contents" : "Show contents"}
+          </button>
+        </div>
+
         {/* Sidebar TOC */}
-        <aside className="lg:w-64 lg:min-h-[calc(100dvh-57px)] lg:border-r lg:border-zinc-200 lg:sticky lg:top-0">
+        <aside className={cn(
+          "lg:w-64 lg:min-h-[calc(100dvh-57px)] lg:border-r lg:border-zinc-200 lg:sticky lg:top-0",
+          mobileSidebarOpen ? "block" : "hidden lg:block"
+        )}>
           <nav className="p-4 lg:p-6">
             <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-[0.2em] mb-4">
               Documentation
@@ -145,7 +163,7 @@ function DocsPage() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 px-6 py-8 lg:px-12 lg:py-12">
+        <main className="flex-1 min-w-0 px-4 sm:px-6 py-6 sm:py-8 lg:px-12 lg:py-12">
           <div className="max-w-3xl space-y-16">
             {/* Page title */}
             <div>
@@ -189,7 +207,7 @@ function DocsPage() {
                 intelligent AI generation, and a copy-and-refine workflow.
               </p>
 
-              <div className="grid gap-4 mt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
                 <FeatureCard
                   icon={<Mail className="size-5" />}
                   title="Smart Email Generator"
@@ -1194,13 +1212,13 @@ comfortable with AI-assisted support when human escalation is available.
           </div>
 
           {/* Footer */}
-          <footer className="mt-20 pt-10 border-t border-zinc-200">
+          <footer className="mt-16 sm:mt-20 pt-8 sm:pt-10 border-t border-zinc-200">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-2.5">
                 <img src="/logo-icon.png" alt="Operiq AI" className="h-6 w-6" />
                 <span className="text-sm font-semibold text-zinc-900">Operiq AI</span>
               </div>
-              <p className="text-sm text-zinc-500 text-center">
+              <p className="text-sm text-zinc-500 text-center px-4">
                 AI-powered workplace productivity platform built with React, Convex, and cutting-edge AI models.
               </p>
               <div className="flex items-center gap-4 text-sm text-zinc-500">

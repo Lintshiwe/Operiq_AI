@@ -63,8 +63,8 @@ function AssistantIndex() {
 
   return (
     <AppShell>
-      <div className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">
-        <Loader2 className="size-5 animate-spin mr-2" />
+      <div className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground px-4 text-center">
+        <Loader2 className="size-5 animate-spin mr-2 shrink-0" />
         Opening assistant…
       </div>
     </AppShell>

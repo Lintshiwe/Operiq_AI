@@ -208,7 +208,7 @@ function SettingsPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-2xl px-4 lg:px-6 py-8 space-y-8">
+          <div className="mx-auto max-w-2xl px-4 lg:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
             {activeSection === "general" && (
               <GeneralSection
                 isDark={isDark}
@@ -1052,7 +1052,7 @@ function ContactSection() {
 
       {/* Profile card */}
       <div className="rounded-xl border border-border bg-card p-4 space-y-4">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <Avatar className="size-12">
             <AvatarFallback className="bg-accent text-accent-foreground text-lg font-medium">
               {initial}
@@ -1097,7 +1097,7 @@ function ContactSection() {
         </p>
 
         {/* Links */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <a
             href={linkedInUrl}
             target="_blank"

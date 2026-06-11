@@ -907,7 +907,7 @@ function ChatPane({
                 <div key={m.id} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
                   {isUser ? (
                     <div className="flex flex-col items-end gap-0.5">
-                      <div className="max-w-[80%] rounded-2xl bg-card text-foreground px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap border border-border">
+                      <div className="max-w-[92%] sm:max-w-[80%] rounded-2xl bg-card text-foreground px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap border border-border">
                         {text}
                       </div>
                       <span className="text-[11px] text-muted-foreground/60 px-1">
@@ -1040,7 +1040,7 @@ function ChatPane({
                 className="relative rounded-xl border border-border bg-card shadow-sm focus-within:border-muted-foreground/50 transition-colors"
               >
                 {/* Toolbar */}
-                <div className="flex items-center gap-1 px-3 pt-2 pb-1">
+                <div className="flex flex-wrap items-center gap-1 px-3 pt-2 pb-1">
                   <Select value={selectedModel} onValueChange={setSelectedModel}>
                     <SelectTrigger className="h-7 w-auto min-w-0 px-2 py-0 text-[11px] rounded-md bg-transparent border-0 text-muted-foreground hover:text-foreground hover:bg-muted focus:ring-0 gap-1 shrink-0">
                       <Cpu className="size-3.5" />
@@ -1197,7 +1197,7 @@ function ChatPane({
                       <X className="size-4" />
                     </button>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       value={imagePrompt}
                       onChange={(e) => setImagePrompt(e.target.value)}
@@ -1263,7 +1263,7 @@ function ChatPane({
                       <X className="size-4" />
                     </button>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       value={videoPrompt}
                       onChange={(e) => setVideoPrompt(e.target.value)}

@@ -126,7 +126,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex h-dvh w-full bg-background text-foreground">
+    <div className="flex h-dvh w-full bg-background text-foreground overflow-x-hidden">
       {/* Desktop sidebar — always visible on md+ */}
       <aside className="hidden md:flex w-[260px] shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
         {/* Logo */}

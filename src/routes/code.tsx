@@ -99,7 +99,7 @@ function CodePage() {
     <AppShell>
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center gap-3 px-6 lg:px-8 h-14 border-b border-border shrink-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-4 sm:px-6 lg:px-8 h-auto sm:h-14 border-b border-border shrink-0 py-2 sm:py-0">
           <span className="flex size-7 items-center justify-center rounded-lg bg-accent text-accent-foreground">
             <Code2 className="size-4" />
           </span>
@@ -110,8 +110,8 @@ function CodePage() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 lg:px-6">
-          <div className="max-w-[720px] mx-auto py-6 space-y-6">
+        <div className="flex-1 overflow-y-auto px-3 sm:px-4 lg:px-6">
+          <div className="max-w-[720px] mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6">
             {messages.length === 0 && !error && (
               <div className="flex flex-col items-center justify-center text-center pt-16 pb-8">
                 <div className="size-12 rounded-xl bg-accent/5 border border-accent/10 flex items-center justify-center mb-4">
@@ -131,7 +131,7 @@ function CodePage() {
                     <div className="size-2 rounded-full bg-accent" />
                   </div>
                 )}
-                <div className={`flex flex-col gap-0.5 max-w-[85%] ${
+                <div className={`flex flex-col gap-0.5 max-w-[92%] sm:max-w-[85%] ${
                   m.role === "user"
                     ? "bg-accent/10 text-foreground rounded-2xl rounded-tr-md px-4 py-2.5"
                     : "text-foreground"
@@ -177,7 +177,7 @@ function CodePage() {
         </div>
 
         {/* Input area */}
-        <div className="border-t border-border shrink-0 px-4 lg:px-6 py-4">
+        <div className="border-t border-border shrink-0 px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
           <div className="max-w-[720px] mx-auto">
             <div className="relative rounded-xl border border-border bg-card shadow-sm focus-within:border-muted-foreground/50 transition-colors">
               {/* Toolbar */}
