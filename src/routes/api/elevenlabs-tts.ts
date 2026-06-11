@@ -7,9 +7,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 const VOICE_MAP: Record<string, string> = {
-  aria: "9BWtsMINqrJLrRakOkie",
-  roger: "CwhRBWXzGAHq8TQ4Fs17",
-  sarah: "EXAVITQu4vr4xnSDxMaL",
+  aria: "21m00Tcm4TlvDq8ikWAM",   // Rachel (default on all accounts)
+  roger: "29vD33N1CtxCmqQRPOHJ8",  // Drew
+  sarah: "MF3mGyEYCl7XYWbV9V6O",   // Emily
 };
 
 const DEFAULT_VOICE = VOICE_MAP.aria;
