@@ -1266,7 +1266,7 @@ function ChatPane({
       </header>
 
       {/* Messages */}
-      <div ref={scrollRef} key={threadId} className="flex-1 overflow-y-auto transition-opacity duration-200">
+      <div ref={scrollRef} key={thread.id} className="flex-1 overflow-y-auto transition-opacity duration-200">
         {isEmpty ? (
           <EmptyState onPick={(s) => submit(s)} promptLimit={promptLimit} isGuest={isGuest} />
         ) : (
