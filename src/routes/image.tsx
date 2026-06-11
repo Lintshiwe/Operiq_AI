@@ -67,14 +67,24 @@ function ImagePage() {
     setGeneratedImage(null);
     setError(null);
     try {
-      const res = await fetch('/api/huggingface', {
+      // Get token from server, then call HF directly from browser
+      const tokenRes = await fetch('/api/huggingface-token');
+      const { token } = await tokenRes.json();
+      if (!token) throw new Error("HF token not available");
+      
+      const res = await fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: `${style}: ${p}`, width: 512, height: 512 }),
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inputs: `${style}: ${p}` }),
       });
-      const result = await res.json();
-      if (!result.success) throw new Error(result.error || "Failed");
-      setGeneratedImage(result.image!);
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+      setGeneratedImage(dataUrl);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to generate image";
       setError(msg);

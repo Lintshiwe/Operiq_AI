@@ -30,6 +30,7 @@ import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AssistantThreadIdRouteImport } from './routes/assistant.$threadId'
 import { Route as ApiResendRouteImport } from './routes/api/resend'
 import { Route as ApiHuggingfaceVideoRouteImport } from './routes/api/huggingface-video'
+import { Route as ApiHuggingfaceTokenRouteImport } from './routes/api/huggingface-token'
 import { Route as ApiHuggingfaceRouteImport } from './routes/api/huggingface'
 import { Route as ApiElevenlabsTtsRouteImport } from './routes/api/elevenlabs-tts'
 import { Route as ApiElevenlabsSttRouteImport } from './routes/api/elevenlabs-stt'
@@ -144,6 +145,11 @@ const ApiHuggingfaceVideoRoute = ApiHuggingfaceVideoRouteImport.update({
   path: '/api/huggingface-video',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHuggingfaceTokenRoute = ApiHuggingfaceTokenRouteImport.update({
+  id: '/api/huggingface-token',
+  path: '/api/huggingface-token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHuggingfaceRoute = ApiHuggingfaceRouteImport.update({
   id: '/api/huggingface',
   path: '/api/huggingface',
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/api/elevenlabs-stt': typeof ApiElevenlabsSttRoute
   '/api/elevenlabs-tts': typeof ApiElevenlabsTtsRoute
   '/api/huggingface': typeof ApiHuggingfaceRoute
+  '/api/huggingface-token': typeof ApiHuggingfaceTokenRoute
   '/api/huggingface-video': typeof ApiHuggingfaceVideoRoute
   '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/api/elevenlabs-stt': typeof ApiElevenlabsSttRoute
   '/api/elevenlabs-tts': typeof ApiElevenlabsTtsRoute
   '/api/huggingface': typeof ApiHuggingfaceRoute
+  '/api/huggingface-token': typeof ApiHuggingfaceTokenRoute
   '/api/huggingface-video': typeof ApiHuggingfaceVideoRoute
   '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
@@ -270,6 +278,7 @@ export interface FileRoutesById {
   '/api/elevenlabs-stt': typeof ApiElevenlabsSttRoute
   '/api/elevenlabs-tts': typeof ApiElevenlabsTtsRoute
   '/api/huggingface': typeof ApiHuggingfaceRoute
+  '/api/huggingface-token': typeof ApiHuggingfaceTokenRoute
   '/api/huggingface-video': typeof ApiHuggingfaceVideoRoute
   '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
@@ -303,6 +312,7 @@ export interface FileRouteTypes {
     | '/api/elevenlabs-stt'
     | '/api/elevenlabs-tts'
     | '/api/huggingface'
+    | '/api/huggingface-token'
     | '/api/huggingface-video'
     | '/api/resend'
     | '/assistant/$threadId'
@@ -333,6 +343,7 @@ export interface FileRouteTypes {
     | '/api/elevenlabs-stt'
     | '/api/elevenlabs-tts'
     | '/api/huggingface'
+    | '/api/huggingface-token'
     | '/api/huggingface-video'
     | '/api/resend'
     | '/assistant/$threadId'
@@ -364,6 +375,7 @@ export interface FileRouteTypes {
     | '/api/elevenlabs-stt'
     | '/api/elevenlabs-tts'
     | '/api/huggingface'
+    | '/api/huggingface-token'
     | '/api/huggingface-video'
     | '/api/resend'
     | '/assistant/$threadId'
@@ -396,6 +408,7 @@ export interface RootRouteChildren {
   ApiElevenlabsSttRoute: typeof ApiElevenlabsSttRoute
   ApiElevenlabsTtsRoute: typeof ApiElevenlabsTtsRoute
   ApiHuggingfaceRoute: typeof ApiHuggingfaceRoute
+  ApiHuggingfaceTokenRoute: typeof ApiHuggingfaceTokenRoute
   ApiHuggingfaceVideoRoute: typeof ApiHuggingfaceVideoRoute
   ApiResendRoute: typeof ApiResendRoute
   InviteTokenRoute: typeof InviteTokenRoute
@@ -552,6 +565,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHuggingfaceVideoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/huggingface-token': {
+      id: '/api/huggingface-token'
+      path: '/api/huggingface-token'
+      fullPath: '/api/huggingface-token'
+      preLoaderRoute: typeof ApiHuggingfaceTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/huggingface': {
       id: '/api/huggingface'
       path: '/api/huggingface'
@@ -648,6 +668,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiElevenlabsSttRoute: ApiElevenlabsSttRoute,
   ApiElevenlabsTtsRoute: ApiElevenlabsTtsRoute,
   ApiHuggingfaceRoute: ApiHuggingfaceRoute,
+  ApiHuggingfaceTokenRoute: ApiHuggingfaceTokenRoute,
   ApiHuggingfaceVideoRoute: ApiHuggingfaceVideoRoute,
   ApiResendRoute: ApiResendRoute,
   InviteTokenRoute: InviteTokenRoute,
