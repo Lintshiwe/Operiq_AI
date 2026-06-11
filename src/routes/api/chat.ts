@@ -21,8 +21,10 @@ export const Route = createFileRoute("/api/chat")({
             return Response.json({ error: "AI not configured" }, { status: 500 });
           }
 
-          const response = await fetch(
-            `${process.env.AI_BASE_URL || "https://api.openai.com/v1"}/chat/completions`,
+          const baseUrl = process.env.AI_BASE_URL || "https://api.openai.com/v1";
+          const endpoint = baseUrl.endsWith("/v1") ? `${baseUrl}/chat/completions` : `${baseUrl}/v1/chat/completions`;
+
+          const response = await fetch(endpoint,
             {
               method: "POST",
               headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
