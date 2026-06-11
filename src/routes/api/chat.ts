@@ -21,7 +21,15 @@ export const Route = createFileRoute("/api/chat")({
             return Response.json({ error: "AI not configured" }, { status: 500 });
           }
 
-          const model = request.headers.get("x-operiq-model") || process.env.AI_MODEL || "gpt-4o-mini";
+          const rawModel = request.headers.get("x-operiq-model") || process.env.AI_MODEL || "operiq-mini";
+          const MODEL_MAP: Record<string, string> = {
+            "operiq-ultra": "mistralai/mistral-large-3-675b-instruct-2512",
+            "operiq-pro": "meta/llama-3.3-70b-instruct",
+            "operiq-plus": "nvidia/llama-3.3-nemotron-super-49b-v1",
+            "operiq-nano": "nvidia/nvidia-nemotron-nano-9b-v2",
+            "operiq-mini": "nvidia/nemotron-mini-4b-instruct",
+          };
+          const model = MODEL_MAP[rawModel] || rawModel;
 
           const baseUrl = process.env.AI_BASE_URL || "https://api.openai.com/v1";
           const endpoint = baseUrl.endsWith("/v1") ? `${baseUrl}/chat/completions` : `${baseUrl}/v1/chat/completions`;

@@ -5,9 +5,7 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ArrowUp, Loader2, Code2, Cpu, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { MarkdownView } from "@/components/MarkdownView";
@@ -50,23 +48,12 @@ function CodePage() {
     }
   }, [selectedModel]);
 
-  const transport = useMemo(
-    () =>
-      new DefaultChatTransport({
-        api: "/api/code",
-        headers: () => ({ "x-operiq-model": MODEL_MAP[modelRef.current] || modelRef.current }),
-      }),
-    []
-  );
-
-  const { messages, sendMessage, status, error } = useChat({
-    transport,
-  });
+  const [messages, setMessages] = useState<Array<{ id: string; role: "user" | "assistant"; content: string; createdAt?: Date }>>([]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  const isLoading = status === "streaming" || status === "submitted";
 
   // Auto-resize textarea
   useEffect(() => {
@@ -81,11 +68,37 @@ function CodePage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  function onSend() {
+  async function sendCode(prompt: string) {
+    const userMsg = { role: "user" as const, content: prompt };
+    const res = await fetch("/api/code", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-operiq-model": MODEL_MAP[modelRef.current] || modelRef.current,
+      },
+      body: JSON.stringify({ messages: [...messages, userMsg] }),
+    });
+    const data = await res.json();
+    const content = data.choices?.[0]?.message?.content || data.text || data.content || JSON.stringify(data);
+    return content;
+  }
+
+  async function onSend() {
     const trimmed = input.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed || loading) return;
+    setLoading(true);
+    setError(null);
+    setMessages((prev) => [...prev, { id: Math.random().toString(36).slice(2) + Date.now(), role: "user", content: trimmed, createdAt: new Date() }]);
     setInput("");
-    sendMessage(trimmed);
+    try {
+      const result = await sendCode(trimmed);
+      setMessages((prev) => [...prev, { id: Math.random().toString(36).slice(2) + Date.now(), role: "assistant", content: result, createdAt: new Date() }]);
+    } catch (e: any) {
+      setError(e.message || "Something went wrong");
+      setMessages((prev) => [...prev, { id: Math.random().toString(36).slice(2) + Date.now(), role: "assistant", content: "Error: " + (e.message || "Something went wrong"), createdAt: new Date() }]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
@@ -150,7 +163,7 @@ function CodePage() {
               </div>
             ))}
 
-            {isLoading && messages[messages.length - 1]?.role === "user" && (
+            {loading && messages[messages.length - 1]?.role === "user" && (
               <div className="flex gap-3">
                 <div className="size-7 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0 mt-0.5">
                   <div className="size-2 rounded-full bg-accent animate-pulse" />
@@ -206,15 +219,15 @@ function CodePage() {
                 onKeyDown={onKeyDown}
                 placeholder="Ask a coding question..."
                 rows={1}
-                disabled={isLoading}
+                disabled={loading}
                 className="w-full min-h-[44px] max-h-[200px] bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground/40 resize-none disabled:opacity-50 px-3 py-3 pr-12"
               />
               <button
                 onClick={onSend}
-                disabled={!input.trim() || isLoading}
+                disabled={!input.trim() || loading}
                 className="absolute right-1.5 bottom-1.5 size-8 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 flex items-center justify-center shrink-0 transition-opacity disabled:opacity-30"
               >
-                {isLoading ? (
+                {loading ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
                   <ArrowUp className="size-4" />

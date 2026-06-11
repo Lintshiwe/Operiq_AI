@@ -9,7 +9,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
-  CheckCircle2, ListChecks, Calendar, Copy, Check, Sparkles, ShieldCheck,
+  CheckCircle2, ListChecks, Calendar, Copy, Check, Sparkles, ShieldCheck, CalendarCheck2,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";

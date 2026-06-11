@@ -9,7 +9,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
-  Lightbulb, FileText, TrendingUp, Sparkles,
+  Lightbulb, FileText, TrendingUp, Sparkles, BookOpen,
   Copy, Check, ShieldCheck, Loader2,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
