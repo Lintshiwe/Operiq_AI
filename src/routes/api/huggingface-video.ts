@@ -9,6 +9,47 @@ import { createFileRoute } from "@tanstack/react-router";
 const HF_VIDEO_URL =
   "https://api-inference.huggingface.co/models/tencent/HunyuanVideo";
 
+async function hfVideoFetchWithTimeout(
+  token: string,
+  prompt: string,
+  numFrames: number,
+  retries = 1,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+
+  try {
+    const response = await fetch(HF_VIDEO_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        inputs: prompt.trim(),
+        parameters: { num_frames: numFrames },
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+    return response;
+  } catch (err) {
+    clearTimeout(timeout);
+
+    // Retry once on timeout
+    if (
+      retries > 0 &&
+      err instanceof DOMException &&
+      err.name === "AbortError"
+    ) {
+      return hfVideoFetchWithTimeout(token, prompt, numFrames, retries - 1);
+    }
+
+    throw err;
+  }
+}
+
 export const Route = createFileRoute("/api/huggingface-video")({
   server: {
     handlers: {
@@ -36,17 +77,11 @@ export const Route = createFileRoute("/api/huggingface-video")({
         }
 
         try {
-          const response = await fetch(HF_VIDEO_URL, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              inputs: body.prompt.trim(),
-              parameters: { num_frames: numFrames },
-            }),
-          });
+          const response = await hfVideoFetchWithTimeout(
+            token,
+            body.prompt,
+            numFrames,
+          );
 
           if (!response.ok) {
             const errorText = await response.text();
@@ -86,9 +121,27 @@ export const Route = createFileRoute("/api/huggingface-video")({
             { status: 502 },
           );
         } catch (err) {
+          if (
+            err instanceof DOMException &&
+            err.name === "AbortError"
+          ) {
+            return Response.json(
+              {
+                error:
+                  "Video generation timed out — the model is loading. Try again in a few seconds.",
+              },
+              { status: 504 },
+            );
+          }
+
           console.error("Hugging Face video error:", err);
           return Response.json(
-            { error: err instanceof Error ? err.message : "Video generation failed" },
+            {
+              error:
+                err instanceof Error
+                  ? err.message
+                  : "Video generation failed",
+            },
             { status: 500 },
           );
         }
