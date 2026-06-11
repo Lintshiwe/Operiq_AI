@@ -124,8 +124,8 @@ RESEND_API_KEY=       # Resend email API key
 
 ```bash
 # Clone the repository
-git clone https://github.com/Lintshiwe/flowdesk-ai.git
-cd flowdesk-ai
+git clone https://github.com/Lintshiwe/Operiq_AI.git
+cd Operiq_AI
 
 # Install dependencies
 bun install
