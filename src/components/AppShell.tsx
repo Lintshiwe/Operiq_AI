@@ -16,6 +16,8 @@ import {
   Code2,
   SquarePen,
   LogOut,
+  Image,
+  Film,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useQuery } from "convex/react";
@@ -40,6 +42,8 @@ const STUDIO_NAV: NavItem[] = [
   { to: "/meetings", label: "Meetings", icon: CalendarCheck2 },
   { to: "/planner", label: "Planner", icon: ListChecks },
   { to: "/research", label: "Research", icon: BookOpen },
+  { to: "/image", label: "Image Gen", icon: Image },
+  { to: "/video", label: "Video Gen", icon: Film },
 ];
 
 /**

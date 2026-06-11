@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VideoRouteImport } from './routes/video'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -16,6 +17,7 @@ import { Route as ResearchRouteImport } from './routes/research'
 import { Route as PlannerRouteImport } from './routes/planner'
 import { Route as MeetingsRouteImport } from './routes/meetings'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ImageRouteImport } from './routes/image'
 import { Route as EmailRouteImport } from './routes/email'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as CodeRouteImport } from './routes/code'
@@ -32,6 +34,11 @@ import { Route as ApiElevenlabsSttRouteImport } from './routes/api/elevenlabs-st
 import { Route as ApiCodeRouteImport } from './routes/api/code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
+const VideoRoute = VideoRouteImport.update({
+  id: '/video',
+  path: '/video',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -65,6 +72,11 @@ const MeetingsRoute = MeetingsRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImageRoute = ImageRouteImport.update({
+  id: '/image',
+  path: '/image',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmailRoute = EmailRouteImport.update({
@@ -149,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/code': typeof CodeRoute
   '/docs': typeof DocsRoute
   '/email': typeof EmailRoute
+  '/image': typeof ImageRoute
   '/login': typeof LoginRoute
   '/meetings': typeof MeetingsRoute
   '/planner': typeof PlannerRoute
@@ -156,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/video': typeof VideoRoute
   '/api/chat': typeof ApiChatRoute
   '/api/code': typeof ApiCodeRoute
   '/api/elevenlabs-stt': typeof ApiElevenlabsSttRoute
@@ -172,6 +186,7 @@ export interface FileRoutesByTo {
   '/code': typeof CodeRoute
   '/docs': typeof DocsRoute
   '/email': typeof EmailRoute
+  '/image': typeof ImageRoute
   '/login': typeof LoginRoute
   '/meetings': typeof MeetingsRoute
   '/planner': typeof PlannerRoute
@@ -179,6 +194,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/video': typeof VideoRoute
   '/api/chat': typeof ApiChatRoute
   '/api/code': typeof ApiCodeRoute
   '/api/elevenlabs-stt': typeof ApiElevenlabsSttRoute
@@ -197,6 +213,7 @@ export interface FileRoutesById {
   '/code': typeof CodeRoute
   '/docs': typeof DocsRoute
   '/email': typeof EmailRoute
+  '/image': typeof ImageRoute
   '/login': typeof LoginRoute
   '/meetings': typeof MeetingsRoute
   '/planner': typeof PlannerRoute
@@ -204,6 +221,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/video': typeof VideoRoute
   '/api/chat': typeof ApiChatRoute
   '/api/code': typeof ApiCodeRoute
   '/api/elevenlabs-stt': typeof ApiElevenlabsSttRoute
@@ -223,6 +241,7 @@ export interface FileRouteTypes {
     | '/code'
     | '/docs'
     | '/email'
+    | '/image'
     | '/login'
     | '/meetings'
     | '/planner'
@@ -230,6 +249,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/sitemap.xml'
+    | '/video'
     | '/api/chat'
     | '/api/code'
     | '/api/elevenlabs-stt'
@@ -246,6 +266,7 @@ export interface FileRouteTypes {
     | '/code'
     | '/docs'
     | '/email'
+    | '/image'
     | '/login'
     | '/meetings'
     | '/planner'
@@ -253,6 +274,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/sitemap.xml'
+    | '/video'
     | '/api/chat'
     | '/api/code'
     | '/api/elevenlabs-stt'
@@ -270,6 +292,7 @@ export interface FileRouteTypes {
     | '/code'
     | '/docs'
     | '/email'
+    | '/image'
     | '/login'
     | '/meetings'
     | '/planner'
@@ -277,6 +300,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/sitemap.xml'
+    | '/video'
     | '/api/chat'
     | '/api/code'
     | '/api/elevenlabs-stt'
@@ -295,6 +319,7 @@ export interface RootRouteChildren {
   CodeRoute: typeof CodeRoute
   DocsRoute: typeof DocsRoute
   EmailRoute: typeof EmailRoute
+  ImageRoute: typeof ImageRoute
   LoginRoute: typeof LoginRoute
   MeetingsRoute: typeof MeetingsRoute
   PlannerRoute: typeof PlannerRoute
@@ -302,6 +327,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  VideoRoute: typeof VideoRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiCodeRoute: typeof ApiCodeRoute
   ApiElevenlabsSttRoute: typeof ApiElevenlabsSttRoute
@@ -314,6 +340,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/video': {
+      id: '/video'
+      path: '/video'
+      fullPath: '/video'
+      preLoaderRoute: typeof VideoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -361,6 +394,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/image': {
+      id: '/image'
+      path: '/image'
+      fullPath: '/image'
+      preLoaderRoute: typeof ImageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/email': {
@@ -491,6 +531,7 @@ const rootRouteChildren: RootRouteChildren = {
   CodeRoute: CodeRoute,
   DocsRoute: DocsRoute,
   EmailRoute: EmailRoute,
+  ImageRoute: ImageRoute,
   LoginRoute: LoginRoute,
   MeetingsRoute: MeetingsRoute,
   PlannerRoute: PlannerRoute,
@@ -498,6 +539,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  VideoRoute: VideoRoute,
   ApiChatRoute: ApiChatRoute,
   ApiCodeRoute: ApiCodeRoute,
   ApiElevenlabsSttRoute: ApiElevenlabsSttRoute,
