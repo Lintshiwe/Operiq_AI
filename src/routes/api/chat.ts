@@ -47,7 +47,12 @@ export const Route = createFileRoute("/api/chat")({
           );
         }
 
-        const provider = getProvider();
+        let provider;
+        try {
+          provider = getProvider();
+        } catch (e) {
+          return Response.json({ error: "AI provider not configured: " + (e instanceof Error ? e.message : "unknown") }, { status: 500 });
+        }
         const modelName =
           request.headers.get("x-operiq-model") ??
           process.env.AI_MODEL ??
