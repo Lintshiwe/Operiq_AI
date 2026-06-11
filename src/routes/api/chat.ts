@@ -1,7 +1,6 @@
 /**
  * Copyright (c) 2025 Operiq AI. All rights reserved.
- * Proprietary and confidential. Unauthorized copying, distribution,
- * or use of this file is strictly prohibited.
+ * Proprietary and confidential.
  */
 
 import { createFileRoute } from "@tanstack/react-router";
@@ -10,24 +9,37 @@ export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const body = await request.json();
-        const convexUrl = process.env.CONVEX_URL || process.env.VITE_CONVEX_URL;
+        try {
+          const body = await request.json();
+          const messages = body.messages;
+          if (!Array.isArray(messages)) {
+            return Response.json({ error: "Messages required" }, { status: 400 });
+          }
 
-        const res = await fetch(`${convexUrl}/chat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: body.messages?.map((m: any) => ({
-              role: m.role,
-              content: m.content,
-            })),
-            model:
-              request.headers.get("x-operiq-model") || "gpt-4o-mini",
-          }),
-        });
+          const apiKey = process.env.AI_API_KEY;
+          if (!apiKey) {
+            return Response.json({ error: "AI not configured" }, { status: 500 });
+          }
 
-        const data = await res.json();
-        return Response.json(data);
+          const response = await fetch(
+            `${process.env.AI_BASE_URL || "https://api.openai.com/v1"}/chat/completions`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ model: "gpt-4o-mini", messages, stream: false }),
+            },
+          );
+
+          if (!response.ok) {
+            const err = await response.text();
+            return Response.json({ error: err }, { status: response.status });
+          }
+
+          const data = await response.json();
+          return Response.json(data);
+        } catch (e: any) {
+          return Response.json({ error: e.message }, { status: 500 });
+        }
       },
     },
   },
