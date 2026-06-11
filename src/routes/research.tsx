@@ -195,7 +195,7 @@ function ResearchPage() {
                 </>
               ) : (
                 <>
-                  <Sparkles className="size-4 mr-2" />
+                  <BookOpen className="size-4 mr-2" />
                   Generate Analysis
                 </>
               )}

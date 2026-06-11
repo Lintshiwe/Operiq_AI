@@ -184,7 +184,7 @@ function ImagePage() {
                   </>
                 ) : (
                   <>
-                    <Sparkles className="size-4" /> Generate Image
+                    <Image className="size-4" /> Generate Image
                   </>
                 )}
               </Button>

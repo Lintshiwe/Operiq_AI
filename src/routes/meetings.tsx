@@ -107,9 +107,9 @@ function MeetingsPage() {
               className="rounded-full px-8 bg-accent text-accent-foreground hover:bg-accent/90"
             >
               {loading ? (
-                <Sparkles className="size-4 mr-2 animate-spin" />
+                <CalendarCheck2 className="size-4 mr-2 animate-spin" />
               ) : (
-                <Sparkles className="size-4 mr-2" />
+                <CalendarCheck2 className="size-4 mr-2" />
               )}
               Generate Summary
             </Button>

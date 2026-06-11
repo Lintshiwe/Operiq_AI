@@ -185,7 +185,7 @@ function PlannerPage() {
                 </>
               ) : (
                 <>
-                  <Sparkles className="size-4 mr-2" />
+                  <ListChecks className="size-4 mr-2" />
                   Generate Plan
                 </>
               )}

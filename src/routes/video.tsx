@@ -172,7 +172,7 @@ function VideoPage() {
                   </>
                 ) : (
                   <>
-                    <Sparkles className="size-4" /> Generate Video
+                    <Film className="size-4" /> Generate Video
                   </>
                 )}
               </Button>

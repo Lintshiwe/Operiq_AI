@@ -158,12 +158,12 @@ function EmailPage() {
             >
               {loading ? (
                 <>
-                  <Sparkles className="size-4 mr-2 animate-spin" />
+                  <Mail className="size-4 mr-2 animate-spin" />
                   Generating...
                 </>
               ) : (
                 <>
-                  <Sparkles className="size-4 mr-2" />
+                  <Mail className="size-4 mr-2" />
                   Generate Email
                 </>
               )}
