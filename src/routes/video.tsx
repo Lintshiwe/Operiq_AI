@@ -4,7 +4,7 @@
  * or use of this file is strictly prohibited.
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Film,
@@ -50,7 +50,7 @@ function VideoPage() {
     setModKey(navigator.platform?.includes("Mac") ? "\u2318" : "Ctrl");
   }, []);
 
-  async function generateVideo() {
+  const generateVideo = useCallback(async () => {
     const p = prompt.trim();
     if (!p || loading) return;
     setLoading(true);
@@ -72,7 +72,7 @@ function VideoPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [prompt, style, loading]);
 
   async function copy() {
     if (!videoUrl) return;
@@ -95,7 +95,7 @@ function VideoPage() {
     }
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [prompt, style, loading]);
+  }, [generateVideo]);
 
   // Scroll to result when video appears
   useEffect(() => {

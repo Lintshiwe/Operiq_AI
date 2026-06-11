@@ -4,7 +4,7 @@
  * or use of this file is strictly prohibited.
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Image,
@@ -58,7 +58,7 @@ function ImagePage() {
     setModKey(navigator.platform?.includes("Mac") ? "\u2318" : "Ctrl");
   }, []);
 
-  async function generateImage() {
+  const generateImage = useCallback(async () => {
     const p = prompt.trim();
     if (!p || loading) return;
     setLoading(true);
@@ -80,7 +80,7 @@ function ImagePage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [prompt, style, loading]);
 
   async function copy() {
     if (!generatedImage) return;
@@ -107,7 +107,7 @@ function ImagePage() {
     }
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [prompt, style, loading]);
+  }, [generateImage]);
 
   // Scroll to result when image appears
   useEffect(() => {

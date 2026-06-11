@@ -150,7 +150,7 @@ function TemplatesPage() {
 
   function handleUse(template: (typeof TEMPLATES)[0]) {
     if (template.route === "/email" || template.route === "/meetings" || template.route === "/planner" || template.route === "/research") {
-      navigate({ to: template.route as "/email", search: { prefill: template.prefill } });
+      navigate({ to: template.route as "/email" | "/meetings" | "/planner" | "/research", search: { prefill: template.prefill } });
     } else {
       navigate({ to: "/assistant" });
       toast.info("Navigate to the tool and paste the template text.");

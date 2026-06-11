@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -179,11 +180,12 @@ function SettingsPage() {
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background">
         {/* Mobile header */}
-        <header className="md:hidden h-14 flex items-center px-4 border-b border-border/60">
+        <header className="md:hidden h-14 flex items-center justify-between px-4 border-b border-border/60">
           <Link to="/assistant" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="size-4" />
             Back
           </Link>
+          <NotificationBell />
         </header>
 
         {/* Mobile section selector */}
@@ -207,6 +209,11 @@ function SettingsPage() {
               </button>
             );
           })}
+        </div>
+
+        {/* Desktop top bar with notification bell */}
+        <div className="hidden md:flex items-center justify-end px-4 lg:px-6 h-12 border-b border-border/40">
+          <NotificationBell />
         </div>
 
         <div className="flex-1 overflow-y-auto">
