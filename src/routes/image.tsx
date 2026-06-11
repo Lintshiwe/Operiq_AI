@@ -14,6 +14,8 @@ import {
   Check,
   ShieldCheck,
 } from "lucide-react";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -58,6 +60,8 @@ function ImagePage() {
     setModKey(navigator.platform?.includes("Mac") ? "\u2318" : "Ctrl");
   }, []);
 
+  const generateImageMutation = useMutation(api.huggingface.generateImage);
+
   const generateImage = useCallback(async () => {
     const p = prompt.trim();
     if (!p || loading) return;
@@ -65,14 +69,9 @@ function ImagePage() {
     setGeneratedImage(null);
     setError(null);
     try {
-      const response = await fetch("/api/huggingface", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: `${style}: ${p}` }),
-      });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error || "Failed");
-      setGeneratedImage(data.image);
+      const result = await generateImageMutation({ prompt: `${style}: ${p}`, width: 512, height: 512 });
+      if (!result.success) throw new Error(result.error || "Failed");
+      setGeneratedImage(result.image!);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to generate image";
       setError(msg);
@@ -80,12 +79,12 @@ function ImagePage() {
     } finally {
       setLoading(false);
     }
-  }, [prompt, style, loading]);
+  }, [prompt, style, loading, generateImageMutation]);
 
   async function copy() {
     if (!generatedImage) return;
     try {
-      const res = await fetch(`data:image/png;base64,${generatedImage}`);
+      const res = await fetch(generatedImage);
       const blob = await res.blob();
       await navigator.clipboard.write([
         new ClipboardItem({ "image/png": blob }),
@@ -233,7 +232,7 @@ function ImagePage() {
               {/* Image content */}
               <div className="rounded-xl border border-border/50 overflow-hidden">
                 <img
-                  src={`data:image/png;base64,${generatedImage}`}
+                  src={generatedImage}
                   alt="Generated image"
                   className="w-full object-contain"
                 />

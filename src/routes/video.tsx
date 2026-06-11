@@ -14,6 +14,8 @@ import {
   Check,
   ShieldCheck,
 } from "lucide-react";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,6 +52,8 @@ function VideoPage() {
     setModKey(navigator.platform?.includes("Mac") ? "\u2318" : "Ctrl");
   }, []);
 
+  const generateVideoMutation = useMutation(api.huggingface.generateVideo);
+
   const generateVideo = useCallback(async () => {
     const p = prompt.trim();
     if (!p || loading) return;
@@ -57,14 +61,9 @@ function VideoPage() {
     setVideoUrl(null);
     setError(null);
     try {
-      const response = await fetch("/api/huggingface-video", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: `${style}: ${p}` }),
-      });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error || "Failed");
-      setVideoUrl(data.video);
+      const result = await generateVideoMutation({ prompt: `${style}: ${p}` });
+      if (!result.success) throw new Error(result.error || "Failed");
+      setVideoUrl(result.video!);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to generate video";
       setError(msg);
@@ -72,7 +71,7 @@ function VideoPage() {
     } finally {
       setLoading(false);
     }
-  }, [prompt, style, loading]);
+  }, [prompt, style, loading, generateVideoMutation]);
 
   async function copy() {
     if (!videoUrl) return;
