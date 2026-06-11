@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useSsrConvexAuth } from "@/lib/use-ssr-convex-auth";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { usePromptLimit } from "@/hooks/use-prompt-limit";
 import { GenericId as Id } from "convex/values";
 import {
@@ -48,6 +49,7 @@ import {
   BadgeCheck,
   AlertTriangle,
   HelpCircle,
+  LogOut,
 } from "lucide-react";
 import {
   Select,
@@ -75,6 +77,8 @@ import { deriveTitle, type Thread, loadThreads, saveThreads, createBlankThread }
 import { MODELS, MODEL_STORAGE_KEY, MODEL_MAP } from "@/lib/models";
 import { timeAgo } from "@/lib/time";
 import { toast } from "sonner";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /* ------------------------------------------------------------------ */
 /*  Route                                                             */
@@ -656,7 +660,60 @@ function ThreadSidebar({
           Settings
         </Link>
       </div>
+
+      {/* Profile + Logout */}
+      <ThreadSidebarUser />
     </aside>
+  );
+}
+
+/* ------------ Sidebar User Profile ------------ */
+
+function ThreadSidebarUser() {
+  const user = useQuery(api.users.me);
+  const { signOut } = useAuthActions();
+  const navigate = useNavigate();
+
+  if (user === undefined) {
+    return (
+      <div className="border-t border-sidebar-border px-3 py-3">
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-8 rounded-full" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  const name = user.name || user.email || "User";
+  const initial = name.charAt(0).toUpperCase();
+
+  return (
+    <div className="border-t border-sidebar-border">
+      <Link
+        to="/settings"
+        className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-sidebar-accent transition-colors"
+      >
+        <Avatar className="size-8">
+          <AvatarFallback className="bg-accent text-accent-foreground text-sm font-medium">
+            {initial}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-sidebar-foreground truncate">{name}</p>
+          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+        </div>
+      </Link>
+      <button
+        onClick={() => { signOut(); navigate({ to: "/login" }); }}
+        className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+      >
+        <LogOut className="size-4" strokeWidth={1.75} />
+        Sign out
+      </button>
+    </div>
   );
 }
 
