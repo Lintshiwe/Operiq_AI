@@ -652,13 +652,6 @@ function ThreadSidebar({
             </Link>
           );
         })}
-        <Link
-          to="/settings"
-          className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
-        >
-          <Settings className="size-4" strokeWidth={1.75} />
-          Settings
-        </Link>
       </div>
 
       {/* Profile + Logout */}
@@ -1500,26 +1493,6 @@ function ChatPane({
               >
                 <Headphones className="size-4" />
               </button>
-              {typeof window !== "undefined" && location.protocol === "https:" && (
-                <button
-                  type="button"
-                  onClick={isRecording ? stopRecording : startRecording}
-                  className={cn(
-                    "shrink-0 size-7 rounded-md flex items-center justify-center transition-colors relative",
-                    isRecording
-                      ? "bg-destructive text-white hover:bg-destructive/90"
-                      : "bg-transparent text-muted-foreground hover:bg-muted",
-                  )}
-                  aria-label={isRecording ? "Stop recording" : "Start recording"}
-                  title={isRecording ? "Stop recording" : "Record voice"}
-                >
-                  {isRecording ? (
-                    <span className="size-2 rounded-full bg-foreground animate-pulse" />
-                  ) : (
-                    <Mic className="size-4" />
-                  )}
-                </button>
-              )}
             </div>
                 <input
                   ref={fileInputRef}
@@ -1612,7 +1585,7 @@ function EmptyState({
   return (
     <div className="h-full flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-2xl text-center">
-        <img src="/logo-full.png" alt="Operiq AI" className="mx-auto h-16 mb-4" />
+        <img src="/logo-full.png" alt="Operiq AI" className="mx-auto h-64 mb-4" />
         <h2 className="text-2xl font-semibold text-foreground tracking-tight">
           What can I help with?
         </h2>
