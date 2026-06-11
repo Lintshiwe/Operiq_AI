@@ -60,8 +60,6 @@ function ImagePage() {
     setModKey(navigator.platform?.includes("Mac") ? "\u2318" : "Ctrl");
   }, []);
 
-  const generateImageMutation = useMutation(api.huggingface.generateImage);
-
   const generateImage = useCallback(async () => {
     const p = prompt.trim();
     if (!p || loading) return;
@@ -69,7 +67,12 @@ function ImagePage() {
     setGeneratedImage(null);
     setError(null);
     try {
-      const result = await generateImageMutation({ prompt: `${style}: ${p}`, width: 512, height: 512 });
+      const res = await fetch('/api/huggingface', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: `${style}: ${p}`, width: 512, height: 512 }),
+      });
+      const result = await res.json();
       if (!result.success) throw new Error(result.error || "Failed");
       setGeneratedImage(result.image!);
     } catch (e) {
@@ -79,7 +82,7 @@ function ImagePage() {
     } finally {
       setLoading(false);
     }
-  }, [prompt, style, loading, generateImageMutation]);
+  }, [prompt, style, loading]);
 
   async function copy() {
     if (!generatedImage) return;

@@ -52,8 +52,6 @@ function VideoPage() {
     setModKey(navigator.platform?.includes("Mac") ? "\u2318" : "Ctrl");
   }, []);
 
-  const generateVideoMutation = useMutation(api.huggingface.generateVideo);
-
   const generateVideo = useCallback(async () => {
     const p = prompt.trim();
     if (!p || loading) return;
@@ -61,7 +59,12 @@ function VideoPage() {
     setVideoUrl(null);
     setError(null);
     try {
-      const result = await generateVideoMutation({ prompt: `${style}: ${p}` });
+      const res = await fetch('/api/huggingface-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: `${style}: ${p}` }),
+      });
+      const result = await res.json();
       if (!result.success) throw new Error(result.error || "Failed");
       setVideoUrl(result.video!);
     } catch (e) {
@@ -71,7 +74,7 @@ function VideoPage() {
     } finally {
       setLoading(false);
     }
-  }, [prompt, style, loading, generateVideoMutation]);
+  }, [prompt, style, loading]);
 
   async function copy() {
     if (!videoUrl) return;
