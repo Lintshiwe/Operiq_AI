@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import { Copy, Check, Trash2, Link2 } from "lucide-react";
+import { Copy, Check, Trash2, Link2, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,14 +37,21 @@ export function InviteDialog({ open, onOpenChange, threadId }: InviteDialogProps
 
   const [copied, setCopied] = useState(false);
   const [confirmRevoke, setConfirmRevoke] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isRevoking, setIsRevoking] = useState(false);
 
   const inviteLink = invite ? `https://operiq-ai.netlify.app/invite/${invite.token}` : null;
 
   const handleCopy = async () => {
     if (!inviteLink) return;
-    await navigator.clipboard.writeText(inviteLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard may be blocked
+    }
   };
 
   const handleRevoke = async () => {
@@ -52,19 +59,27 @@ export function InviteDialog({ open, onOpenChange, threadId }: InviteDialogProps
       setConfirmRevoke(true);
       return;
     }
+    setIsRevoking(true);
+    setError(null);
     try {
       await revokeInvite({ threadId: threadId as Id<"threads"> });
       setConfirmRevoke(false);
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      setError(e.message || "Failed to revoke invite");
+    } finally {
+      setIsRevoking(false);
     }
   };
 
   const handleCreate = async () => {
+    setIsCreating(true);
+    setError(null);
     try {
       await createInvite({ threadId: threadId as Id<"threads"> });
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      setError(e.message || "Failed to create invite link");
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -97,19 +112,32 @@ export function InviteDialog({ open, onOpenChange, threadId }: InviteDialogProps
                 variant="destructive"
                 size="sm"
                 onClick={handleRevoke}
+                disabled={isRevoking}
                 onMouseLeave={() => setConfirmRevoke(false)}
               >
-                <Trash2 className="size-3.5" />
+                {isRevoking ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
                 {confirmRevoke ? "Confirm?" : "Revoke invite"}
               </Button>
             </div>
           </div>
         ) : (
           <div>
-            <Button onClick={handleCreate} size="sm">
-              <Link2 className="size-3.5" />
-              Generate invite link
+            <Button onClick={handleCreate} size="sm" disabled={isCreating}>
+              {isCreating ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Link2 className="size-3.5" />
+              )}
+              {isCreating ? "Generating..." : "Generate invite link"}
             </Button>
+          </div>
+        )}
+
+        {/* Error display */}
+        {error && (
+          <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+            <AlertCircle className="size-4 shrink-0" />
+            {error}
           </div>
         )}
 

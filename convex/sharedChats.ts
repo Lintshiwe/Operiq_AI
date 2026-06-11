@@ -15,15 +15,23 @@ export const createInvite = mutation({
     if (!userId) throw new Error("Not authenticated");
 
     const thread = await ctx.db.get(args.threadId);
-    if (!thread || thread.userId !== userId) throw new Error("Thread not found");
+    if (!thread) throw new Error("Thread not found");
 
-    const existing = await ctx.db
+    // Allow creating invite if user is thread owner OR already a participant
+    const existingShare = await ctx.db
       .query("sharedChats")
       .withIndex("by_threadId", (q) => q.eq("threadId", args.threadId))
-      .filter((q) => q.eq("isActive", true))
       .collect();
 
-    const activeInvite = existing.find((sc) => sc.ownerId === userId);
+    const isOwner = thread.userId === userId;
+    const isParticipant = existingShare.some((sc) => sc.invitedUserIds.includes(userId));
+
+    if (!isOwner && !isParticipant) throw new Error("You don't have permission to share this thread");
+
+    // Check for existing active invite
+    const activeInvite = existingShare.find(
+      (sc) => sc.ownerId === userId && sc.isActive,
+    );
     if (activeInvite) {
       return { token: activeInvite.token };
     }
