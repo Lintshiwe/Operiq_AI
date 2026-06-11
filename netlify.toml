@@ -9,6 +9,9 @@
   external_node_modules = []
   included_files = ["node_modules/ai/**", "node_modules/@ai-sdk/**"]
 
+  [functions.server]
+    timeout = 60
+
 # All routes handled by the SSR function
 [[redirects]]
   from = "/*"
