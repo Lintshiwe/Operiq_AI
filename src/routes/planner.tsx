@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation } from "convex/react";
+import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
   Sparkles, Star, CalendarDays, Lightbulb, ListChecks,
@@ -72,7 +72,7 @@ function parsePlan(text: string) {
 
 function PlannerPage() {
   const { prefill } = Route.useSearch();
-  const generate = useMutation(api.plans.generate);
+  const generate = useAction(api.plans.generate);
   const [horizon, setHorizon] = useState<"Day" | "Week" | "Month">("Day");
   const [tasks, setTasks] = useState(prefill || "");
   const [output, setOutput] = useState<string | null>(null);

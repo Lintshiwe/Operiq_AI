@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation } from "convex/react";
+import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Copy, Check, Mail } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
@@ -47,7 +47,7 @@ const TONE_OPTIONS = [
 
 function EmailPage() {
   const { prefill } = Route.useSearch();
-  const generate = useMutation(api.emailDrafts.generate);
+  const generate = useAction(api.emailDrafts.generate);
   const [recipient, setRecipient] = useState("");
   const [subject, setSubject] = useState("");
   const [tone, setTone] = useState<string>("formal");

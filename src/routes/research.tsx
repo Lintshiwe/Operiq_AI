@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation } from "convex/react";
+import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
   Lightbulb, FileText, TrendingUp, Sparkles, BookOpen,
@@ -74,7 +74,7 @@ function parseSections(text: string) {
 
 function ResearchPage() {
   const { prefill } = Route.useSearch();
-  const generate = useMutation(api.analyses.generate);
+  const generate = useAction(api.analyses.generate);
   const [material, setMaterial] = useState(prefill || "");
   const [depth, setDepth] = useState<"brief" | "standard" | "deep">("standard");
   const [output, setOutput] = useState<string | null>(null);

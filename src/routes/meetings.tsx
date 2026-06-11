@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation } from "convex/react";
+import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
   CheckCircle2, ListChecks, Calendar, Copy, Check, Sparkles, ShieldCheck, CalendarCheck2,
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/meetings")({
 
 function MeetingsPage() {
   const { prefill } = Route.useSearch();
-  const generate = useMutation(api.summaries.generate);
+  const generate = useAction(api.summaries.generate);
   const [notes, setNotes] = useState(prefill || "");
   const [output, setOutput] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
