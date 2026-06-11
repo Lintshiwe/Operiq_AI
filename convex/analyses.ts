@@ -5,7 +5,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { action, mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const list = query({
@@ -19,14 +19,16 @@ export const list = query({
   },
 });
 
-export const generate = mutation({
+export const generate = action({
   args: {
     material: v.string(),
     question: v.optional(v.string()),
     depth: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const userId = identity.subject as any;
     if (!userId) throw new Error("Not authenticated");
 
     const system = `You are a senior research analyst. Distill the provided material.
