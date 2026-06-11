@@ -14,26 +14,16 @@ export const createInvite = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    const thread = await ctx.db.get(args.threadId);
-    if (!thread) throw new Error("Thread not found");
-
-    // Allow creating invite if user is thread owner OR already a participant
-    const existingShare = await ctx.db
+    // Check for existing active invite for this user on this thread
+    const existing = await ctx.db
       .query("sharedChats")
       .withIndex("by_threadId", (q) => q.eq("threadId", args.threadId))
+      .filter((q) => q.eq("isActive", true))
       .collect();
 
-    const isOwner = thread.userId === userId;
-    const isParticipant = existingShare.some((sc) => sc.invitedUserIds.includes(userId));
-
-    if (!isOwner && !isParticipant) throw new Error("You don't have permission to share this thread");
-
-    // Check for existing active invite
-    const activeInvite = existingShare.find(
-      (sc) => sc.ownerId === userId && sc.isActive,
-    );
+    const activeInvite = existing.find((sc) => sc.ownerId === userId);
     if (activeInvite) {
-      return { token: activeInvite.token };
+      return { token: activeInvite.token, inviteLink: `https://operiq-ai.netlify.app/invite/${activeInvite.token}` };
     }
 
     const token = crypto.randomUUID();
@@ -46,7 +36,7 @@ export const createInvite = mutation({
       invitedUserIds: [],
     });
 
-    return { token };
+    return { token, inviteLink: `https://operiq-ai.netlify.app/invite/${token}` };
   },
 });
 

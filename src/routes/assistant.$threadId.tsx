@@ -1612,7 +1612,7 @@ function EmptyState({
   return (
     <div className="h-full flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-2xl text-center">
-        <img src="/logo-full.png" alt="Operiq AI" className="mx-auto h-10 mb-4" />
+        <img src="/logo-full.png" alt="Operiq AI" className="mx-auto h-16 mb-4" />
         <h2 className="text-2xl font-semibold text-foreground tracking-tight">
           What can I help with?
         </h2>

@@ -41,7 +41,9 @@ export function InviteDialog({ open, onOpenChange, threadId }: InviteDialogProps
   const [isCreating, setIsCreating] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
 
-  const inviteLink = invite ? `https://operiq-ai.netlify.app/invite/${invite.token}` : null;
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+
+  const inviteLink = invite?.inviteLink ?? generatedLink ?? (invite ? `https://operiq-ai.netlify.app/invite/${invite.token}` : null);
 
   const handleCopy = async () => {
     if (!inviteLink) return;
@@ -75,7 +77,8 @@ export function InviteDialog({ open, onOpenChange, threadId }: InviteDialogProps
     setIsCreating(true);
     setError(null);
     try {
-      await createInvite({ threadId: threadId as Id<"threads"> });
+      const result = await createInvite({ threadId: threadId as Id<"threads"> });
+      setGeneratedLink(result.inviteLink);
     } catch (e: any) {
       setError(e.message || "Failed to create invite link");
     } finally {
