@@ -26,7 +26,7 @@ function InviteJoinPage() {
         const result = await joinByToken({ token });
         router.navigate({
           to: "/assistant/$threadId",
-          params: { threadId: result.threadId },
+          params: { threadId: String(result.threadId) },
         });
       } catch (e: any) {
         setError(e.message || "Failed to join conversation");

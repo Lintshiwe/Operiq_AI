@@ -117,10 +117,10 @@ function AssistantThreadPage() {
     }
 
     if (!threads) return null;
-    const found = threads.find((t) => t._id === threadId);
+    const found = threads.find((t) => String(t._id) === threadId);
     return found
       ? {
-          id: found._id,
+          id: String(found._id),
           title: found.title,
           updatedAt: new Date(found.updatedAt).getTime(),
           messages: found.messages.map((m) => ({
@@ -137,7 +137,7 @@ function AssistantThreadPage() {
   useEffect(() => {
     if (authLoading || isGuest || threads === undefined || hasCreatedRef.current) return;
 
-    const current = threads.find((t) => t._id === threadId);
+    const current = threads.find((t) => String(t._id) === threadId);
     if (current) {
       hasCreatedRef.current = false;
       return;
@@ -154,7 +154,7 @@ function AssistantThreadPage() {
           console.error(e);
         });
     } else {
-      navigate({ to: "/assistant/$threadId", params: { threadId: threads[0]._id } });
+      navigate({ to: "/assistant/$threadId", params: { threadId: String(threads[0]._id) } });
     }
   }, [threads, threadId, authLoading, isGuest, create, navigate]);
 

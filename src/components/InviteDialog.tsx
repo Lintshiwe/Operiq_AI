@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import { Copy, Check, Trash2, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,8 +30,8 @@ interface InviteDialogProps {
 }
 
 export function InviteDialog({ open, onOpenChange, threadId }: InviteDialogProps) {
-  const invite = useQuery(api.sharedChats.getInviteByThread, { threadId });
-  const participants = useQuery(api.sharedChats.getSharedParticipants, { threadId });
+  const invite = useQuery(api.sharedChats.getInviteByThread, { threadId: threadId as Id<"threads"> });
+  const participants = useQuery(api.sharedChats.getSharedParticipants, { threadId: threadId as Id<"threads"> });
   const createInvite = useMutation(api.sharedChats.createInvite);
   const revokeInvite = useMutation(api.sharedChats.revokeInvite);
 
@@ -52,7 +53,7 @@ export function InviteDialog({ open, onOpenChange, threadId }: InviteDialogProps
       return;
     }
     try {
-      await revokeInvite({ threadId });
+      await revokeInvite({ threadId: threadId as Id<"threads"> });
       setConfirmRevoke(false);
     } catch (e) {
       console.error(e);
@@ -61,7 +62,7 @@ export function InviteDialog({ open, onOpenChange, threadId }: InviteDialogProps
 
   const handleCreate = async () => {
     try {
-      await createInvite({ threadId });
+      await createInvite({ threadId: threadId as Id<"threads"> });
     } catch (e) {
       console.error(e);
     }
