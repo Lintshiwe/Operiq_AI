@@ -19,6 +19,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/email")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    prefill: (search.prefill as string) || "",
+  }),
   head: () => ({
     meta: [
       { title: "Email Studio \u00b7 Operiq AI" },
@@ -32,12 +35,13 @@ export const Route = createFileRoute("/email")({
 });
 
 function EmailPage() {
+  const { prefill } = Route.useSearch();
   const generate = useMutation(api.emailDrafts.generate);
   const [recipient, setRecipient] = useState("");
   const [subject, setSubject] = useState("");
   const [tone, setTone] = useState<"formal" | "informal" | "persuasive">("informal");
   const [audience, setAudience] = useState<"client" | "manager" | "team">("client");
-  const [context, setContext] = useState("");
+  const [context, setContext] = useState(prefill || "");
   const [draft, setDraft] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);

@@ -18,6 +18,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/planner")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    prefill: (search.prefill as string) || "",
+  }),
   head: () => ({
     meta: [
       { title: "Task Planner \u00b7 Operiq AI" },
@@ -28,9 +31,10 @@ export const Route = createFileRoute("/planner")({
 });
 
 function PlannerPage() {
+  const { prefill } = Route.useSearch();
   const generate = useMutation(api.plans.generate);
   const [horizon, setHorizon] = useState<"daily" | "weekly">("daily");
-  const [tasks, setTasks] = useState("");
+  const [tasks, setTasks] = useState(prefill || "");
   const [goals, setGoals] = useState("");
   const [output, setOutput] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

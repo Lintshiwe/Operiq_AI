@@ -18,6 +18,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/meetings")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    prefill: (search.prefill as string) || "",
+  }),
   head: () => ({
     meta: [
       { title: "Meeting Intelligence \u00b7 Operiq AI" },
@@ -31,8 +34,9 @@ export const Route = createFileRoute("/meetings")({
 });
 
 function MeetingsPage() {
+  const { prefill } = Route.useSearch();
   const generate = useMutation(api.summaries.generate);
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(prefill || "");
   const [meetingType, setMeetingType] = useState<"1:1" | "team" | "client" | "all-hands">("team");
   const [output, setOutput] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

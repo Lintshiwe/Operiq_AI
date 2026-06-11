@@ -21,6 +21,7 @@ import type * as notifications from "../notifications.js";
 import type * as plans from "../plans.js";
 import type * as presence from "../presence.js";
 import type * as profiles from "../profiles.js";
+import type * as prompts from "../prompts.js";
 import type * as sharedChats from "../sharedChats.js";
 import type * as summaries from "../summaries.js";
 import type * as threads from "../threads.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   plans: typeof plans;
   presence: typeof presence;
   profiles: typeof profiles;
+  prompts: typeof prompts;
   sharedChats: typeof sharedChats;
   summaries: typeof summaries;
   threads: typeof threads;

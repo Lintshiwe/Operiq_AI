@@ -20,6 +20,9 @@ import { toast } from "sonner";
 const SUPPORTED_FILE_TYPES = ".txt,.md,.json";
 
 export const Route = createFileRoute("/research")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    prefill: (search.prefill as string) || "",
+  }),
   head: () => ({
     meta: [
       { title: "Research Hub \u00b7 Operiq AI" },
@@ -30,8 +33,9 @@ export const Route = createFileRoute("/research")({
 });
 
 function ResearchPage() {
+  const { prefill } = Route.useSearch();
   const generate = useMutation(api.analyses.generate);
-  const [material, setMaterial] = useState("");
+  const [material, setMaterial] = useState(prefill || "");
   const [question, setQuestion] = useState("");
   const [depth, setDepth] = useState<"quick" | "deep" | "executive">("quick");
   const [output, setOutput] = useState<string | null>(null);

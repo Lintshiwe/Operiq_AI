@@ -1036,9 +1036,13 @@ function ContactSection() {
     }
   }
 
+  const deleteAccount = useMutation(api.users.deleteAccount);
+
   async function handleDeleteAccount() {
     setDeleting(true);
     try {
+      // Delete Convex data
+      await deleteAccount({});
       // Clear all localStorage
       localStorage.clear();
       // Sign out

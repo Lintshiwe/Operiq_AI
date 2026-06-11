@@ -133,4 +133,12 @@ export default defineSchema({
     metadata: v.optional(v.object({ threadId: v.optional(v.id("threads")) })),
     createdAt: v.string(),
   }).index("by_userId", ["userId"]),
+
+  prompts: defineTable({
+    userId: v.id("users"),
+    title: v.string(),
+    content: v.string(),
+    category: v.string(),
+    createdAt: v.string(),
+  }).index("by_userId", ["userId"]),
 });

@@ -4,8 +4,10 @@
  * or use of this file is strictly prohibited.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Bell, Check, CheckCheck, X } from "lucide-react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -53,14 +55,41 @@ function ensureWelcomeNotification() {
 }
 
 export function NotificationBell() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [localNotifications, setLocalNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Fetch Convex notifications
+  const convexNotifications = useQuery(api.notifications.list);
+  const markReadMutation = useMutation(api.notifications.markRead);
+  const markAllReadMutation = useMutation(api.notifications.markAllRead);
+
   useEffect(() => {
     ensureWelcomeNotification();
-    setNotifications(loadNotifications());
+    setLocalNotifications(loadNotifications());
   }, []);
+
+  // Merge Convex and localStorage notifications
+  const allNotifications = useMemo(() => {
+    const convexMapped: Notification[] = (convexNotifications || []).map((n) => ({
+      id: n._id,
+      type: (n.type as "share" | "mention" | "system") || "system",
+      title: n.title,
+      body: n.body,
+      read: n.read,
+      createdAt: new Date(n.createdAt).getTime(),
+    }));
+    // Combine, deduplicating by id (Convex takes priority)
+    const seen = new Set<string>();
+    const merged: Notification[] = [];
+    for (const n of [...convexMapped, ...localNotifications]) {
+      if (!seen.has(n.id)) {
+        seen.add(n.id);
+        merged.push(n);
+      }
+    }
+    return merged;
+  }, [convexNotifications, localNotifications]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -74,25 +103,42 @@ export function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = allNotifications.filter((n) => !n.read).length;
 
   function markAsRead(id: string) {
-    const next = notifications.map((n) => (n.id === id ? { ...n, read: true } : n));
-    setNotifications(next);
-    saveNotifications(next);
+    // Check if this is a Convex notification (has _id format)
+    const isConvex = convexNotifications?.some((n) => n._id === id);
+    if (isConvex) {
+      markReadMutation({ notificationId: id as any }).catch(() => {});
+    } else {
+      const next = localNotifications.map((n) => (n.id === id ? { ...n, read: true } : n));
+      setLocalNotifications(next);
+      saveNotifications(next);
+    }
   }
 
-  function markAllAsRead() {
-    const next = notifications.map((n) => ({ ...n, read: true }));
-    setNotifications(next);
+  async function markAllAsRead() {
+    // Mark all Convex notifications as read
+    try {
+      await markAllReadMutation({});
+    } catch {
+      // Not authenticated or no notifications
+    }
+    // Mark all localStorage notifications as read
+    const next = localNotifications.map((n) => ({ ...n, read: true }));
+    setLocalNotifications(next);
     saveNotifications(next);
     toast.success("All notifications marked as read");
   }
 
   function removeNotification(id: string) {
-    const next = notifications.filter((n) => n.id !== id);
-    setNotifications(next);
-    saveNotifications(next);
+    const isConvex = convexNotifications?.some((n) => n._id === id);
+    if (!isConvex) {
+      const next = localNotifications.filter((n) => n.id !== id);
+      setLocalNotifications(next);
+      saveNotifications(next);
+    }
+    // Convex notifications cannot be deleted from the client side currently
   }
 
   return (
@@ -125,12 +171,12 @@ export function NotificationBell() {
             )}
           </div>
           <div className="max-h-[320px] overflow-y-auto">
-            {notifications.length === 0 ? (
+            {allNotifications.length === 0 ? (
               <div className="px-4 py-6 text-center text-sm text-muted-foreground">
                 No notifications yet
               </div>
             ) : (
-              notifications
+              allNotifications
                 .sort((a, b) => b.createdAt - a.createdAt)
                 .map((n) => (
                   <div

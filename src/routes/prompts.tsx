@@ -5,7 +5,10 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { useSsrConvexAuth } from "@/lib/use-ssr-convex-auth";
+import { api } from "../../convex/_generated/api";
 import {
   Bookmark,
   Plus,
@@ -87,7 +90,14 @@ function savePrompts(prompts: Prompt[]) {
 }
 
 function PromptsPage() {
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const { isAuthenticated } = useSsrConvexAuth();
+  const convexPrompts = useQuery(api.prompts.list);
+  const createPrompt = useMutation(api.prompts.create);
+  const updatePrompt = useMutation(api.prompts.update);
+  const removePrompt = useMutation(api.prompts.remove);
+
+  const [localPrompts, setLocalPrompts] = useState<Prompt[]>([]);
+  const [migrated, setMigrated] = useState(false);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
@@ -97,11 +107,60 @@ function PromptsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   useEffect(() => {
-    setPrompts(loadPrompts());
+    setLocalPrompts(loadPrompts());
   }, []);
 
+  // Load from Convex or localStorage
+  const remotePrompts: Prompt[] = useMemo(() => {
+    if (!convexPrompts) return [];
+    return convexPrompts.map((p) => ({
+      id: p._id,
+      title: p.title,
+      content: p.content,
+      category: p.category,
+      createdAt: new Date(p.createdAt).getTime(),
+    }));
+  }, [convexPrompts]);
+
+  // Merge: Convex prompts take priority, localStorage as fallback
+  const allPrompts = useMemo(() => {
+    if (isAuthenticated && convexPrompts) {
+      // Merge localStorage prompts that don't exist in Convex yet
+      const remoteIds = new Set(remotePrompts.map((p) => p.id));
+      const localOnly = localPrompts.filter((p) => !remoteIds.has(p.id));
+      return [...remotePrompts, ...localOnly];
+    }
+    return localPrompts;
+  }, [isAuthenticated, convexPrompts, remotePrompts, localPrompts]);
+
+  // Migrate localStorage prompts to Convex on first load (one-time)
+  const migratePrompts = useCallback(async () => {
+    if (migrated || !isAuthenticated || !convexPrompts || localPrompts.length === 0) return;
+    setMigrated(true);
+    const remoteIds = new Set(remotePrompts.map((p) => p.id));
+    const toMigrate = localPrompts.filter((p) => !remoteIds.has(p.id));
+    for (const p of toMigrate) {
+      try {
+        await createPrompt({
+          title: p.title,
+          content: p.content,
+          category: p.category,
+        });
+      } catch {
+        // Silently skip migration errors
+      }
+    }
+    if (toMigrate.length > 0) {
+      toast.success(`${toMigrate.length} prompt(s) migrated to cloud`);
+    }
+  }, [migrated, isAuthenticated, convexPrompts, localPrompts, remotePrompts, createPrompt]);
+
+  useEffect(() => {
+    migratePrompts();
+  }, [migratePrompts]);
+
   const filtered = useMemo(() => {
-    let result = prompts;
+    let result = allPrompts;
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -114,7 +173,7 @@ function PromptsPage() {
       result = result.filter((p) => p.category === selectedCategory);
     }
     return result.sort((a, b) => b.createdAt - a.createdAt);
-  }, [prompts, search, selectedCategory]);
+  }, [allPrompts, search, selectedCategory]);
 
   function openAdd() {
     setEditingPrompt(null);
@@ -132,12 +191,57 @@ function PromptsPage() {
     setDialogOpen(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!title.trim() || !content.trim()) {
       toast.error("Title and content are required");
       return;
     }
-    const next = [...prompts];
+
+    if (isAuthenticated) {
+      // Use Convex mutations
+      try {
+        if (editingPrompt) {
+          // Check if it's a Convex prompt (ID looks like a Convex ID)
+          const isConvex = convexPrompts?.some((p) => p._id === editingPrompt.id);
+          if (isConvex) {
+            await updatePrompt({
+              promptId: editingPrompt.id as any,
+              title: title.trim(),
+              content: content.trim(),
+              category,
+            });
+          } else {
+            // Editing a local-only prompt — create it in Convex
+            await createPrompt({
+              title: title.trim(),
+              content: content.trim(),
+              category,
+            });
+            // Remove from local
+            const next = localPrompts.filter((p) => p.id !== editingPrompt.id);
+            setLocalPrompts(next);
+            savePrompts(next);
+          }
+        } else {
+          await createPrompt({
+            title: title.trim(),
+            content: content.trim(),
+            category,
+          });
+        }
+      } catch (e) {
+        toast.error("Failed to save prompt to cloud. Saving locally.");
+        saveLocally();
+      }
+    } else {
+      saveLocally();
+    }
+    setDialogOpen(false);
+    toast.success(editingPrompt ? "Prompt updated" : "Prompt saved");
+  }
+
+  function saveLocally() {
+    const next = [...localPrompts];
     if (editingPrompt) {
       const idx = next.findIndex((p) => p.id === editingPrompt.id);
       if (idx !== -1) {
@@ -152,16 +256,24 @@ function PromptsPage() {
         createdAt: Date.now(),
       });
     }
-    setPrompts(next);
+    setLocalPrompts(next);
     savePrompts(next);
-    setDialogOpen(false);
-    toast.success(editingPrompt ? "Prompt updated" : "Prompt saved");
   }
 
-  function handleDelete(id: string) {
-    const next = prompts.filter((p) => p.id !== id);
-    setPrompts(next);
-    savePrompts(next);
+  async function handleDelete(id: string) {
+    const isConvex = convexPrompts?.some((p) => p._id === id);
+    if (isConvex && isAuthenticated) {
+      try {
+        await removePrompt({ promptId: id as any });
+      } catch (e) {
+        toast.error("Failed to delete prompt from cloud.");
+        return;
+      }
+    } else {
+      const next = localPrompts.filter((p) => p.id !== id);
+      setLocalPrompts(next);
+      savePrompts(next);
+    }
     toast.success("Prompt deleted");
   }
 
@@ -232,7 +344,7 @@ function PromptsPage() {
             <div className="rounded-xl border border-border bg-card p-12 text-center">
               <Bookmark className="mx-auto size-10 text-muted-foreground/40 mb-3" />
               <p className="text-sm text-muted-foreground">
-                {prompts.length === 0 ? "No prompts yet. Add your first one!" : "No prompts match your search."}
+                {allPrompts.length === 0 ? "No prompts yet. Add your first one!" : "No prompts match your search."}
               </p>
             </div>
           ) : (
