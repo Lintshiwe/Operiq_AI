@@ -6,8 +6,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { useSsrConvexAuth } from "@/lib/use-ssr-convex-auth";
 import { api } from "../../convex/_generated/api";
 import {
@@ -17,7 +16,6 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { MarkdownView } from "@/components/MarkdownView";
 import { Button } from "@/components/ui/button";
-import { generateEmail } from "@/lib/ai.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/email")({
@@ -34,7 +32,7 @@ export const Route = createFileRoute("/email")({
 });
 
 function EmailPage() {
-  const run = useServerFn(generateEmail);
+  const generate = useMutation(api.emailDrafts.generate);
   const [recipient, setRecipient] = useState("");
   const [subject, setSubject] = useState("");
   const [tone, setTone] = useState<"formal" | "informal" | "persuasive">("informal");
@@ -62,8 +60,14 @@ function EmailPage() {
     setLoading(true);
     setDraft(null);
     try {
-      const res = await run({ data: { topic, context, tone, audience, recipient, subject } });
-      setDraft(res.text);
+      const result = await generate({
+        recipient: recipient || "",
+        subject: subject || "",
+        tone,
+        audience,
+        context,
+      } as any);
+      setDraft(result.draft);
     } catch (e) {
       toast.error("Generation failed. Please try again.");
       console.error(e);
@@ -76,17 +80,14 @@ function EmailPage() {
     if (!draft || !refineText.trim()) return;
     setRefining(true);
     try {
-      const res = await run({
-        data: {
-          topic: `Revise this email: ${draft}\n\nRequested changes: ${refineText}`,
-          context: "",
-          tone,
-          audience,
-          recipient,
-          subject,
-        },
-      });
-      setDraft(res.text);
+      const result = await generate({
+        recipient: recipient || "",
+        subject: `[REFINED] ${subject || "Email draft"}`,
+        tone,
+        audience,
+        context: `Previous draft:\n${draft}\n\nRequested changes: ${refineText}`,
+      } as any);
+      setDraft(result.draft);
       setRefineText("");
     } catch (e) {
       toast.error("Refinement failed. Please try again.");

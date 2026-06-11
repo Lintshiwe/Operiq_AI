@@ -5,7 +5,7 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
@@ -19,6 +19,7 @@ import {
   Mail,
   Moon,
   Palette,
+  RefreshCw,
   Settings,
   Sun,
   Trash2,
@@ -41,6 +42,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/settings")({
@@ -457,6 +459,20 @@ function BillingSection() {
   const cancel = useMutation(api.billing.cancelSubscription);
   const [upgradingId, setUpgradingId] = useState<string | null>(null);
   const [billingError, setBillingError] = useState<string | null>(null);
+  const [billingTimedOut, setBillingTimedOut] = useState(false);
+  const billingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (billing !== undefined) {
+      setBillingTimedOut(false);
+      if (billingTimeoutRef.current) clearTimeout(billingTimeoutRef.current);
+      return;
+    }
+    billingTimeoutRef.current = setTimeout(() => setBillingTimedOut(true), 5000);
+    return () => {
+      if (billingTimeoutRef.current) clearTimeout(billingTimeoutRef.current);
+    };
+  }, [billing]);
 
   const currentPlan = ((billing as any)?.plan as string) || "free";
 
@@ -479,6 +495,25 @@ function BillingSection() {
     } catch (e) {
       setBillingError(e instanceof Error ? e.message : "Failed to cancel subscription");
     }
+  }
+
+  if (billingTimedOut) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Billing</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Manage your billing and subscription settings.</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-6 text-center space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Could not load billing. Please sign in again.
+          </p>
+          <Button variant="outline" onClick={() => { setBillingTimedOut(false); }}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   if (billing === undefined) {
@@ -704,10 +739,13 @@ function ContactSection() {
     setSaving(true);
     setSaveError(null);
     try {
-      await updateProfile({ name: editName });
+      await updateProfile({ name: editName } as any);
+      toast.success("Profile updated successfully");
       setEditOpen(false);
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : "Failed to update profile");
+      const errMsg = e instanceof Error ? e.message : "Failed to update profile";
+      setSaveError(errMsg);
+      toast.error(errMsg);
     } finally {
       setSaving(false);
     }
@@ -745,6 +783,17 @@ function ContactSection() {
             }}
           >
             Edit name
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              window.location.reload();
+            }}
+            className="text-muted-foreground"
+            title="Refresh profile"
+          >
+            <RefreshCw className="size-3.5" />
           </Button>
         </div>
 

@@ -77,8 +77,12 @@ async function getOrCreateBilling(
 export const getBilling = query({
   args: {},
   handler: async (ctx) => {
-    const billing = await getOrCreateBilling(ctx);
-    return billing;
+    try {
+      const billing = await getOrCreateBilling(ctx);
+      return billing;
+    } catch (e) {
+      return null;
+    }
   },
 });
 
@@ -91,23 +95,27 @@ export const upgradePlan = mutation({
     plan: v.union(v.literal("pro"), v.literal("enterprise")),
   },
   handler: async (ctx, args) => {
-    const billing = await getOrCreateBilling(ctx);
-    const limits = PLAN_LIMITS[args.plan as Plan];
+    try {
+      const billing = await getOrCreateBilling(ctx);
+      const limits = PLAN_LIMITS[args.plan as Plan];
 
-    const now = new Date().toISOString();
-    const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const now = new Date().toISOString();
+      const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    await ctx.db.patch(billing._id, {
-      plan: args.plan,
-      subscriptionStatus: "active",
-      aiRequestsLimit: limits.aiRequestsLimit,
-      imagesLimit: limits.imagesLimit,
-      storageLimit: limits.storageLimit,
-      currentPeriodStart: now,
-      currentPeriodEnd: thirtyDays,
-    });
+      await ctx.db.patch(billing._id, {
+        plan: args.plan,
+        subscriptionStatus: "active",
+        aiRequestsLimit: limits.aiRequestsLimit,
+        imagesLimit: limits.imagesLimit,
+        storageLimit: limits.storageLimit,
+        currentPeriodStart: now,
+        currentPeriodEnd: thirtyDays,
+      });
 
-    return { success: true, plan: args.plan };
+      return { success: true, plan: args.plan };
+    } catch (e) {
+      return { success: false, error: "Not authenticated" };
+    }
   },
 });
 
@@ -137,25 +145,33 @@ export const cancelSubscription = mutation({
 export const recordAiRequest = mutation({
   args: {},
   handler: async (ctx) => {
-    const billing = await getOrCreateBilling(ctx);
+    try {
+      const billing = await getOrCreateBilling(ctx);
 
-    await ctx.db.patch(billing._id, {
-      aiRequestsUsed: (billing.aiRequestsUsed as number) + 1,
-    });
+      await ctx.db.patch(billing._id, {
+        aiRequestsUsed: (billing.aiRequestsUsed as number) + 1,
+      });
 
-    return { success: true, aiRequestsUsed: (billing.aiRequestsUsed as number) + 1 };
+      return { success: true, aiRequestsUsed: (billing.aiRequestsUsed as number) + 1 };
+    } catch (e) {
+      return { success: false, error: "Not authenticated" };
+    }
   },
 });
 
 export const recordImageGeneration = mutation({
   args: {},
   handler: async (ctx) => {
-    const billing = await getOrCreateBilling(ctx);
+    try {
+      const billing = await getOrCreateBilling(ctx);
 
-    await ctx.db.patch(billing._id, {
-      imagesGenerated: (billing.imagesGenerated as number) + 1,
-    });
+      await ctx.db.patch(billing._id, {
+        imagesGenerated: (billing.imagesGenerated as number) + 1,
+      });
 
-    return { success: true, imagesGenerated: (billing.imagesGenerated as number) + 1 };
+      return { success: true, imagesGenerated: (billing.imagesGenerated as number) + 1 };
+    } catch (e) {
+      return { success: false, error: "Not authenticated" };
+    }
   },
 });

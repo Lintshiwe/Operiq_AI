@@ -16,3 +16,7 @@
 [dev]
   command = "bun run dev"
   port = 3000
+
+[[edge_functions]]
+  path = "/*"
+  function = "security"

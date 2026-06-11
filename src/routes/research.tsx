@@ -6,7 +6,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import {
   BookOpen, Loader2, Copy, Check, ShieldCheck,
   Sparkles, SendHorizontal,
@@ -14,7 +15,6 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { MarkdownView } from "@/components/MarkdownView";
 import { Button } from "@/components/ui/button";
-import { analyzeResearch } from "@/lib/ai.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/research")({
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/research")({
 });
 
 function ResearchPage() {
-  const run = useServerFn(analyzeResearch);
+  const generate = useMutation(api.analyses.generate);
   const [material, setMaterial] = useState("");
   const [question, setQuestion] = useState("");
   const [depth, setDepth] = useState<"quick" | "deep" | "executive">("quick");
@@ -50,8 +50,8 @@ function ResearchPage() {
     setLoading(true);
     setOutput(null);
     try {
-      const res = await run({ data: { material, question, depth } });
-      setOutput(res.text);
+      const result = await generate({ material, question, depth } as any);
+      setOutput(result.text);
     } catch (e) {
       toast.error("Generation failed. Please try again.");
       console.error(e);
@@ -64,14 +64,12 @@ function ResearchPage() {
     if (!output || !refineText.trim()) return;
     setRefining(true);
     try {
-      const res = await run({
-        data: {
-          material: `Previous analysis:\n${output}\n\nRequested changes: ${refineText}`,
-          question: "",
-          depth,
-        },
-      });
-      setOutput(res.text);
+      const result = await generate({
+        material: `Previous analysis:\n${output}\n\nRequested changes: ${refineText}`,
+        question: "",
+        depth,
+      } as any);
+      setOutput(result.text);
       setRefineText("");
     } catch (e) {
       toast.error("Refinement failed. Please try again.");

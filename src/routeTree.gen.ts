@@ -17,6 +17,7 @@ import { Route as PlannerRouteImport } from './routes/planner'
 import { Route as MeetingsRouteImport } from './routes/meetings'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as EmailRouteImport } from './routes/email'
+import { Route as DocsRouteImport } from './routes/docs'
 import { Route as CodeRouteImport } from './routes/code'
 import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as IndexRouteImport } from './routes/index'
@@ -24,7 +25,10 @@ import { Route as AssistantIndexRouteImport } from './routes/assistant.index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AssistantThreadIdRouteImport } from './routes/assistant.$threadId'
 import { Route as ApiResendRouteImport } from './routes/api/resend'
+import { Route as ApiHuggingfaceVideoRouteImport } from './routes/api/huggingface-video'
 import { Route as ApiHuggingfaceRouteImport } from './routes/api/huggingface'
+import { Route as ApiElevenlabsTtsRouteImport } from './routes/api/elevenlabs-tts'
+import { Route as ApiElevenlabsSttRouteImport } from './routes/api/elevenlabs-stt'
 import { Route as ApiCodeRouteImport } from './routes/api/code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
@@ -68,6 +72,11 @@ const EmailRoute = EmailRouteImport.update({
   path: '/email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CodeRoute = CodeRouteImport.update({
   id: '/code',
   path: '/code',
@@ -103,9 +112,24 @@ const ApiResendRoute = ApiResendRouteImport.update({
   path: '/api/resend',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHuggingfaceVideoRoute = ApiHuggingfaceVideoRouteImport.update({
+  id: '/api/huggingface-video',
+  path: '/api/huggingface-video',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHuggingfaceRoute = ApiHuggingfaceRouteImport.update({
   id: '/api/huggingface',
   path: '/api/huggingface',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiElevenlabsTtsRoute = ApiElevenlabsTtsRouteImport.update({
+  id: '/api/elevenlabs-tts',
+  path: '/api/elevenlabs-tts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiElevenlabsSttRoute = ApiElevenlabsSttRouteImport.update({
+  id: '/api/elevenlabs-stt',
+  path: '/api/elevenlabs-stt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCodeRoute = ApiCodeRouteImport.update({
@@ -123,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/assistant': typeof AssistantRouteWithChildren
   '/code': typeof CodeRoute
+  '/docs': typeof DocsRoute
   '/email': typeof EmailRoute
   '/login': typeof LoginRoute
   '/meetings': typeof MeetingsRoute
@@ -133,7 +158,10 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/chat': typeof ApiChatRoute
   '/api/code': typeof ApiCodeRoute
+  '/api/elevenlabs-stt': typeof ApiElevenlabsSttRoute
+  '/api/elevenlabs-tts': typeof ApiElevenlabsTtsRoute
   '/api/huggingface': typeof ApiHuggingfaceRoute
+  '/api/huggingface-video': typeof ApiHuggingfaceVideoRoute
   '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -142,6 +170,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/code': typeof CodeRoute
+  '/docs': typeof DocsRoute
   '/email': typeof EmailRoute
   '/login': typeof LoginRoute
   '/meetings': typeof MeetingsRoute
@@ -152,7 +181,10 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/chat': typeof ApiChatRoute
   '/api/code': typeof ApiCodeRoute
+  '/api/elevenlabs-stt': typeof ApiElevenlabsSttRoute
+  '/api/elevenlabs-tts': typeof ApiElevenlabsTtsRoute
   '/api/huggingface': typeof ApiHuggingfaceRoute
+  '/api/huggingface-video': typeof ApiHuggingfaceVideoRoute
   '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -163,6 +195,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/assistant': typeof AssistantRouteWithChildren
   '/code': typeof CodeRoute
+  '/docs': typeof DocsRoute
   '/email': typeof EmailRoute
   '/login': typeof LoginRoute
   '/meetings': typeof MeetingsRoute
@@ -173,7 +206,10 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/chat': typeof ApiChatRoute
   '/api/code': typeof ApiCodeRoute
+  '/api/elevenlabs-stt': typeof ApiElevenlabsSttRoute
+  '/api/elevenlabs-tts': typeof ApiElevenlabsTtsRoute
   '/api/huggingface': typeof ApiHuggingfaceRoute
+  '/api/huggingface-video': typeof ApiHuggingfaceVideoRoute
   '/api/resend': typeof ApiResendRoute
   '/assistant/$threadId': typeof AssistantThreadIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -185,6 +221,7 @@ export interface FileRouteTypes {
     | '/'
     | '/assistant'
     | '/code'
+    | '/docs'
     | '/email'
     | '/login'
     | '/meetings'
@@ -195,7 +232,10 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/chat'
     | '/api/code'
+    | '/api/elevenlabs-stt'
+    | '/api/elevenlabs-tts'
     | '/api/huggingface'
+    | '/api/huggingface-video'
     | '/api/resend'
     | '/assistant/$threadId'
     | '/invite/$token'
@@ -204,6 +244,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/code'
+    | '/docs'
     | '/email'
     | '/login'
     | '/meetings'
@@ -214,7 +255,10 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/chat'
     | '/api/code'
+    | '/api/elevenlabs-stt'
+    | '/api/elevenlabs-tts'
     | '/api/huggingface'
+    | '/api/huggingface-video'
     | '/api/resend'
     | '/assistant/$threadId'
     | '/invite/$token'
@@ -224,6 +268,7 @@ export interface FileRouteTypes {
     | '/'
     | '/assistant'
     | '/code'
+    | '/docs'
     | '/email'
     | '/login'
     | '/meetings'
@@ -234,7 +279,10 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/chat'
     | '/api/code'
+    | '/api/elevenlabs-stt'
+    | '/api/elevenlabs-tts'
     | '/api/huggingface'
+    | '/api/huggingface-video'
     | '/api/resend'
     | '/assistant/$threadId'
     | '/invite/$token'
@@ -245,6 +293,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AssistantRoute: typeof AssistantRouteWithChildren
   CodeRoute: typeof CodeRoute
+  DocsRoute: typeof DocsRoute
   EmailRoute: typeof EmailRoute
   LoginRoute: typeof LoginRoute
   MeetingsRoute: typeof MeetingsRoute
@@ -255,7 +304,10 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiCodeRoute: typeof ApiCodeRoute
+  ApiElevenlabsSttRoute: typeof ApiElevenlabsSttRoute
+  ApiElevenlabsTtsRoute: typeof ApiElevenlabsTtsRoute
   ApiHuggingfaceRoute: typeof ApiHuggingfaceRoute
+  ApiHuggingfaceVideoRoute: typeof ApiHuggingfaceVideoRoute
   ApiResendRoute: typeof ApiResendRoute
   InviteTokenRoute: typeof InviteTokenRoute
 }
@@ -318,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmailRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/code': {
       id: '/code'
       path: '/code'
@@ -367,11 +426,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiResendRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/huggingface-video': {
+      id: '/api/huggingface-video'
+      path: '/api/huggingface-video'
+      fullPath: '/api/huggingface-video'
+      preLoaderRoute: typeof ApiHuggingfaceVideoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/huggingface': {
       id: '/api/huggingface'
       path: '/api/huggingface'
       fullPath: '/api/huggingface'
       preLoaderRoute: typeof ApiHuggingfaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/elevenlabs-tts': {
+      id: '/api/elevenlabs-tts'
+      path: '/api/elevenlabs-tts'
+      fullPath: '/api/elevenlabs-tts'
+      preLoaderRoute: typeof ApiElevenlabsTtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/elevenlabs-stt': {
+      id: '/api/elevenlabs-stt'
+      path: '/api/elevenlabs-stt'
+      fullPath: '/api/elevenlabs-stt'
+      preLoaderRoute: typeof ApiElevenlabsSttRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/code': {
@@ -409,6 +489,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AssistantRoute: AssistantRouteWithChildren,
   CodeRoute: CodeRoute,
+  DocsRoute: DocsRoute,
   EmailRoute: EmailRoute,
   LoginRoute: LoginRoute,
   MeetingsRoute: MeetingsRoute,
@@ -419,7 +500,10 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiChatRoute: ApiChatRoute,
   ApiCodeRoute: ApiCodeRoute,
+  ApiElevenlabsSttRoute: ApiElevenlabsSttRoute,
+  ApiElevenlabsTtsRoute: ApiElevenlabsTtsRoute,
   ApiHuggingfaceRoute: ApiHuggingfaceRoute,
+  ApiHuggingfaceVideoRoute: ApiHuggingfaceVideoRoute,
   ApiResendRoute: ApiResendRoute,
   InviteTokenRoute: InviteTokenRoute,
 }

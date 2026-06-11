@@ -31,8 +31,12 @@ import {
   Paperclip,
   X,
   Cpu,
+  ExternalLink,
+  Film,
+  Mic,
   Bot,
   Upload,
+  Volume2,
   Link as LinkIcon,
   Image,
   Share2,
@@ -60,6 +64,7 @@ import { cn } from "@/lib/utils";
 import { deriveTitle, type Thread, loadThreads, saveThreads, createBlankThread } from "@/lib/threads";
 import { MODELS, MODEL_STORAGE_KEY, MODEL_MAP } from "@/lib/models";
 import { timeAgo } from "@/lib/time";
+import { toast } from "sonner";
 
 /* ------------------------------------------------------------------ */
 /*  Route                                                             */
@@ -578,6 +583,17 @@ function ChatPane({
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [loadingSpeechId, setLoadingSpeechId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [videoGenOpen, setVideoGenOpen] = useState(false);
+  const [videoPrompt, setVideoPrompt] = useState("");
+  const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -715,6 +731,124 @@ function ChatPane({
     }
   }
 
+  async function speakMessage(messageId: string, text: string) {
+    if (speakingMessageId === messageId) {
+      audioRef.current?.pause();
+      if (audioRef.current) {
+        URL.revokeObjectURL(audioRef.current.src);
+      }
+      audioRef.current = null;
+      setSpeakingMessageId(null);
+      return;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      URL.revokeObjectURL(audioRef.current.src);
+      audioRef.current = null;
+    }
+    setSpeakingMessageId(null);
+    setLoadingSpeechId(messageId);
+    try {
+      const res = await fetch("/api/elevenlabs-tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error("TTS request failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => {
+        setSpeakingMessageId(null);
+        URL.revokeObjectURL(url);
+        audioRef.current = null;
+      };
+      setLoadingSpeechId(null);
+      setSpeakingMessageId(messageId);
+      await audio.play();
+    } catch {
+      setLoadingSpeechId(null);
+      toast.error("Failed to read aloud. Please try again.");
+    }
+  }
+
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        if (blob.size === 0) return;
+
+        try {
+          const formData = new FormData();
+          formData.append("audio", blob, "recording.webm");
+          const res = await fetch("/api/elevenlabs-stt", {
+            method: "POST",
+            body: formData,
+          });
+          if (!res.ok) throw new Error("STT request failed");
+          const data = await res.json();
+          if (data.text) {
+            setInput((prev) => (prev ? prev + " " + data.text : data.text));
+          }
+        } catch {
+          toast.error("Failed to transcribe audio. Please try again.");
+        }
+      };
+
+      recorder.start();
+      setIsRecording(true);
+    } catch {
+      toast.error("Microphone access denied. Please allow microphone permissions.");
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+  }
+
+  async function generateVideo() {
+    const prompt = videoPrompt.trim();
+    if (!prompt || isGeneratingVideo) return;
+    setIsGeneratingVideo(true);
+    setVideoError(null);
+    setGeneratedVideo(null);
+    try {
+      const res = await fetch("/api/huggingface-video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Video generation failed");
+      }
+      const data = await res.json();
+      if (data.video) {
+        setGeneratedVideo(data.video);
+      } else {
+        throw new Error("No video returned");
+      }
+    } catch (e) {
+      setVideoError(e instanceof Error ? e.message : "Failed to generate video");
+    } finally {
+      setIsGeneratingVideo(false);
+    }
+  }
+
   return (
     <section className="flex-1 flex flex-col h-dvh bg-background min-w-0">
       {/* Top bar */}
@@ -784,7 +918,26 @@ function ChatPane({
                     <div className="flex gap-3 w-full">
                       <Logo variant="ai-avatar" className="mt-0.5 size-7 shrink-0" />
                       <div className="min-w-0 flex-1 flex flex-col gap-0.5 text-[15px] leading-relaxed">
-                        <MarkdownView>{text || "..."}</MarkdownView>
+                        <div className="group/ai relative">
+                          <MarkdownView>{text || "..."}</MarkdownView>
+                          <button
+                            onClick={() => speakMessage(m.id, text)}
+                            className={cn(
+                              "absolute top-0 right-0 p-1.5 rounded-md transition-colors opacity-0 group-hover/ai:opacity-100",
+                              speakingMessageId === m.id
+                                ? "text-accent bg-accent/10 opacity-100"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                            )}
+                            aria-label={speakingMessageId === m.id ? "Stop reading" : "Read aloud"}
+                            title={speakingMessageId === m.id ? "Stop reading" : "Read aloud"}
+                          >
+                            {loadingSpeechId === m.id ? (
+                              <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                              <Volume2 className="size-4" />
+                            )}
+                          </button>
+                        </div>
                         <span className="text-[11px] text-muted-foreground/60">
                           {timeAgo(m.createdAt ?? Date.now())}
                         </span>
@@ -954,6 +1107,40 @@ function ChatPane({
               >
                 <Image className="size-4" />
               </button>
+              {typeof window !== "undefined" && window.isSecureContext && (
+                <button
+                  type="button"
+                  onClick={isRecording ? stopRecording : startRecording}
+                  className={cn(
+                    "shrink-0 size-7 rounded-md flex items-center justify-center transition-colors relative",
+                    isRecording
+                      ? "bg-destructive text-white hover:bg-destructive/90"
+                      : "bg-transparent text-muted-foreground hover:bg-muted",
+                  )}
+                  aria-label={isRecording ? "Stop recording" : "Start recording"}
+                  title={isRecording ? "Stop recording" : "Record voice"}
+                >
+                  {isRecording ? (
+                    <span className="size-2 rounded-full bg-white animate-pulse" />
+                  ) : (
+                    <Mic className="size-4" />
+                  )}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setVideoGenOpen((v) => !v)}
+                className={cn(
+                  "shrink-0 size-7 rounded-md flex items-center justify-center transition-colors",
+                  videoGenOpen
+                    ? "bg-accent text-white hover:bg-accent/90"
+                    : "bg-transparent text-muted-foreground hover:bg-muted",
+                )}
+                aria-label={videoGenOpen ? "Close video generation" : "Open video generation"}
+                title="Generate video"
+              >
+                <Film className="size-4" />
+              </button>
             </div>
                 <input
                   ref={fileInputRef}
@@ -1052,6 +1239,72 @@ function ChatPane({
                         src={`data:image/png;base64,${generatedImage}`}
                         alt="Generated"
                         className="w-full max-h-[300px] object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Video generation panel */}
+              {videoGenOpen && (
+                <div className="mt-2 rounded-xl border border-border bg-card p-4 space-y-3 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">Video generation</span>
+                    <button
+                      onClick={() => {
+                        setVideoGenOpen(false);
+                        setVideoPrompt("");
+                        setGeneratedVideo(null);
+                        setVideoError(null);
+                      }}
+                      className="p-1 rounded-md hover:bg-muted text-muted-foreground"
+                      aria-label="Close video generation"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      value={videoPrompt}
+                      onChange={(e) => setVideoPrompt(e.target.value)}
+                      placeholder="Describe the video you want to generate..."
+                      className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          generateVideo();
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={generateVideo}
+                      disabled={isGeneratingVideo || !videoPrompt.trim()}
+                      size="sm"
+                    >
+                      {isGeneratingVideo ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        "Generate"
+                      )}
+                    </Button>
+                  </div>
+                  {isGeneratingVideo && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="size-4 animate-spin" />
+                      Generating video...
+                    </div>
+                  )}
+                  {videoError && (
+                    <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                      {videoError}
+                    </div>
+                  )}
+                  {generatedVideo && (
+                    <div className="rounded-lg border border-border overflow-hidden">
+                      <video
+                        src={`data:video/mp4;base64,${generatedVideo}`}
+                        controls
+                        className="w-full max-h-[300px]"
                       />
                     </div>
                   )}

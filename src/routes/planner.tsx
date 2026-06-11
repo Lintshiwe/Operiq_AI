@@ -6,15 +6,15 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import {
   ListChecks, Loader2, Copy, Check, ShieldCheck,
-  Sparkles, SendHorizontal,
+  Sparkles, SendHorizontal, Download,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { MarkdownView } from "@/components/MarkdownView";
 import { Button } from "@/components/ui/button";
-import { planTasks } from "@/lib/ai.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/planner")({
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/planner")({
 });
 
 function PlannerPage() {
-  const run = useServerFn(planTasks);
+  const generate = useMutation(api.plans.generate);
   const [horizon, setHorizon] = useState<"daily" | "weekly">("daily");
   const [tasks, setTasks] = useState("");
   const [goals, setGoals] = useState("");
@@ -50,8 +50,8 @@ function PlannerPage() {
     setLoading(true);
     setOutput(null);
     try {
-      const res = await run({ data: { horizon, tasks, goals } });
-      setOutput(res.text);
+      const result = await generate({ horizon, tasks, goals } as any);
+      setOutput(result.text);
     } catch (e) {
       toast.error("Generation failed. Please try again.");
       console.error(e);
@@ -64,14 +64,12 @@ function PlannerPage() {
     if (!output || !refineText.trim()) return;
     setRefining(true);
     try {
-      const res = await run({
-        data: {
-          horizon,
-          tasks: `Previous plan:\n${output}\n\nRequested changes: ${refineText}`,
-          goals: "",
-        },
-      });
-      setOutput(res.text);
+      const result = await generate({
+        horizon,
+        tasks: `Previous plan:\n${output}\n\nRequested changes: ${refineText}`,
+        goals: "",
+      } as any);
+      setOutput(result.text);
       setRefineText("");
     } catch (e) {
       toast.error("Refinement failed. Please try again.");
@@ -235,6 +233,13 @@ function PlannerPage() {
                             <><Check className="size-3.5 text-accent" /> Copied</>
                           ) : (
                             <><Copy className="size-3.5" /> Copy</>
+                          )}
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={copy} className="h-7 px-2 text-xs gap-1">
+                          {copied ? (
+                            <><Check className="size-3.5 text-accent" /> Exported</>
+                          ) : (
+                            <><Download className="size-3.5" /> Export</>
                           )}
                         </Button>
                       </div>

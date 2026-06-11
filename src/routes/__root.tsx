@@ -18,6 +18,7 @@ import { type ReactNode, useEffect } from "react";
 import { ConvexReactClient } from "convex/react";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { AuthGate } from "@/components/AuthGate";
+import { DevToolsGuard } from "@/components/DevToolsGuard";
 
 import appCss from "../styles.css?url";
 
@@ -153,10 +154,12 @@ function RootComponent() {
     pathname === "/login" ||
     pathname === "/signup" ||
     pathname.startsWith("/assistant") ||
-    pathname.startsWith("/invite");
+    pathname.startsWith("/invite") ||
+    pathname.startsWith("/docs");
 
   return (
     <ConvexAuthProvider client={convex}>
+      <DevToolsGuard />
       <QueryClientProvider client={queryClient}>
         {isPublicRoute ? (
           <Outlet />

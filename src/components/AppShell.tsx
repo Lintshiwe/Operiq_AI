@@ -146,7 +146,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         {/* Nav items */}
-        <div className="flex-1 overflow-y-auto px-2 py-1">
+        <div className="flex-1 min-h-0 overflow-y-auto px-2 py-1">
           {/* Chat section */}
           <p className="px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">
             Chat
@@ -159,8 +159,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           {STUDIO_NAV.map((item) => navLink(item))}
         </div>
 
-        <UserProfile />
-        <LogoutButton />
+        <div className="flex-shrink-0">
+          <UserProfile />
+        </div>
+        <div className="flex-shrink-0">
+          <LogoutButton />
+        </div>
       </aside>
 
       {/* Mobile sidebar toggle */}
@@ -198,7 +202,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 New chat
               </Link>
             </div>
-            <div className="flex-1 overflow-y-auto px-2">
+            <div className="flex-1 min-h-0 overflow-y-auto px-2">
               <p className="px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/40">
                 Chat
               </p>
@@ -209,8 +213,12 @@ export function AppShell({ children }: { children: ReactNode }) {
               {STUDIO_NAV.map((item) => navLink(item, () => setMobileOpen(false)))}
             </div>
 
-            <UserProfile />
-            <LogoutButton />
+            <div className="flex-shrink-0">
+              <UserProfile />
+            </div>
+            <div className="flex-shrink-0">
+              <LogoutButton />
+            </div>
           </aside>
         </div>
       )}
