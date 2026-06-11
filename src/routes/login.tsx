@@ -11,6 +11,9 @@ import { useState, useEffect } from "react";
 import { LogIn, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: (search.redirect as string) || undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign in · Operiq AI" },
@@ -21,6 +24,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
+  const { redirect } = Route.useSearch();
   const { isAuthenticated } = useSsrConvexAuth();
   const { signIn } = useAuthActions();
   const navigate = useNavigate();
@@ -32,9 +36,13 @@ function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate({ to: "/assistant", replace: true });
+      if (redirect) {
+        window.location.href = redirect;
+      } else {
+        navigate({ to: "/assistant", replace: true });
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, redirect]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -43,7 +51,11 @@ function LoginPage() {
 
     try {
       await signIn("password", { email, password, flow: "signIn" });
-      navigate({ to: "/assistant", replace: true });
+      if (redirect) {
+        window.location.href = redirect;
+      } else {
+        navigate({ to: "/assistant", replace: true });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid email or password");
     } finally {
