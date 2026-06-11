@@ -56,7 +56,7 @@ export const Route = createFileRoute("/docs")({
       { title: "Documentation \u00b7 Operiq AI" },
       {
         name: "description",
-        content: "AI Skill Accelerator Programme documentation \u2014 system architecture, prompt engineering, responsible AI, and evaluation criteria.",
+        content: "Operiq AI documentation — system architecture, prompt engineering, responsible AI, and evaluation criteria.",
       },
     ],
   }),
@@ -149,13 +149,13 @@ function DocsPage() {
           <div className="max-w-3xl space-y-16">
             {/* Page title */}
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-[#10a37f] font-medium">AI Skill Accelerator Programme</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[#10a37f] font-medium">Operiq AI</p>
               <h1 className="mt-3 text-3xl lg:text-4xl font-semibold tracking-tight text-zinc-900">
                 Operiq AI Technical Documentation
               </h1>
               <p className="mt-3 text-sm text-zinc-600 leading-relaxed max-w-xl">
-                Comprehensive documentation for the AI Skill Accelerator Programme, CAPACITI.
-                Covering system architecture, prompt engineering, responsible AI practices, and evaluation alignment.
+                Comprehensive documentation covering system architecture, prompt engineering,
+                responsible AI practices, and evaluation alignment.
               </p>
             </div>
 
@@ -179,31 +179,6 @@ function DocsPage() {
                 Operiq AI helps professionals reclaim their time and focus on what matters most.
               </p>
 
-              <SubHeading>Programme Context</SubHeading>
-              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-5 mt-4">
-                <p className="text-sm text-zinc-700 leading-relaxed">
-                  <strong className="text-zinc-900">Developed for the AI Skill Accelerator Programme</strong>
-                </p>
-                <p className="text-sm text-zinc-600 mt-2 leading-relaxed">
-                  CAPACITI, a division of UMU Africa, runs the AI Skill Accelerator Programme to cultivate
-                  practical AI engineering skills among South African professionals. This project demonstrates
-                  the application of AI in solving real-world workplace productivity challenges.
-                </p>
-                <div className="mt-4 space-y-2 text-sm text-zinc-600">
-                  <div className="flex items-center gap-2">
-                    <MailIcon className="size-4 text-[#10a37f]" />
-                    <span>hello@capaciti.org.za</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Globe className="size-4 text-[#10a37f]" />
-                    <span>www.capaciti.org.za</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="size-4 text-[#10a37f]" />
-                    <span>+27 (0) 21 003 7509</span>
-                  </div>
-                </div>
-              </div>
             </SectionBlock>
 
             {/* Section 2: Solution Overview */}
@@ -427,7 +402,7 @@ billing           — userId, plan, aiRequestsUsed, aiRequestsLimit, imagesGener
             {/* Section 5: Prompt Engineering */}
             <SectionBlock id="prompt-engineering" title="Prompt Engineering" icon={<GitBranch className="size-5" />}>
               <p>
-                Prompt engineering is a core competency of the AI Skill Accelerator Programme, representing
+                Prompt engineering is a core competency, representing
                 <strong> 25% of the evaluation criteria</strong>. Operiq AI demonstrates structured, tested,
                 and refined prompts across all AI features.
               </p>
@@ -635,7 +610,7 @@ Focus question: {question}`}</CodeBlock>
             <SectionBlock id="responsible-ai" title="Responsible AI" icon={<Shield className="size-5" />}>
               <p>
                 Responsible AI practices represent <strong>10% of the evaluation criteria</strong> for the
-                AI Skill Accelerator Programme. Operiq AI implements comprehensive safeguards across
+                Operiq AI implements comprehensive safeguards across
                 bias mitigation, data privacy, transparency, and ethical use.
               </p>
 
@@ -735,7 +710,7 @@ Focus question: {question}`}</CodeBlock>
             {/* Section 7: Evaluation Criteria */}
             <SectionBlock id="evaluation-criteria" title="Evaluation Criteria" icon={<ClipboardCheck className="size-5" />}>
               <p>
-                The AI Skill Accelerator Programme evaluates projects across six criteria. The table below
+                Operiq AI is evaluated across six criteria. The table below
                 maps each criterion to how Operiq AI addresses it.
               </p>
 
@@ -1226,11 +1201,10 @@ comfortable with AI-assisted support when human escalation is available.
                 <span className="text-sm font-semibold text-zinc-900">Operiq AI</span>
               </div>
               <p className="text-sm text-zinc-500 text-center">
-                Developed for the AI Skill Accelerator Programme by CAPACITI, a division of UMU Africa
+                AI-powered workplace productivity platform built with React, Convex, and cutting-edge AI models.
               </p>
               <div className="flex items-center gap-4 text-sm text-zinc-500">
-                <span>hello@capaciti.org.za</span>
-                <span>+27 (0) 21 003 7509</span>
+                <span>operiq.ai</span>
               </div>
             </div>
             <p className="text-xs text-zinc-400 text-center mt-6">
