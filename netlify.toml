@@ -6,6 +6,8 @@
 [functions]
   # nft traces imports — required for dynamic import("./assets/*") inside server.js
   node_bundler = "nft"
+  external_node_modules = []
+  included_files = ["node_modules/ai/**", "node_modules/@ai-sdk/**"]
 
 # All routes handled by the SSR function
 [[redirects]]
