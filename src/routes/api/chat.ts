@@ -21,6 +21,8 @@ export const Route = createFileRoute("/api/chat")({
             return Response.json({ error: "AI not configured" }, { status: 500 });
           }
 
+          const model = request.headers.get("x-operiq-model") || process.env.AI_MODEL || "gpt-4o-mini";
+
           const baseUrl = process.env.AI_BASE_URL || "https://api.openai.com/v1";
           const endpoint = baseUrl.endsWith("/v1") ? `${baseUrl}/chat/completions` : `${baseUrl}/v1/chat/completions`;
 
@@ -28,7 +30,7 @@ export const Route = createFileRoute("/api/chat")({
             {
               method: "POST",
               headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-              body: JSON.stringify({ model: "gpt-4o-mini", messages, stream: false }),
+              body: JSON.stringify({ model, messages, stream: false }),
             },
           );
 
