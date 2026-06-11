@@ -111,12 +111,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         to="/settings"
         className="flex items-center gap-2.5 px-3 py-2.5 border-t border-sidebar-border hover:bg-sidebar-accent transition-colors"
       >
-        <Avatar className="size-8">
+        <Avatar className="size-8 shrink-0">
           <AvatarFallback className="bg-accent text-accent-foreground text-sm font-medium">
             {initial}
           </AvatarFallback>
         </Avatar>
-        <span className="text-sm text-sidebar-foreground truncate">{name}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-medium text-sidebar-foreground truncate leading-tight">{name}</p>
+          <p className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">{user.email}</p>
+        </div>
       </Link>
     );
   }
@@ -131,7 +134,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           signOut();
           navigate({ to: "/login" });
         }}
-        className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+        className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
       >
         <LogOut className="size-4" strokeWidth={1.75} />
         Sign out

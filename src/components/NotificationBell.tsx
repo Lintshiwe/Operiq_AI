@@ -150,7 +150,7 @@ export function NotificationBell() {
       >
         <Bell className="size-4" strokeWidth={1.75} />
         {unreadCount > 0 && (
-          <span className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-white">
+          <span className="absolute -top-0.5 -right-0.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-destructive px-[3px] text-[9px] font-semibold leading-none text-white">
             {unreadCount}
           </span>
         )}
