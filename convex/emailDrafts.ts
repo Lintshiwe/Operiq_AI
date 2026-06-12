@@ -6,6 +6,7 @@
 
 import { v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
+import { api } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { callAI } from "./ai";
 
@@ -58,7 +59,7 @@ export const generate = action({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const userId = identity.subject as any;
+    const userId = identity.subject.split("|")[0];
     if (!userId) throw new Error("Not authenticated");
 
     const systemPrompt = `You are an expert email copywriter for professionals. 
@@ -86,8 +87,8 @@ Please write the complete email draft.`;
       { role: "user", content: userPrompt },
     ]);
 
-    // Save to database
-    const draftId = await ctx.db.insert("emailDrafts", {
+    // Save to database via mutation (actions can't use ctx.db directly)
+    const draftId = await ctx.runMutation(api.emailDrafts.save, {
       userId,
       recipient: args.recipient,
       subject: args.subject,
@@ -96,7 +97,6 @@ Please write the complete email draft.`;
       context: args.context,
       draft,
       sent: false,
-      createdAt: new Date().toISOString(),
     });
 
     return { success: true, draftId, draft };

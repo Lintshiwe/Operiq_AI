@@ -39,7 +39,8 @@ export const list = query({
       await Promise.all(newSharedThreadIds.map((id) => ctx.db.get(id)))
     ).filter((t): t is NonNullable<typeof t> => t !== null);
 
-    const allThreads = [...ownedThreads, ...sharedThreads];
+    const allThreads = [...ownedThreads, ...sharedThreads]
+      .filter((t) => t.messages && t.messages.length > 0);
     allThreads.sort(
       (a, b) => b.updatedAt.localeCompare(a.updatedAt),
     );

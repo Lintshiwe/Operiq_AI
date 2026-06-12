@@ -108,7 +108,7 @@ function EmailPage() {
 
   return (
     <AppShell>
-      <div className="h-full flex flex-col items-center py-12 px-4">
+      <div className="h-full flex flex-col items-center py-12 px-4 overflow-y-auto">
         <div className="w-full max-w-[680px] space-y-8">
           {/* Title */}
           <h1 className="text-2xl font-semibold text-center text-foreground">

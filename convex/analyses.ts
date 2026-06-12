@@ -6,6 +6,7 @@
 
 import { v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
+import { api } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const list = query({
@@ -28,7 +29,7 @@ export const generate = action({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const userId = identity.subject as any;
+    const userId = identity.subject.split("|")[0];
     if (!userId) throw new Error("Not authenticated");
 
     const system = `You are a senior research analyst. Distill the provided material.
@@ -73,13 +74,12 @@ Be objective. Flag potential biases in the source material.`;
     const data = await res.json();
     const text = data.choices?.[0]?.message?.content || "";
 
-    await ctx.db.insert("researchAnalyses", {
+    await ctx.runMutation(api.analyses.save, {
       userId,
       material: args.material,
       question: args.question,
       depth: args.depth,
       output: text,
-      createdAt: new Date().toISOString(),
     });
 
     return { text };

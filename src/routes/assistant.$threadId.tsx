@@ -250,6 +250,7 @@ function AssistantThreadPage() {
   };
 
   const handleMessagesUpdate = (messages: UIMessage[]) => {
+    if (messages.length === 0) return; // Don't save empty conversations
     if (isGuest) {
       const local = loadThreads();
       const title = deriveTitle(messages);
@@ -541,13 +542,15 @@ function ThreadSidebar({
                       >
                         <Star className="size-3.5 fill-accent" />
                       </button>
-                      <button
-                        onClick={() => onShare?.(t.id)}
-                        aria-label={`Share ${t.title}`}
-                        className="p-1 rounded-md text-muted-foreground hover:bg-background hover:text-accent"
-                      >
-                        <Share2 className="size-3.5" />
-                      </button>
+                      {!isGuest && (
+                        <button
+                          onClick={() => onShare?.(t.id)}
+                          aria-label={`Share ${t.title}`}
+                          className="p-1 rounded-md text-muted-foreground hover:bg-background hover:text-accent"
+                        >
+                          <Share2 className="size-3.5" />
+                        </button>
+                      )}
                       <button
                         onClick={() => onDelete(t.id)}
                         aria-label={`Delete ${t.title}`}
@@ -602,13 +605,15 @@ function ThreadSidebar({
                       >
                         <Star className={cn("size-3.5", isPinned && "fill-accent")} />
                       </button>
-                      <button
-                        onClick={() => onShare?.(t.id)}
-                        aria-label={`Share ${t.title}`}
-                        className="p-1 rounded-md text-muted-foreground hover:bg-background hover:text-accent"
-                      >
-                        <Share2 className="size-3.5" />
-                      </button>
+                      {!isGuest && (
+                        <button
+                          onClick={() => onShare?.(t.id)}
+                          aria-label={`Share ${t.title}`}
+                          className="p-1 rounded-md text-muted-foreground hover:bg-background hover:text-accent"
+                        >
+                          <Share2 className="size-3.5" />
+                        </button>
+                      )}
                       <button
                         onClick={() => onDelete(t.id)}
                         aria-label={`Delete ${t.title}`}
@@ -1241,13 +1246,15 @@ function ChatPane({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <button
-            onClick={() => setInviteOpen(true)}
-            className="p-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label="Share conversation"
-          >
-            <Share2 className="size-4" />
-          </button>
+          {!isGuest && (
+            <button
+              onClick={() => setInviteOpen(true)}
+              className="p-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Share conversation"
+            >
+              <Share2 className="size-4" />
+            </button>
+          )}
           <button
             onClick={() => onShortcutsOpenChange(true)}
             className="hidden md:flex p-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"

@@ -6,6 +6,7 @@
 
 import { v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
+import { api } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const list = query({
@@ -27,7 +28,7 @@ export const generate = action({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const userId = identity.subject as any;
+    const userId = identity.subject.split("|")[0];
     if (!userId) throw new Error("Not authenticated");
 
     const system = `You analyze raw meeting notes/transcripts and produce a clear executive briefing.
@@ -71,12 +72,11 @@ Be thorough and accurate. Flag any ambiguous points.`;
     const data = await res.json();
     const text = data.choices?.[0]?.message?.content || "";
 
-    await ctx.db.insert("meetingSummaries", {
+    await ctx.runMutation(api.summaries.save, {
       userId,
       meetingType: args.meetingType,
       notes: args.notes,
       output: text,
-      createdAt: new Date().toISOString(),
     });
 
     return { text };

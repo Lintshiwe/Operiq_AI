@@ -19,6 +19,7 @@ import {
   Film,
   Bookmark,
   LayoutTemplate,
+  History,
 } from "lucide-react";
 import { useState, useEffect, type ReactNode } from "react";
 import { useQuery } from "convex/react";
@@ -48,6 +49,7 @@ const STUDIO_NAV: NavItem[] = [
   { to: "/research", label: "Research", icon: BookOpen },
   { to: "/image", label: "Image Gen", icon: Image },
   { to: "/video", label: "Video Gen", icon: Film },
+  { to: "/history", label: "History", icon: History },
 ];
 
 /**

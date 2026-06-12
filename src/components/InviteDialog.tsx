@@ -30,8 +30,15 @@ interface InviteDialogProps {
 }
 
 export function InviteDialog({ open, onOpenChange, threadId }: InviteDialogProps) {
-  const invite = useQuery(api.sharedChats.getInviteByThread, { threadId: threadId as Id<"threads"> });
-  const participants = useQuery(api.sharedChats.getSharedParticipants, { threadId: threadId as Id<"threads"> });
+  const isValidThreadId = /^[a-z0-9]{28,}$/.test(threadId);
+  const invite = useQuery(
+    api.sharedChats.getInviteByThread,
+    isValidThreadId ? { threadId: threadId as Id<"threads"> } : "skip",
+  );
+  const participants = useQuery(
+    api.sharedChats.getSharedParticipants,
+    isValidThreadId ? { threadId: threadId as Id<"threads"> } : "skip",
+  );
   const createInvite = useMutation(api.sharedChats.createInvite);
   const revokeInvite = useMutation(api.sharedChats.revokeInvite);
 

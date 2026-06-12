@@ -6,7 +6,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
-import { ArrowUp, Loader2, Code2, Cpu, ShieldCheck } from "lucide-react";
+import { ArrowUp, Eye, Loader2, Code2, Cpu, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { MarkdownView } from "@/components/MarkdownView";
 import { timeAgo } from "@/lib/time";
@@ -49,11 +49,17 @@ function CodePage() {
   }, [selectedModel]);
 
   const [messages, setMessages] = useState<Array<{ id: string; role: "user" | "assistant"; content: string; createdAt?: Date }>>([]);
+  const [previewViews, setPreviewViews] = useState<Record<string, "code" | "preview">>({});
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  function isHtmlContent(content: string): boolean {
+    const trimmed = content.trim();
+    return /^<!DOCTYPE html>/i.test(trimmed) || /^<html/i.test(trimmed);
+  }
 
   // Auto-resize textarea
   useEffect(() => {
@@ -92,7 +98,11 @@ function CodePage() {
     setInput("");
     try {
       const result = await sendCode(trimmed);
-      setMessages((prev) => [...prev, { id: Math.random().toString(36).slice(2) + Date.now(), role: "assistant", content: result, createdAt: new Date() }]);
+      const msgId = Math.random().toString(36).slice(2) + Date.now();
+      setMessages((prev) => [...prev, { id: msgId, role: "assistant", content: result, createdAt: new Date() }]);
+      if (isHtmlContent(result)) {
+        setPreviewViews((prev) => ({ ...prev, [msgId]: "preview" }));
+      }
     } catch (e: any) {
       setError(e.message || "Something went wrong");
       setMessages((prev) => [...prev, { id: Math.random().toString(36).slice(2) + Date.now(), role: "assistant", content: "Error: " + (e.message || "Something went wrong"), createdAt: new Date() }]);
@@ -151,6 +161,59 @@ function CodePage() {
                 }`}>
                   {m.role === "user" ? (
                     <p className="text-sm whitespace-pre-wrap">{m.content}</p>
+                  ) : isHtmlContent(m.content) ? (
+                    <div className="space-y-2">
+                      {/* Tab bar */}
+                      <div className="flex gap-0 border-b border-border">
+                        <button
+                          onClick={() => setPreviewViews(p => ({...p, [m.id]: "code"}))}
+                          className={`px-3 py-1.5 text-xs font-medium border-b-2 transition-colors ${
+                            previewViews[m.id] === "code" || !previewViews[m.id]
+                              ? "border-accent text-accent"
+                              : "border-transparent text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <Code2 className="size-3.5 inline mr-1" />
+                          Code
+                        </button>
+                        <button
+                          onClick={() => setPreviewViews(p => ({...p, [m.id]: "preview"}))}
+                          className={`px-3 py-1.5 text-xs font-medium border-b-2 transition-colors ${
+                            previewViews[m.id] === "preview"
+                              ? "border-accent text-accent"
+                              : "border-transparent text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <Eye className="size-3.5 inline mr-1" />
+                          Preview
+                        </button>
+                      </div>
+                      {/* Content */}
+                      {previewViews[m.id] === "preview" ? (
+                        <div className="rounded-lg overflow-hidden border border-border bg-white">
+                          <iframe
+                            srcDoc={m.content}
+                            title="HTML Preview"
+                            sandbox="allow-scripts"
+                            className="w-full border-0"
+                            style={{ height: "400px" }}
+                            onLoad={(e) => {
+                              const iframe = e.currentTarget;
+                              try {
+                                const h = iframe.contentDocument?.documentElement?.scrollHeight;
+                                if (h && h > 100) {
+                                  iframe.style.height = Math.min(h + 20, 600) + "px";
+                                }
+                              } catch {}
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="prose-flow text-sm">
+                          <MarkdownView>{m.content}</MarkdownView>
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <div className="prose-flow text-sm">
                       <MarkdownView>{m.content}</MarkdownView>

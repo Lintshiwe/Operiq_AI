@@ -6,6 +6,7 @@
 
 import { v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
+import { api } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const list = query({
@@ -28,7 +29,7 @@ export const generate = action({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const userId = identity.subject as any;
+    const userId = identity.subject.split("|")[0];
     if (!userId) throw new Error("Not authenticated");
 
     const system = `You are an executive productivity coach. Build a prioritized ${args.horizon} plan.
@@ -72,13 +73,12 @@ Consider dependencies between tasks and energy levels.`;
     const data = await res.json();
     const text = data.choices?.[0]?.message?.content || "";
 
-    await ctx.db.insert("taskPlans", {
+    await ctx.runMutation(api.plans.save, {
       userId,
       horizon: args.horizon,
       tasks: args.tasks,
       goals: args.goals,
       output: text,
-      createdAt: new Date().toISOString(),
     });
 
     return { text };
