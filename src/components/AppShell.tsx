@@ -133,7 +133,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <button
         onClick={() => {
           signOut();
-          navigate({ to: "/login" });
+          navigate({ to: "/login", search: {} });
         }}
         className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
       >

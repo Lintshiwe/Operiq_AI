@@ -74,7 +74,7 @@ Consider dependencies between tasks and energy levels.`;
     const text = data.choices?.[0]?.message?.content || "";
 
     await ctx.runMutation(api.plans.save, {
-      userId,
+      userId: userId as any,
       horizon: args.horizon,
       tasks: args.tasks,
       goals: args.goals,

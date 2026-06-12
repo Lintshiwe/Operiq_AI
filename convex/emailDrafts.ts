@@ -56,7 +56,7 @@ export const generate = action({
     audience: v.string(),
     context: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ success: boolean; draftId: any; draft: string }> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
     const userId = identity.subject.split("|")[0];
@@ -88,8 +88,8 @@ Please write the complete email draft.`;
     ]);
 
     // Save to database via mutation (actions can't use ctx.db directly)
-    const draftId = await ctx.runMutation(api.emailDrafts.save, {
-      userId,
+    const draftId: any = await ctx.runMutation(api.emailDrafts.save, {
+      userId: userId as any,
       recipient: args.recipient,
       subject: args.subject,
       tone: args.tone,

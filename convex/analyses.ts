@@ -75,7 +75,7 @@ Be objective. Flag potential biases in the source material.`;
     const text = data.choices?.[0]?.message?.content || "";
 
     await ctx.runMutation(api.analyses.save, {
-      userId,
+      userId: userId as any,
       material: args.material,
       question: args.question,
       depth: args.depth,

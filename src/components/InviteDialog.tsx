@@ -50,7 +50,7 @@ export function InviteDialog({ open, onOpenChange, threadId }: InviteDialogProps
 
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
 
-  const inviteLink = invite?.inviteLink || generatedLink || (invite?.token ? `https://operiq-ai.netlify.app/invite/${invite.token}` : null);
+  const inviteLink = (invite as any)?.inviteLink || generatedLink || (invite?.token ? `https://operiq-ai.netlify.app/invite/${invite.token}` : null);
   if (!inviteLink) return null; // Don't show copy button without a link
 
   const handleCopy = async () => {
@@ -157,7 +157,7 @@ export function InviteDialog({ open, onOpenChange, threadId }: InviteDialogProps
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-foreground">Participants</h4>
             <div className="space-y-1">
-              {participants.map((p) => (
+              {participants.map((p: any) => (
                 <div
                   key={p.userId}
                   className="flex items-center gap-2.5 px-3 py-2 rounded-md bg-muted/50"

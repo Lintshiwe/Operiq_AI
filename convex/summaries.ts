@@ -73,7 +73,7 @@ Be thorough and accurate. Flag any ambiguous points.`;
     const text = data.choices?.[0]?.message?.content || "";
 
     await ctx.runMutation(api.summaries.save, {
-      userId,
+      userId: userId as any,
       meetingType: args.meetingType,
       notes: args.notes,
       output: text,

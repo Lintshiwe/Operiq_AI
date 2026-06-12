@@ -685,13 +685,13 @@ function BillingSection() {
     };
   }, [billing]);
 
-  const currentPlan = (billing?.plan as string) || "free";
+  const currentPlan = ((billing as any)?.plan as string) || "free";
 
   async function handleUpgrade(planId: string) {
     setUpgradingId(planId);
     setBillingError(null);
     try {
-      await upgrade({ plan: planId });
+      await upgrade({ plan: planId as "pro" | "enterprise" });
     } catch (e) {
       setBillingError(e instanceof Error ? e.message : "Failed to upgrade plan");
     } finally {
@@ -844,8 +844,8 @@ function BillingSection() {
 
 function StorageSection() {
   const billing = useQuery(api.billing.getBilling);
-  const storageUsed = Number(billing?.storageUsed ?? 0);
-  const storageLimit = Number(billing?.storageLimit ?? 50);
+  const storageUsed = Number((billing as any)?.storageUsed ?? 0);
+  const storageLimit = Number((billing as any)?.storageLimit ?? 50);
   const percentUsed = storageLimit > 0 ? Math.round((storageUsed / storageLimit) * 100) : 0;
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
 

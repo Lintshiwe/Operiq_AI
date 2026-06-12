@@ -25,7 +25,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" search={{}} />;
   }
 
   return <>{children}</>;

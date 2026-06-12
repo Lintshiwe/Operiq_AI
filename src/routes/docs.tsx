@@ -47,7 +47,6 @@ import {
   Volume2,
   Mic,
   Package,
-  TypeScript,
   Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";

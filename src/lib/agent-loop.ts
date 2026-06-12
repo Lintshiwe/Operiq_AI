@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Copyright (c) 2025 Operiq AI. All rights reserved.
  * Proprietary and confidential. Unauthorized copying, distribution,

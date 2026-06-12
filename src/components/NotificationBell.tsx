@@ -71,7 +71,7 @@ export function NotificationBell() {
 
   // Merge Convex and localStorage notifications
   const allNotifications = useMemo(() => {
-    const convexMapped: Notification[] = (convexNotifications || []).map((n) => ({
+    const convexMapped: Notification[] = (convexNotifications || []).map((n: any) => ({
       id: n._id,
       type: (n.type as "share" | "mention" | "system") || "system",
       title: n.title,
@@ -107,7 +107,7 @@ export function NotificationBell() {
 
   function markAsRead(id: string) {
     // Check if this is a Convex notification (has _id format)
-    const isConvex = convexNotifications?.some((n) => n._id === id);
+    const isConvex = convexNotifications?.some((n: any) => n._id === id);
     if (isConvex) {
       markReadMutation({ notificationId: id as any }).catch(() => {});
     } else {
@@ -132,7 +132,7 @@ export function NotificationBell() {
   }
 
   function removeNotification(id: string) {
-    const isConvex = convexNotifications?.some((n) => n._id === id);
+    const isConvex = convexNotifications?.some((n: any) => n._id === id);
     if (!isConvex) {
       const next = localNotifications.filter((n) => n.id !== id);
       setLocalNotifications(next);

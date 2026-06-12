@@ -23,20 +23,7 @@ export const getProfile = query({
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .first();
 
-    if (existing) return existing;
-
-    // Auto-create profile on first access
-    const identity = await ctx.auth.getUserIdentity();
-    const displayName =
-      identity?.name ?? identity?.email ?? "User";
-
-    const id = await ctx.db.insert("profiles", {
-      userId,
-      displayName,
-      createdAt: new Date().toISOString(),
-    });
-
-    return await ctx.db.get(id);
+    return existing ?? null;
   },
 });
 

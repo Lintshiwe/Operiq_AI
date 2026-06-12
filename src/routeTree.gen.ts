@@ -20,6 +20,7 @@ import { Route as PlannerRouteImport } from './routes/planner'
 import { Route as MeetingsRouteImport } from './routes/meetings'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ImageRouteImport } from './routes/image'
+import { Route as HistoryRouteImport } from './routes/history'
 import { Route as EmailRouteImport } from './routes/email'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as CodeRouteImport } from './routes/code'
@@ -93,6 +94,11 @@ const LoginRoute = LoginRouteImport.update({
 const ImageRoute = ImageRouteImport.update({
   id: '/image',
   path: '/image',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmailRoute = EmailRouteImport.update({
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/code': typeof CodeRoute
   '/docs': typeof DocsRoute
   '/email': typeof EmailRoute
+  '/history': typeof HistoryRoute
   '/image': typeof ImageRoute
   '/login': typeof LoginRoute
   '/meetings': typeof MeetingsRoute
@@ -228,6 +235,7 @@ export interface FileRoutesByTo {
   '/code': typeof CodeRoute
   '/docs': typeof DocsRoute
   '/email': typeof EmailRoute
+  '/history': typeof HistoryRoute
   '/image': typeof ImageRoute
   '/login': typeof LoginRoute
   '/meetings': typeof MeetingsRoute
@@ -261,6 +269,7 @@ export interface FileRoutesById {
   '/code': typeof CodeRoute
   '/docs': typeof DocsRoute
   '/email': typeof EmailRoute
+  '/history': typeof HistoryRoute
   '/image': typeof ImageRoute
   '/login': typeof LoginRoute
   '/meetings': typeof MeetingsRoute
@@ -295,6 +304,7 @@ export interface FileRouteTypes {
     | '/code'
     | '/docs'
     | '/email'
+    | '/history'
     | '/image'
     | '/login'
     | '/meetings'
@@ -326,6 +336,7 @@ export interface FileRouteTypes {
     | '/code'
     | '/docs'
     | '/email'
+    | '/history'
     | '/image'
     | '/login'
     | '/meetings'
@@ -358,6 +369,7 @@ export interface FileRouteTypes {
     | '/code'
     | '/docs'
     | '/email'
+    | '/history'
     | '/image'
     | '/login'
     | '/meetings'
@@ -391,6 +403,7 @@ export interface RootRouteChildren {
   CodeRoute: typeof CodeRoute
   DocsRoute: typeof DocsRoute
   EmailRoute: typeof EmailRoute
+  HistoryRoute: typeof HistoryRoute
   ImageRoute: typeof ImageRoute
   LoginRoute: typeof LoginRoute
   MeetingsRoute: typeof MeetingsRoute
@@ -493,6 +506,13 @@ declare module '@tanstack/react-router' {
       path: '/image'
       fullPath: '/image'
       preLoaderRoute: typeof ImageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/email': {
@@ -651,6 +671,7 @@ const rootRouteChildren: RootRouteChildren = {
   CodeRoute: CodeRoute,
   DocsRoute: DocsRoute,
   EmailRoute: EmailRoute,
+  HistoryRoute: HistoryRoute,
   ImageRoute: ImageRoute,
   LoginRoute: LoginRoute,
   MeetingsRoute: MeetingsRoute,

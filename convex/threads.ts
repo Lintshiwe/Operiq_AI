@@ -23,7 +23,7 @@ export const list = query({
     const sharedChats = await ctx.db
       .query("sharedChats")
       .withIndex("by_threadId")
-      .filter((q) => q.eq("isActive", true))
+      .filter((q) => q.eq("isActive", true as any))
       .collect();
 
     const sharedThreadIds = sharedChats
@@ -63,7 +63,7 @@ export const get = query({
     const sharedChat = await ctx.db
       .query("sharedChats")
       .withIndex("by_threadId", (q) => q.eq("threadId", args.threadId))
-      .filter((q) => q.eq("isActive", true))
+      .filter((q) => q.eq("isActive", true as any))
       .first();
 
     if (sharedChat && sharedChat.invitedUserIds.includes(userId)) {

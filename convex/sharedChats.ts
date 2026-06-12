@@ -18,7 +18,7 @@ export const createInvite = mutation({
     const existing = await ctx.db
       .query("sharedChats")
       .withIndex("by_threadId", (q) => q.eq("threadId", args.threadId))
-      .filter((q) => q.eq("isActive", true))
+      .filter((q) => q.eq("isActive", true as any))
       .collect();
 
     const activeInvite = existing.find((sc) => sc.ownerId === userId);
@@ -49,7 +49,7 @@ export const revokeInvite = mutation({
     const invites = await ctx.db
       .query("sharedChats")
       .withIndex("by_threadId", (q) => q.eq("threadId", args.threadId))
-      .filter((q) => q.eq("isActive", true))
+      .filter((q) => q.eq("isActive", true as any))
       .collect();
 
     const activeInvite = invites.find((sc) => sc.ownerId === userId);
@@ -124,7 +124,7 @@ export const getInviteByThread = query({
     const invites = await ctx.db
       .query("sharedChats")
       .withIndex("by_threadId", (q) => q.eq("threadId", args.threadId))
-      .filter((q) => q.eq("isActive", true))
+      .filter((q) => q.eq("isActive", true as any))
       .collect();
 
     const activeInvite = invites.find((sc) => sc.ownerId === userId);
@@ -148,7 +148,7 @@ export const getSharedParticipants = query({
     const sharedChat = await ctx.db
       .query("sharedChats")
       .withIndex("by_threadId", (q) => q.eq("threadId", args.threadId))
-      .filter((q) => q.eq("isActive", true))
+      .filter((q) => q.eq("isActive", true as any))
       .first();
 
     if (!sharedChat || sharedChat.invitedUserIds.length === 0) return [];

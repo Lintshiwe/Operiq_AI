@@ -30,13 +30,13 @@ export function usePresence(threadId: string | undefined): void {
     if (!threadId) return;
 
     // Send initial heartbeat immediately
-    heartbeat({ threadId } as { threadId: string }).catch((err) =>
+    heartbeat({ threadId } as any).catch((err) =>
       console.warn("Presence heartbeat failed:", err),
     );
 
     // Send heartbeat on interval
     intervalRef.current = setInterval(() => {
-      heartbeat({ threadId } as { threadId: string }).catch((err) =>
+      heartbeat({ threadId } as any).catch((err) =>
         console.warn("Presence heartbeat failed:", err),
       );
     }, HEARTBEAT_INTERVAL_MS);

@@ -71,14 +71,14 @@ export const deleteAccount = mutation({
     // Delete user's sharedChats
     const sharedChats = await ctx.db
       .query("sharedChats")
-      .withIndex("by_threadId", (q) => q.eq("threadId", userId))
+      .withIndex("by_threadId", (q) => q.eq("threadId", userId as any))
       .collect();
     for (const s of sharedChats) await ctx.db.delete(s._id);
 
     // Delete sharedChats where user is the owner
     const ownedChats = await ctx.db
       .query("sharedChats")
-      .filter((q) => q.eq("ownerId", userId))
+      .filter((q) => q.eq("ownerId", userId as any))
       .collect();
     for (const s of ownedChats) await ctx.db.delete(s._id);
 

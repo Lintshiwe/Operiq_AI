@@ -159,13 +159,13 @@ function AssistantThreadPage() {
     }
 
     if (!threads) return null;
-    const found = threads.find((t) => String(t._id) === threadId);
+    const found = threads.find((t: any) => String(t._id) === threadId);
     return found
       ? {
           id: String(found._id),
           title: found.title,
           updatedAt: new Date(found.updatedAt).getTime(),
-          messages: found.messages.map((m) => ({
+          messages: found.messages.map((m: any) => ({
             id: m.id,
             role: m.role,
             content: m.content,
@@ -179,7 +179,7 @@ function AssistantThreadPage() {
   useEffect(() => {
     if (authLoading || isGuest || threads === undefined || hasCreatedRef.current) return;
 
-    const current = threads.find((t) => String(t._id) === threadId);
+    const current = threads.find((t: any) => String(t._id) === threadId);
     if (current) {
       hasCreatedRef.current = false;
       return;
@@ -635,6 +635,7 @@ function ThreadSidebar({
         <div className="border-t border-sidebar-border p-3">
           <Link
             to="/login"
+            search={{}}
             className="flex items-center gap-2 rounded-lg bg-accent/10 px-3 py-2.5 text-sm font-medium text-accent hover:bg-accent/20 transition-colors"
           >
             <Sparkles className="size-4" />
@@ -649,11 +650,11 @@ function ThreadSidebar({
         {MODULES.map((m) => {
           const Icon = m.icon;
           return (
-            <Link
-              key={m.to}
-              to={m.to as "/email"}
-              className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
-            >
+              <Link
+                to={m.to as "/email"}
+                search={{}}
+                className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              >
               <Icon className="size-4" strokeWidth={1.75} />
               {m.label}
             </Link>
@@ -707,7 +708,7 @@ function ThreadSidebarUser() {
         </div>
       </Link>
       <button
-        onClick={() => { signOut(); navigate({ to: "/login" }); }}
+        onClick={() => { signOut(); navigate({ to: "/login", search: {} }); }}
         className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
       >
         <LogOut className="size-4 shrink-0" strokeWidth={1.75} />
@@ -1289,7 +1290,7 @@ function ChatPane({
                         {text}
                       </div>
                       <span className="text-[11px] text-muted-foreground/60 px-1">
-                        {timeAgo(m.createdAt ?? Date.now())}
+                        {timeAgo((m as any).createdAt ?? Date.now())}
                       </span>
                     </div>
                   ) : (
@@ -1318,7 +1319,7 @@ function ChatPane({
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-[11px] text-muted-foreground/60">
-                            {timeAgo(m.createdAt ?? Date.now())}
+                            {timeAgo((m as any).createdAt ?? Date.now())}
                           </span>
                           {!isLoading && text && (
                             <ConfidenceBadge text={text} />
@@ -1362,6 +1363,7 @@ function ChatPane({
               </span>
               <Link
                 to="/login"
+                search={{}}
                 className="text-xs font-medium text-accent hover:underline"
               >
                 Sign in for unlimited
@@ -1379,6 +1381,7 @@ function ChatPane({
               <div className="mt-4 flex gap-3 justify-center">
                 <Link
                   to="/login"
+                  search={{}}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
                 >
                   <LogIn className="size-4" />
@@ -1619,6 +1622,7 @@ function EmptyState({
           <div className="mt-6">
             <Link
               to="/login"
+              search={{}}
               className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
             >
               <LogIn className="size-4" />

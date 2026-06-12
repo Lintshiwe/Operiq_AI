@@ -4,7 +4,7 @@
  * or use of this file is strictly prohibited.
  */
 
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute, useParams, useRouter } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useSsrConvexAuth } from "@/lib/use-ssr-convex-auth";
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/invite/$token")({
 function InviteJoinPage() {
   const { token } = useParams({ from: "/invite/$token" });
   const { isAuthenticated, isLoading: authLoading } = useSsrConvexAuth();
-  const router = Route.useRouter();
+  const router = useRouter();
   const joinByToken = useMutation(api.sharedChats.joinByToken);
   const [error, setError] = useState<string | null>(null);
 

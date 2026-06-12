@@ -124,7 +124,7 @@ function HistoryPage() {
         type: "chat",
         title: t.title || "Conversation",
         snippet: firstMsg?.content?.slice(0, 200) || "",
-        fullContent: t.messages?.map((m) => `${m.role}: ${m.content}`).join("\n\n") || "",
+        fullContent: t.messages?.map((m: any) => `${m.role}: ${m.content}`).join("\n\n") || "",
         createdAt: t.createdAt,
         linkTo: `/assistant/${t._id}`,
       });
@@ -268,7 +268,7 @@ function HistoryCard({ item }: { item: HistoryItem }) {
                   </Button>
                 </Link>
               ) : (
-                <Link to={item.linkTo as "/email"}>
+                <Link to={item.linkTo as "/email"} search={{}}>
                   <Button variant="outline" size="sm" className="text-xs gap-1.5 h-7">
                     <ExternalLink className="size-3" />
                     Open {TYPE_META[item.type as keyof typeof TYPE_META].label}

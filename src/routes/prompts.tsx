@@ -113,7 +113,7 @@ function PromptsPage() {
   // Load from Convex or localStorage
   const remotePrompts: Prompt[] = useMemo(() => {
     if (!convexPrompts) return [];
-    return convexPrompts.map((p) => ({
+    return convexPrompts.map((p: any) => ({
       id: p._id,
       title: p.title,
       content: p.content,
@@ -202,7 +202,7 @@ function PromptsPage() {
       try {
         if (editingPrompt) {
           // Check if it's a Convex prompt (ID looks like a Convex ID)
-          const isConvex = convexPrompts?.some((p) => p._id === editingPrompt.id);
+          const isConvex = convexPrompts?.some((p: any) => p._id === editingPrompt.id);
           if (isConvex) {
             await updatePrompt({
               promptId: editingPrompt.id as any,
@@ -261,7 +261,7 @@ function PromptsPage() {
   }
 
   async function handleDelete(id: string) {
-    const isConvex = convexPrompts?.some((p) => p._id === id);
+    const isConvex = convexPrompts?.some((p: any) => p._id === id);
     if (isConvex && isAuthenticated) {
       try {
         await removePrompt({ promptId: id as any });
